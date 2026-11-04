@@ -1,6 +1,6 @@
 # Integrasi Supabase
 
-Implementasi pada branch codex/supabase-integration. Mode demo tetap tersedia. Katalog, editor event, cover, reservasi, pembayaran simulasi, e-ticket, laporan organizer dan check-in memiliki adapter Supabase. Tidak ada fallback ke katalog seed lokal ketika mode Supabase gagal.
+Implementasi pada branch feature/supabase-integration. Mode demo tetap tersedia. Katalog, editor event, cover, reservasi, pembayaran simulasi, e-ticket, laporan organizer dan check-in memiliki adapter Supabase. Tidak ada fallback ke katalog seed lokal ketika mode Supabase gagal.
 
 ## Persiapan development
 
