@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { authMode, safeReturnPath } from './config';
 import { supabaseServer } from '@/lib/supabase/server';
+import { roleDestination } from './destination';
 export type Session = { id: string; email: string; name: string; mode: 'demo' | 'supabase'; demoRole?: 'ORGANIZER' | 'STAFF' };
 const cookieName = 'summapass_demo_session';
 // Demo personas are explicit server presets, never used for Supabase authorization.
@@ -39,6 +40,13 @@ export async function canAccessRole(user: Session, role: 'ORGANIZER' | 'STAFF') 
   const client = await supabaseServer();
   const { data, error } = await client.from('event_access').select('event_id').eq('user_id', user.id).eq('role', role).limit(1);
   return !error && !!data?.length;
+}
+export async function loginDestination(user: Session, returnTo: unknown = '/account') {
+  if (user.mode === 'demo') return roleDestination(user.demoRole ? [user.demoRole] : [], returnTo);
+  const client = await supabaseServer();
+  const { data, error } = await client.from('event_access').select('role').eq('user_id', user.id).in('role', ['ORGANIZER', 'STAFF']);
+  if (error) throw new Error('Akses akun belum dapat diperiksa. Coba lagi.');
+  return roleDestination((data ?? []).map(assignment => assignment.role), returnTo);
 }
 export async function endSession() {
   if (authMode() === 'supabase') await (await supabaseServer()).auth.signOut();
