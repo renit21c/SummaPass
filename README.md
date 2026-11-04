@@ -17,16 +17,16 @@ Untuk build produksi: `npm run build`, lalu `npm run start`. Script development 
 Tanpa environment, mode default adalah demo lokal satu proses. Login melalui tombol pengunjung demo tanpa data pribadi. Restart menghapus sesi, booking, payment dan tiket demo. Jangan gunakan mode ini untuk produksi multi-instance.
 
 ## Supabase
-Baca [setup autentikasi](docs/AUTH_SETUP.md), [reservasi](docs/RESERVATIONS.md), serta [pembayaran dan tiket](docs/PAYMENTS_TICKETS.md). Terapkan lima migrasi berurutan lalu seed.sql. Kredensial Supabase belum tersedia dan tidak ada proyek remote yang diubah. Issuance tiket di mode Supabase memerlukan service-role key dan encryption key server-only; jangan commit secret atau memakai prefix NEXT_PUBLIC.
+Baca [setup autentikasi](docs/AUTH_SETUP.md), [reservasi](docs/RESERVATIONS.md), serta [pembayaran dan tiket](docs/PAYMENTS_TICKETS.md). Terapkan tujuh migrasi berurutan lalu seed.sql pada development. Kredensial Supabase belum tersedia dan tidak ada proyek remote yang diubah. Issuance tiket di mode Supabase memerlukan service-role key dan encryption key server-only; jangan commit secret atau memakai prefix NEXT_PUBLIC.
 
-Katalog discovery masih memakai data fiktif lokal. Auth/inventori/booking/payment/tiket memakai adapter yang dipilih secara eksplisit. Tidak ada fallback diam-diam saat Supabase gagal.
+Katalog, editor event, cover, Auth, inventori, booking, pembayaran, tiket, organizer dan check-in memakai adapter sesuai mode. Tidak ada fallback diam-diam saat Supabase gagal. Setup dan pengujian remote ada di [integrasi Supabase](docs/SUPABASE_INTEGRATION.md).
 
 ## Pengujian
-`npm test` menjalankan 20 test cases terisolasi untuk foundation, RLS/RPC PostgreSQL WASM, reservasi, pembayaran, encryption dan QR decode. `npm run typecheck` memeriksa TypeScript.
+`npm test` menjalankan 25 test cases terisolasi untuk foundation, RLS/RPC PostgreSQL WASM, reservasi, pembayaran, encryption dan QR decode. `npm run typecheck` memeriksa TypeScript.
 
 `node tests/auth-http.mjs`, `node tests/reservations-http.mjs` dan `node tests/payments-http.mjs` memeriksa preview port 3001. Jalankan smoke test reservasi/payment pada proses demo baru tanpa booking existing karena memakai kursi fixture tetap; test payment meninggalkan kursi sold sampai restart. Ini bukan pengujian layanan Supabase remote atau locking dua koneksi PostgreSQL asli.
 
-Check-in: baca [alur dan batas pengujian](docs/CHECK_IN.md). `tests/check-in-http.mjs` memakai port 3002 untuk pengujian terpisah. Metadata event dan cover demo tersimpan di `.data/`; sesi dan transaksi tetap di memori. Editor dan Storage Supabase masih pending.
+Check-in: baca [alur dan batas pengujian](docs/CHECK_IN.md). `tests/check-in-http.mjs` memakai port 3002 untuk pengujian terpisah. Metadata event dan cover demo tersimpan di `.data/`; sesi dan transaksi tetap di memori. Adapter editor dan Storage Supabase tersedia; layanan remote belum diuji.
 
 ## Dokumen produk
 [PRD](docs/PRD.md), [user flows](docs/USER_FLOWS.md), [arsitektur](docs/ARCHITECTURE.md), [database/ERD](docs/DATABASE.md), [design system](docs/DESIGN_SYSTEM.md), [rencana](docs/IMPLEMENTATION_PLAN.md) dan [status/hasil verifikasi](docs/PROGRESS.md).
