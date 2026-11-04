@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import sharp from 'sharp';
+import { randomUUID } from 'node:crypto';
+const origin=process.env.TEST_ORIGIN??'http://127.0.0.1:3002';
+const request=(path,options={})=>fetch(origin+path,{redirect:'manual',...options});
+async function login(role){const r=await request('/api/auth/login',{method:'POST',headers:{origin},body:new URLSearchParams({next:'/organizer',...(role?{demoRole:role}:{})})});assert.equal(r.status,303);return r.headers.get('set-cookie').split(';')[0];}
+const org=await login('organizer'),guest=await login();
+const body={title:'Festival QA Lokal',description:'Acara pengujian terisolasi untuk memastikan alur event lengkap.',category:'Musik',startsAt:'2026-12-25T10:00:00+07:00',endsAt:'2026-12-25T13:00:00+07:00',salesStart:'2026-11-01T00:00:00+07:00',salesEnd:'2026-12-25T09:00:00+07:00',price:80000,frontPrice:120000,frontQuota:20,regularQuota:20,rules:'Datang 30 menit lebih awal.',organizer:'Organizer Demo',area:'Summarecon Mall Bandung',theme:'play'};
+const mutate=(path,data,cookie=org,method='POST')=>request(path,{method,headers:{origin,cookie,'Content-Type':'application/json'},body:JSON.stringify(data)});
+assert.equal((await mutate('/api/organizer/events',body,guest)).status,403);
+let r=await mutate('/api/organizer/events',body);assert.equal(r.status,201);let e=await r.json();const endpoint='/api/organizer/events/'+e.id;
+assert.equal((await request('/api/events/'+e.slug+'/seats')).status,404);
+assert.equal((await mutate('/api/organizer/events/20000000-0000-4000-8000-000000000004',body,org,'PATCH')).status,403);
+const png=await sharp({create:{width:600,height:800,channels:3,background:'#f45b15'}}).png().toBuffer();const form=new FormData();form.set('cover',new Blob([png],{type:'image/png'}),'cover.png');r=await request(endpoint+'/cover',{method:'POST',headers:{origin,cookie:org},body:form});assert.equal(r.status,200);e=await r.json();assert.equal((await request(e.coverUrl)).status,404);assert.equal((await request(e.coverUrl,{headers:{cookie:org}})).status,200);
+assert.equal((await mutate(endpoint,{action:'publish'})).status,200);assert.equal((await request('/events/'+e.slug)).status,200);assert.equal((await request(e.coverUrl)).status,200);
+r=await mutate('/api/bookings',{slug:e.slug,categoryId:'regular',seats:[{seatId:'Regular-A1',name:'Peserta Demo'}],key:randomUUID()},guest);assert.equal(r.status,201);const b=await r.json();assert.equal(b.total,80000);
+assert.equal((await mutate(endpoint,{...body,area:'Lokasi berubah'},org,'PATCH')).status,409);
+assert.equal((await mutate('/api/bookings/'+b.id+'/payment',{outcome:'success'},guest)).status,200);
+r=await request('/my-tickets',{headers:{cookie:guest}});assert.match(await r.text(),/Festival QA Lokal/);
+assert.equal((await mutate(endpoint,{action:'unpublish'})).status,200);assert.equal((await request('/api/events/'+e.slug+'/seats')).status,404);
+console.log('PASS: organizer authorization, private drafts/covers, upload, publish, live detail, custom-event reservation/payment/tickets and booking locks.');

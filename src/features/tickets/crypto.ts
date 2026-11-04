@@ -1,0 +1,6 @@
+import { createCipheriv,createDecipheriv,createHash,randomBytes,randomUUID } from 'node:crypto';
+import type { TicketPack } from './types';
+export function encryptToken(token:string,key:Buffer){if(key.length!==32)throw new Error('Kunci tiket tidak valid.');const iv=randomBytes(12);const cipher=createCipheriv('aes-256-gcm',key,iv);const data=Buffer.concat([cipher.update(token,'utf8'),cipher.final()]);return ['v1',iv.toString('base64url'),cipher.getAuthTag().toString('base64url'),data.toString('base64url')].join('.');}
+export function decryptToken(envelope:string,key:Buffer){const [version,iv,tag,data,...extra]=envelope.split('.');if(version!=='v1'||!iv||!tag||!data||extra.length||key.length!==32)throw new Error('Data tiket tidak valid.');const cipher=createDecipheriv('aes-256-gcm',key,Buffer.from(iv,'base64url'));cipher.setAuthTag(Buffer.from(tag,'base64url'));return Buffer.concat([cipher.update(Buffer.from(data,'base64url')),cipher.final()]).toString('utf8');}
+export function tokenHash(token:string){return createHash('sha256').update(token).digest('hex');}
+export function createTicketPack(seatId:string,key:Buffer):TicketPack{const token=randomBytes(32).toString('hex');return {seatId,ticketId:randomUUID(),tokenHash:tokenHash(token),encryptedToken:encryptToken(token,key)};}

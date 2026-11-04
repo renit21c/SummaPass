@@ -1,0 +1,11 @@
+'use client';
+import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowUpRight, CalendarDays, Search, SlidersHorizontal } from 'lucide-react';
+import { type Event, dateLabel, rupiah } from './data';
+import { Poster } from '@/components/poster';
+export function Explorer({items}:{items:Event[]}) {
+ const [query, setQuery] = useState(''); const [category, setCategory] = useState('Semua'); const [sort, setSort] = useState('date');
+ const filtered = items.filter(e => (category === 'Semua' || e.category === category) && `${e.title} ${e.category}`.toLowerCase().includes(query.toLowerCase())).sort((a,b) => sort === 'price' ? a.price-b.price : a.date.localeCompare(b.date));
+ return <><div className="explorer-controls"><label className="search-field"><Search size={20} /><span className="sr-only">Cari nama atau kategori event</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cari event atau kategori" /></label><label className="sort-field"><SlidersHorizontal size={18}/><span className="sr-only">Urutkan event</span><select value={sort} onChange={e=>setSort(e.target.value)}><option value="date">Tanggal terdekat</option><option value="price">Harga terendah</option></select></label></div><div className="filter-row" aria-label="Kategori event">{['Semua','Musik','Workshop','Keluarga'].map(c=><button className={`chip ${category===c?'active':''}`} key={c} aria-pressed={category===c} onClick={()=>setCategory(c)}>{c}</button>)}<span className="result-count" aria-live="polite">{filtered.length} event</span></div><div className="event-grid">{filtered.map(e=><Link href={`/events/${e.slug}`} className="event-card" key={e.slug}><Poster event={e}/><div className="card-meta"><span>{e.category}</span><span><CalendarDays size={13}/>{dateLabel(e.date)}</span></div><div className="card-title"><h3>{e.title}</h3><ArrowUpRight size={21}/></div><p className="card-venue">Summarecon Mall Bandung</p><div className="card-price"><span>Mulai dari</span><strong>{rupiah(e.price)}</strong></div></Link>)}</div>{filtered.length===0&&<div className="empty-state"><h3>Event tidak ditemukan</h3><p>Coba kata lain atau hapus filter.</p><button className="button" onClick={()=>{setQuery('');setCategory('Semua')}}>Reset pencarian</button></div>}</>;
+}

@@ -1,0 +1,6 @@
+import Link from 'next/link';
+import { requireSession } from '@/lib/auth/session';
+import { bookings } from '@/features/booking/service';
+import { events,rupiah } from '@/features/events/data';
+export const metadata={title:'Reservasi saya'};
+export default async function BookingsPage(){const user=await requireSession('/bookings');const list=await bookings(user.id);return <main id="main" className="container section"><div className="page-heading"><h1>Reservasi saya</h1></div>{list.length===0?<div className="empty-state"><h2>Belum ada reservasi</h2><p>Pilih event untuk membuat reservasi.</p><Link className="button" href="/events">Daftar event</Link></div>:<div className="booking-list">{list.map(b=><Link className="booking-list-card" href={`/bookings/${b.id}`} key={b.id}><div><h2>{b.eventTitle??events.find(e=>e.slug===b.slug)?.title??b.slug}</h2><p>{b.categoryName} · {b.items.length} kursi</p></div><span>{b.status==='PENDING_PAYMENT'?'Menunggu pembayaran':b.status==='CANCELLED'?'Dibatalkan':b.status==='EXPIRED'?'Kedaluwarsa':b.status==='FAILED'?'Pembayaran gagal':'Dikonfirmasi'}</span><strong>{rupiah(b.total)}</strong></Link>)}</div>}<Link className="text-link back" href="/account">Kembali ke akun</Link></main>;}

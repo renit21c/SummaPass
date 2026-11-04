@@ -1,0 +1,3 @@
+import sharp from 'sharp';
+
+export async function normalizeCover(bytes:Buffer,mime:string){if(bytes.length>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(mime))throw new Error('Gunakan JPG, PNG, atau WebP maksimal 5 MB.');const input=sharp(bytes,{limitInputPixels:24000000,animated:false});const meta=await input.metadata();if(!['jpeg','png','webp'].includes(meta.format??'')||(meta.pages??1)>1||!meta.width||!meta.height||meta.width<400||meta.height<250)throw new Error('Cover minimal 400 × 250 piksel dan tidak boleh animasi.');return input.rotate().resize({width:1600,height:1600,fit:'inside',withoutEnlargement:true}).webp({quality:85}).toBuffer();}
