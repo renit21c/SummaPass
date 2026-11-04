@@ -72,3 +72,12 @@ Migrasi kedua menambahkan event_seats (event/seat composite PK + revision), book
 
 ## Pembayaran dan tiket yang diimplementasikan
 Migrasi003 menambahkan payments (booking unique, integer amount, status dan confirmed_at), tickets (booking_item unique, reference unique, token_hash unique, status/issued_at), serta ticket_secrets (ticket PK, encrypted_token, key_version). Token mentah tidak disimpan. RLS pada ketiganya; ciphertext tanpa akses browser. Payment trigger menangani booking baru dan expiry/cancel/failure; require_paid_ticket memastikan issuance hanya untuk booking confirmed, payment paid dengan amount cocok dan allocation SOLD. RPC issuer/read ciphertext hanya service_role dan dipanggil setelah authorization server. Detail ada di PAYMENTS_TICKETS.md.
+
+
+## Katalog dan Storage pada migrasi006 dan007
+
+Events menambahkan organizer_name, area, theme, headline dan cover_url. public_catalog hanya mengembalikan PUBLISHED; organizer_event dan manage_event memeriksa penugasan ORGANIZER. manage_event mengunci row event sebelum memeriksa booking/kuota dan mengubah event/kategori/inventori. Audit_logs menyimpan relasi event_id ke events, actor_id ke profiles, action, before_data, after_data dan created_at; organizer assigned hanya mendapat hak SELECT. Client tidak dapat menulis audit langsung.
+
+Tickets menambahkan event_snapshot JSONB, diisi trigger sebelum penerbitan dan dibaca lewat RPC owner-only. Tiket lama dibackfill dari metadata yang tersedia pada saat migrasi. Harga tetap berasal dari booking_items.price_snapshot_idr. Snapshot dapat dibaca pemilik walaupun event unpublished/archived.
+
+Storage bucket event-covers tetap privat, batas WebP5MB. Objek berformat eventUUID/fileUUID.webp. Kebijakan read mengizinkan organizer assigned atau cover current dari event PUBLISHED; insert hanya organizer assigned pada event nonarsip; delete hanya objek yang tidak direferensikan sebagai cover current. Tidak ada UPDATE objek. Trigger require_cover_object menolak linking cover yang belum diupload. Rincian setup dan bukti pengujian ada di SUPABASE_INTEGRATION.md.
