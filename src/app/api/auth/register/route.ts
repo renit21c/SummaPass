@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     email,
     password,
     options: {
+      emailRedirectTo: `${requestOrigin(request)}/auth/callback?next=${encodeURIComponent('/verify-email?verified=1')}`,
       data: {
         display_name: name,
         phone
@@ -64,4 +65,3 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.redirect(new URL(next, requestOrigin(request)), 303);
 }
-

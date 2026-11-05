@@ -454,7 +454,7 @@ export function SeatPicker({
                             value={names[s.id] ?? (idx === 0 && syncFirstTicket ? bookerName : '')}
                             disabled={busy}
                             onChange={e => setNames({ ...names, [s.id]: e.target.value })}
-                            placeholder="Nama sesuai KTP/ID pemegang tiket"
+                            placeholder="Masukkan nama lengkap peserta"
                             style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '8px 10px', fontSize: 12 }}
                           />
                         </label>
@@ -469,17 +469,6 @@ export function SeatPicker({
                                 disabled={busy}
                                 onChange={e => setEmails({ ...emails, [s.id]: e.target.value })}
                                 placeholder="peserta@email.com"
-                                style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '6px 8px', fontSize: 11 }}
-                              />
-                            </label>
-
-                            <label style={{ display: 'grid', gap: 4, fontSize: 11 }}>
-                              <span>No. KTP / Pelajar / NIK (Opsional)</span>
-                              <input
-                                value={identities[s.id] ?? ''}
-                                disabled={busy}
-                                onChange={e => setIdentities({ ...identities, [s.id]: e.target.value })}
-                                placeholder="Nomor identitas untuk verifikasi check-in"
                                 style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '6px 8px', fontSize: 11 }}
                               />
                             </label>

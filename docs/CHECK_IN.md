@@ -13,3 +13,6 @@ Automated coverage includes demo simultaneous confirmations (one success), Postg
 Quota UX: fixed geometry still limits each category to 1-24 seats. Form fields expose min/max and localized browser validation; server messages identify Front/Regular instead of returning duplicate English Zod messages. Larger events need configurable venue geometry, a separate pending stage.
 
 QA executed: all 20 tests passed; check-in-http.mjs passed against isolated production preview. Browser staff login and invalid-reference result passed with no warning/error logs captured. At 390px the document did not overflow horizontally. No camera permission was requested during browser QA.
+
+
+Update 4 November 2026: adapter katalog/editor/Storage Supabase tersedia melalui migrasi006 dan007. Layanan remote belum diuji. Lihat SUPABASE_INTEGRATION.md untuk status terkini dan setup.

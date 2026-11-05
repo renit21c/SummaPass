@@ -74,6 +74,7 @@ export function NotificationBell() {
         <div
           role="region"
           aria-label="Panel Notifikasi"
+          className="notification-panel"
           style={{
             position: 'absolute',
             top: 52,
@@ -169,4 +170,3 @@ export function NotificationBell() {
     </div>
   );
 }
-

@@ -11,3 +11,6 @@ Published events immediately participate in discovery, details, seats, reservati
 Supabase event creation/editing and Storage integration are not implemented in this stage. Those mutations explicitly return unavailable outside demo mode. Existing Supabase monitoring and booking remain separate. Venue geometry remains the fixed two-section, 48-seat plan.
 
 QA: 17 unit/database tests pass. Isolated HTTP flow passes attendee/organizer boundaries, assignment, private drafts and covers, actual upload, publish, live detail, custom-event booking/payment/ticket, schedule lock, and unpublish. `tests/catalog-http.mjs` targets port 3002; run a separate server with `SUMMAPASS_DATA_DIR` set to an isolated directory. Do not run fixture tests against the user preview. CSV formula fixtures remain in isolated unit tests. Browser UI verification is recorded separately.
+
+
+Update 4 November 2026: adapter katalog/editor/Storage Supabase tersedia melalui migrasi006 dan007. Layanan remote belum diuji. Lihat SUPABASE_INTEGRATION.md untuk status terkini dan setup.

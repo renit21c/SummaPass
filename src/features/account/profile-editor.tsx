@@ -65,7 +65,7 @@ export function ProfileEditor({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginTop: 24 }}>
+      <form className="profile-editor-grid" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginTop: 24 }}>
         <label style={{ display: 'grid', gap: 8, fontSize: 13, fontWeight: 700 }}>
           Nama Lengkap
           <input

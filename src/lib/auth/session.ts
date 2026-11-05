@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { authMode, safeReturnPath } from './config';
 import { supabaseServer } from '@/lib/supabase/server';
+import { roleDestination } from './destination';
 export type Session = {
   id: string;
   email: string;
@@ -17,6 +18,17 @@ const cookieName = 'summapass_demo_session';
 // Demo personas are explicit server presets, never used for Supabase authorization.
 const memory = globalThis as typeof globalThis & { summaSessions?: Map<string, { user: Session; expires: number }> };
 const sessions = memory.summaSessions ??= new Map();
+export function hasDemoSession(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  for (const [token, session] of sessions) {
+    if (session.expires <= Date.now()) {
+      sessions.delete(token);
+    } else if (session.user.email.trim().toLowerCase() === normalizedEmail) {
+      return true;
+    }
+  }
+  return false;
+}
 export async function createDemoSession(role?:string) {
   const token = randomBytes(32).toString('hex');
   const user: Session = { id: role==='organizer'?'d0000000-0000-4000-8000-000000000001':crypto.randomUUID(), email: 'pengunjung@example.test', name: role==='staff'?'Petugas Demo':role==='organizer'?'Organizer Demo':'Pengunjung Demo', mode: 'demo', ...(role==='staff'?{demoRole:'STAFF' as const}:role==='organizer'?{demoRole:'ORGANIZER' as const}:{}) };
@@ -108,6 +120,13 @@ export async function canAccessRole(user: Session, role: 'ORGANIZER' | 'STAFF') 
   const client = await supabaseServer();
   const { data, error } = await client.from('event_access').select('event_id').eq('user_id', user.id).eq('role', role).limit(1);
   return !error && !!data?.length;
+}
+export async function loginDestination(user: Session, returnTo: unknown = '/account') {
+  if (user.mode === 'demo') return roleDestination(user.demoRole ? [user.demoRole] : [], returnTo);
+  const client = await supabaseServer();
+  const { data, error } = await client.from('event_access').select('role').eq('user_id', user.id).in('role', ['ORGANIZER', 'STAFF']);
+  if (error) throw new Error('Akses akun belum dapat diperiksa. Coba lagi.');
+  return roleDestination((data ?? []).map(assignment => assignment.role), returnTo);
 }
 export async function endSession() {
   if (authMode() === 'supabase') await (await supabaseServer()).auth.signOut();

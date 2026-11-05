@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ArrowUpRight, Ticket } from 'lucide-react';
 import { authMode, safeReturnPath } from '@/lib/auth/config';
-import { getSession } from '@/lib/auth/session';
+import { getSession, loginDestination } from '@/lib/auth/session';
 
 export const metadata = { title: 'Masuk' };
 
@@ -11,7 +11,8 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const next = safeReturnPath(params.next);
   const mode = authMode();
 
-  if (await getSession()) redirect(next);
+  const user = await getSession();
+  if (user) redirect(await loginDestination(user, next));
 
   return (
     <main id="main" className="container section auth-grid">

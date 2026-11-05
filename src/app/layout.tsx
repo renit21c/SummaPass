@@ -4,13 +4,17 @@ import { ArrowUpRight, Ticket } from 'lucide-react';
 import '@fontsource-variable/plus-jakarta-sans';
 import './globals.css';
 import { NotificationBell } from '@/features/notifications/notification-bell';
+import { getSession } from '@/lib/auth/session';
+import { MobileNavigation } from '@/components/mobile-navigation';
 
 export const metadata: Metadata = {
   title: { default: 'SummaPass | Tiket event', template: '%s | SummaPass' },
   description: 'Cari event dan pesan tiket di Summarecon Mall Bandung. Aplikasi demo.'
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const session = await getSession();
+
   return (
     <html lang="id">
       <body>
@@ -23,12 +27,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <nav aria-label="Navigasi utama">
               <Link href="/events">Daftar event</Link>
               <Link href="/#cara-kerja">Cara pesan</Link>
-              <Link href="/account">Akun saya</Link>
+              {session ? (
+                <Link href="/account">Akun saya</Link>
+              ) : (
+                <Link href="/login">Masuk / Daftar</Link>
+              )}
             </nav>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <NotificationBell />
               <Link className="button button-small" href="/events">Cari event <ArrowUpRight size={16} /></Link>
             </div>
+              <MobileNavigation loggedIn={Boolean(session)} />
           </div>
         </header>
         <div className="demo-strip">Demo SummaPass. Event dan harga fiktif.</div>

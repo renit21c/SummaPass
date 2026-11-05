@@ -39,7 +39,7 @@ export function FavoritesSection({ catalog }: { catalog: Event[] }) {
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div className="favorites-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {favoriteEvents.map(event => (
             <div
               key={event.slug}
@@ -96,4 +96,3 @@ export function FavoritesSection({ catalog }: { catalog: Event[] }) {
     </section>
   );
 }
-

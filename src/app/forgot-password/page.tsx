@@ -30,7 +30,11 @@ export default async function ForgotPassword({
 
         {params.error && (
           <div className="form-error" role="alert">
-            {params.error === 'invalid_email' ? 'Format email tidak valid.' : params.error}
+            {params.error === 'invalid_email'
+              ? 'Format email tidak valid.'
+              : params.error === 'email_not_registered'
+                ? 'Email tidak terdaftar'
+                : params.error}
           </div>
         )}
 
@@ -81,4 +85,3 @@ export default async function ForgotPassword({
     </main>
   );
 }
-

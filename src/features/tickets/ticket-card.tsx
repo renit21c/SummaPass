@@ -142,6 +142,7 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
       {resendStatus && (
         <div
           role="status"
+          className="ticket-email-input"
           style={{
             maxWidth: 980,
             margin: '20px auto 0',
@@ -161,32 +162,13 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
 
       {/* Actions */}
       <div className="ticket-actions no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}>
-        <button
-          className="button"
-          type="button"
-          disabled={downloading}
-          onClick={handleDownloadPdf}
-        >
-          {downloading ? <RefreshCw size={18} className="spin" /> : <Download size={18} />}
-          {downloading ? 'Menyiapkan PDF...' : 'Unduh PDF Langsung'}
-        </button>
-
-        <button
-          className="button button-light"
-          type="button"
-          onClick={() => setShowResendModal(!showResendModal)}
-          disabled={cooldown > 0}
-        >
-          <Mail size={18} />
-          {cooldown > 0 ? `Kirim Ulang (${cooldown}d)` : 'Kirim Ulang Tiket'}
-        </button>
 
         <button
           className="button button-light"
           type="button"
           onClick={() => window.print()}
         >
-          <Printer size={18} /> Cetak / Dialog Browser
+          <Printer size={18} /> Cetak E-Ticket
         </button>
 
         <p style={{ margin: 0, fontSize: 11, color: 'var(--muted)' }}>

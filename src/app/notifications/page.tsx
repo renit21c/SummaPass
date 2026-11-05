@@ -16,15 +16,15 @@ export default function NotificationsPage() {
         <ArrowLeft size={17} /> Kembali ke akun
       </Link>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
+      <div className="notifications-heading">
         <div>
-          <h1 style={{ fontSize: 42, margin: 0, fontWeight: 850 }}>Pusat Notifikasi</h1>
+          <h1>Pusat Notifikasi</h1>
           <p style={{ color: 'var(--muted)', margin: '6px 0 0', fontSize: 14 }}>
             Semua pemberitahuan pemesanan, tiket, pengingat acara, dan pengumuman venue.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div className="notifications-actions">
           {unreadCount > 0 && (
             <button
               type="button"
@@ -76,7 +76,7 @@ export default function NotificationsPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div className="notifications-list">
           {displayed.map(item => {
             const Icon = item.type === 'ticket' ? Ticket : item.type === 'reminder' ? Calendar : item.type === 'booking' ? AlertCircle : Info;
 
@@ -84,15 +84,13 @@ export default function NotificationsPage() {
               <div
                 key={item.id}
                 onClick={() => markAsRead(item.id)}
+                className="notification-item"
                 style={{
                   background: item.read ? 'var(--cream)' : 'var(--purple-light)',
                   border: '1.5px solid var(--ink)',
                   borderRadius: 12,
                   padding: 20,
                   boxShadow: '3px 4px 0 var(--ink)',
-                  display: 'flex',
-                  gap: 18,
-                  alignItems: 'start',
                   cursor: 'pointer',
                   transition: 'transform 0.15s'
                 }}
@@ -113,7 +111,7 @@ export default function NotificationsPage() {
                   <Icon size={22} />
                 </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="notification-content">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <strong style={{ fontSize: 16, fontWeight: 800 }}>{item.title}</strong>
@@ -150,4 +148,3 @@ export default function NotificationsPage() {
     </main>
   );
 }
-
