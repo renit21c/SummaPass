@@ -1,4 +1,5 @@
 import 'server-only';
+import { createClient } from '@supabase/supabase-js';
 import { getSession,canAccessRole } from '@/lib/auth/session';
 import { demoOrganizerSnapshot,demoEventStaff,demoAssignStaff,demoUnassignStaff } from '@/features/booking/service';
 import { supabaseServer } from '@/lib/supabase/server';
@@ -17,23 +18,57 @@ export async function getEventStaff(eventId:string):Promise<StaffAssignment[]>{
  return (data??[]) as StaffAssignment[];
 }
 
+async function resolveStaffUserId(name: string, targetUserId?: string): Promise<string> {
+ if (targetUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId)) {
+  return targetUserId;
+ }
+ const cleanName = name.trim();
+ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+ if (!serviceKey || !url) {
+  throw new BookingError('DATABASE', 'Konfigurasi service role Supabase diperlukan untuk mengundang petugas baru.', 503);
+ }
+
+ const admin = createClient(url, serviceKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+ });
+
+ const slugPart = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
+ const staffEmail = cleanName.includes('@') ? cleanName.toLowerCase() : `${slugPart || 'petugas'}@summapass.id`;
+
+ const { data: userList } = await admin.auth.admin.listUsers();
+ let staffUser = userList?.users?.find(u =>
+  u.email?.toLowerCase() === staffEmail.toLowerCase() ||
+  u.email?.toLowerCase() === cleanName.toLowerCase() ||
+  u.user_metadata?.full_name?.toLowerCase() === cleanName.toLowerCase()
+ );
+
+ if (!staffUser) {
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+   email: staffEmail,
+   email_confirm: true,
+   user_metadata: { full_name: cleanName },
+  });
+  if (createErr || !created?.user) {
+   throw new BookingError('DATABASE', createErr?.message ?? 'Gagal membuat akun petugas.', 500);
+  }
+  staffUser = created.user;
+ }
+
+ await admin.from('profiles').upsert({ id: staffUser.id, display_name: cleanName });
+ return staffUser.id;
+}
+
 export async function assignEventStaff(eventId:string,name:string,targetUserId?:string):Promise<StaffAssignment>{
  const user=await getSession();if(!user)throw new BookingError('AUTH','Silakan masuk.',401);if(!await canAccessRole(user,'ORGANIZER'))throw new BookingError('FORBIDDEN','Akses organizer diperlukan.',403);
  if(user.mode==='demo')return demoAssignStaff(user.id,eventId,name,targetUserId);
  const client=await supabaseServer();
- let uid=targetUserId;
- if(!uid||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)){
-  const {data:p}=await client.from('profiles').select('id').eq('display_name',name.trim()).maybeSingle();
-  if(p?.id){
-   uid=p.id;
-  } else {
-   const newId=crypto.randomUUID();
-   const {error:insErr}=await client.from('profiles').insert({id:newId,display_name:name.trim()});
-   if(!insErr)uid=newId;
-  }
- }
+ const uid = await resolveStaffUserId(name, targetUserId);
  const {data,error}=await client.rpc('assign_staff',{p_event:eventId,p_user:uid});
- if(error||data?.error)throw new BookingError('FORBIDDEN',data?.message??'Gagal menugaskan petugas. Pastikan migrasi 202611050008_staff_assignment.sql sudah dijalankan di SQL Editor Supabase.',403);
+ if(error||data?.error) {
+  const message = data?.message || error?.message || 'Gagal menugaskan petugas.';
+  throw new BookingError('FORBIDDEN', message, 403);
+ }
  return {eventId,userId:data.userId??uid,name:data.name??name,role:'STAFF',assignedAt:new Date().toISOString()};
 }
 
