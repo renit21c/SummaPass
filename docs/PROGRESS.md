@@ -65,3 +65,11 @@ Local organizer create/edit, cover upload, publish/unpublish/archive, persistent
 
 ## Check-in petugas
 Halaman staff dengan kamera jsQR dan fallback referensi, preview dan konfirmasi server, pencatatan sekali masuk, role demo STAFF terpisah, status e-ticket dan agregat organizer. Migrasi005 menambahkan RLS dan RPC transactional. Validasi kuota dilokalkan dengan min/max input. Rincian dan batas pengujian di CHECK_IN.md. Integrasi editor Supabase/Storage, assignment staff dinamis dan denah fleksibel masih pending.
+
+
+## Integrasi Supabase lanjutan
+Branch codex/supabase-integration menambahkan migrasi006 dan007: katalog publik database, editor event transactional, audit perubahan, snapshot event pada tiket, bucket cover privat dan Storage RLS. Service katalog tidak lagi menggunakan seed lokal pada mode Supabase. Demo store diinisialisasi hanya saat dibutuhkan. Upload dibatasi termasuk request chunked, memakai Storage sesi pengguna dan mencoba cleanup bila linking gagal.
+
+Verifikasi lokal: 25 pengujian lulus dan typecheck lulus. Tambahan pengujian memakai PostgreSQL PGlite dengan shim Auth/Storage, bukan layanan remote. Script supabase:check dan supabase:smoke serta panduan konfigurasi tersedia di SUPABASE_INTEGRATION.md. Kredensial belum tersedia sesuai arahan pengguna; tidak ada proyek remote dibuat atau diubah. Pemeriksaan koneksi melaporkan konfigurasi belum diisi.
+
+Verifikasi akhir integrasi: build produksi lulus; typecheck setelah perbaikan script staging lulus; catalog-http.mjs dan check-in-http.mjs lulus pada preview produksi uji port3002 dengan data terpisah. Script remote smoke menolak berjalan tanpa flag staging explicit. Supabase remote belum dikonfigurasi atau diuji.
