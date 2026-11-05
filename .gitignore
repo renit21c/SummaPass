@@ -40,6 +40,9 @@ Desktop.ini
 *.tmp
 *.bak
 
+# Local notes and planning
+PEMBAGIAN_TUGAS.md
+
 # Generated visual QA and temporary document tooling
 /docs/**/*.png
 /docs/**/qa/

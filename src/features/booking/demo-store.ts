@@ -1,4 +1,5 @@
-import type { CheckInResult } from '../check-in/core';
+import type { CheckInResult,StaffReport } from '../check-in/core';
+import type { PersistedCheckIn } from '../check-in/persistence';
 import { seedManaged,eventInput,dateParts,type ManagedEvent,type EventInput } from '../catalog/core';
 import { demoOrganizerEvents,type OrganizerSnapshot } from '../organizer/core';
 import { createTicketPack,decryptToken,tokenHash } from '../tickets/crypto';
@@ -7,8 +8,11 @@ import { randomUUID,randomBytes } from 'node:crypto';
 import { events } from '../events/data';
 import { BookingError,reserveSchema,type Booking,type Inventory,type ReserveInput } from './types';
 export class DemoBookingStore {
- private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>();
- constructor(private clock=()=>Date.now(),catalog?:ManagedEvent[]){this.catalog=new Map((catalog??events.map(seedManaged)).map(e=>[e.slug,structuredClone(e)]));}
+ private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>(); private checkIns:PersistedCheckIn[]=[];
+ constructor(private clock=()=>Date.now(),catalog?:ManagedEvent[],initialCheckIns?:PersistedCheckIn[]){
+  this.catalog=new Map((catalog??events.map(seedManaged)).map(e=>[e.slug,structuredClone(e)]));
+  if(initialCheckIns)this.checkIns=[...initialCheckIns];
+ }
  private expire(){for(const b of this.bookings.values())if(b.status==='PENDING_PAYMENT'&&Date.parse(b.expiresAt)<=this.clock()){b.status='EXPIRED';b.paymentStatus='EXPIRED';}}
  inventory(slug:string,privateRead=false):Inventory{
   const event=this.catalog.get(slug);if(!event||(!privateRead&&event.status!=='PUBLISHED'))throw new BookingError('NOT_FOUND','Event tidak ditemukan.',404);this.expire();
@@ -69,8 +73,53 @@ export class DemoBookingStore {
   const booking=this.bookings.get(ticket.bookingId);if(!booking||booking.status!=='CONFIRMED'||booking.paymentStatus!=='PAID')return {status:'UNPAID'};
   const view=()=>({id:ticket.id,reference:ticket.reference,attendeeName:ticket.attendeeName,seatLabel:ticket.seatLabel,categoryName:ticket.categoryName,...(ticket.checkedInAt?{checkedInAt:ticket.checkedInAt}:{})});
   if(ticket.checkedInAt)return {status:'ALREADY_USED',ticket:view()};
-  if(confirm){ticket.checkedInAt=new Date(this.clock()).toISOString();ticket.checkedInBy=staffId;return {status:'CHECKED_IN',ticket:view()};}
+  if(confirm){
+   const now=new Date(this.clock()).toISOString();
+   ticket.checkedInAt=now;
+   ticket.checkedInBy=staffId;
+   this.checkIns.push({
+    ticketId:ticket.id,
+    reference:ticket.reference,
+    attendeeName:ticket.attendeeName,
+    seatLabel:ticket.seatLabel,
+    categoryName:ticket.categoryName,
+    checkedInAt:now,
+    staffId,
+    slug
+   });
+   return {status:'CHECKED_IN',ticket:view()};
+  }
   return {status:'VALID',ticket:view()};
  }
-
+ getCheckIns(){return structuredClone(this.checkIns);}
+ staffReport(staffId:string,slug:string):StaffReport{
+  if(!demoOrganizerEvents.includes(slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+  const event=this.catalog.get(slug);
+  const eventCheckIns=this.checkIns.filter(c=>c.slug===slug);
+  const totalCheckedInByMe=eventCheckIns.filter(c=>c.staffId===staffId).length;
+  const totalEventCheckedIn=eventCheckIns.length;
+  const totalSold=this.inventory(slug,true).seats.filter(s=>s.status==='SOLD').length;
+  const attendanceRate=totalSold>0?Math.min(100,Math.round((totalEventCheckedIn/totalSold)*100)):0;
+  const last=eventCheckIns.filter(c=>c.staffId===staffId).sort((a,b)=>Date.parse(b.checkedInAt)-Date.parse(a.checkedInAt))[0];
+  const history=eventCheckIns.map(c=>({
+   ticketId:c.ticketId,
+   reference:c.reference,
+   attendeeName:c.attendeeName,
+   seatLabel:c.seatLabel,
+   categoryName:c.categoryName,
+   checkedInAt:c.checkedInAt,
+   staffId:c.staffId,
+   isMe:c.staffId===staffId
+  })).sort((a,b)=>Date.parse(b.checkedInAt)-Date.parse(a.checkedInAt));
+  return {
+   slug,
+   eventTitle:event?.title??slug,
+   totalCheckedInByMe,
+   totalEventCheckedIn,
+   totalSold,
+   attendanceRate,
+   lastCheckedInAt:last?.checkedInAt,
+   history
+  };
+ }
 }

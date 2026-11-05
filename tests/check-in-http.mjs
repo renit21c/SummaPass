@@ -18,5 +18,8 @@ assert.equal((await (await post('/api/staff/check-in',{...data,slug:'senja-di-su
 assert.equal((await (await post('/api/staff/check-in',{...data,credential:'invalid'})).json()).status,'INVALID');
 r=await request('/my-tickets/'+id,{headers:{cookie:attendee}});assert.match(await r.text(),/Sudah masuk/);
 r=await request('/organizer',{headers:{cookie:org}});assert.match(await r.text(),/Sudah check-in:/);
+assert.equal((await request('/api/staff/history?slug=little-weekend',{headers:{origin,cookie:attendee}})).status,403);
+assert.equal((await request('/api/staff/history?slug=after-hours',{headers:{origin,cookie:staff}})).status,403);
+const historyRes=await request('/api/staff/history?slug=little-weekend',{headers:{origin,cookie:staff}});assert.equal(historyRes.status,200);const historyData=await historyRes.json();assert.ok(historyData.totalCheckedInByMe>=1);assert.ok(historyData.history.some(h=>h.reference===t.reference));
 assert.equal((await request('/api/staff/check-in',{method:'POST',headers:{origin:'https://example.test',cookie:staff,'Content-Type':'application/json'},body:JSON.stringify(data)})).status,403);
-console.log('PASS: staff-only access, event assignment, preview, one winner on simultaneous confirm, wrong event, invalid QR, attendee status and organizer attendance.');
+console.log('PASS: staff-only access, event assignment, preview, one winner on simultaneous confirm, wrong event, invalid QR, attendee status, history/report API, and organizer attendance.');

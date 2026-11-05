@@ -1,4 +1,5 @@
 import { loadCatalog,saveCatalog } from '../catalog/persistence';
+import { loadCheckIns,saveCheckIns } from '../check-in/persistence';
 import type { EventInput } from '../catalog/core';
 import { confirmSupabasePayment,supabaseTickets } from '../tickets/supabase';
 import type { Ticket } from '../tickets/types';
@@ -8,7 +9,7 @@ import { authMode } from '@/lib/auth/config';
 import { supabaseServer } from '@/lib/supabase/server';
 import { BookingError,type Inventory,type Booking,type ReserveInput } from './types';
 const state=globalThis as typeof globalThis & {summaBookingStore?:DemoBookingStore};
-const demo=state.summaBookingStore??=new DemoBookingStore(undefined,loadCatalog());
+const demo=state.summaBookingStore??=new DemoBookingStore(undefined,loadCatalog(),loadCheckIns());
 async function rpc<T>(name:string,args:Record<string,unknown>):Promise<T>{const client=await supabaseServer();const {data,error}=await client.rpc(name,args);if(error)throw new BookingError('DATABASE','Reservasi belum dapat diproses. Periksa konfigurasi database.',503);const result=data as T&{error?:string;message?:string};if(result?.error)throw new BookingError(result.error,result.message??'Permintaan belum dapat diproses.',result.error==='NOT_FOUND'?404:409);return data as T;}
 export async function inventory(slug:string):Promise<Inventory>{return authMode()==='demo'?demo.inventory(slug):rpc('seat_inventory',{p_slug:slug});}
 export async function reserve(userId:string,input:ReserveInput):Promise<Booking>{return authMode()==='demo'?demo.reserve(userId,input):rpc('reserve_booking',{p_slug:input.slug,p_category:input.categoryId,p_items:input.seats,p_key:input.key});}
@@ -31,4 +32,11 @@ export function demoEventStatus(userId:string,id:string,action:'publish'|'unpubl
 export function demoEventCover(userId:string,id:string,url:string){return persistMutation(()=>demo.eventCover(userId,id,url));}
 
 export const demoStaffEvents=()=>demo.staffEvents();
-export const demoCheckIn=(staffId:string,slug:string,credential:string,confirm:boolean)=>demo.checkIn(staffId,slug,credential,confirm);
+export const demoCheckIn=(staffId:string,slug:string,credential:string,confirm:boolean)=>{
+ const result=demo.checkIn(staffId,slug,credential,confirm);
+ if(confirm&&result.status==='CHECKED_IN'){
+  try{saveCheckIns(demo.getCheckIns());}catch{}
+ }
+ return result;
+};
+export const demoStaffReport=(staffId:string,slug:string)=>demo.staffReport(staffId,slug);
