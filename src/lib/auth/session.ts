@@ -4,7 +4,15 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { authMode, safeReturnPath } from './config';
 import { supabaseServer } from '@/lib/supabase/server';
-export type Session = { id: string; email: string; name: string; mode: 'demo' | 'supabase'; demoRole?: 'ORGANIZER' | 'STAFF' };
+export type Session = {
+  id: string;
+  email: string;
+  name: string;
+  phone?: string;
+  preferences?: { emailNotify?: boolean; interestedCategories?: string[] };
+  mode: 'demo' | 'supabase';
+  demoRole?: 'ORGANIZER' | 'STAFF';
+};
 const cookieName = 'summapass_demo_session';
 // Demo personas are explicit server presets, never used for Supabase authorization.
 const memory = globalThis as typeof globalThis & { summaSessions?: Map<string, { user: Session; expires: number }> };
@@ -15,6 +23,59 @@ export async function createDemoSession(role?:string) {
   for (const [key, session] of sessions) if (session.expires <= Date.now()) sessions.delete(key);
   sessions.set(token, { user, expires: Date.now() + 8 * 60 * 60 * 1000 });
   (await cookies()).set(cookieName, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' && process.env.SUMMAPASS_COOKIE_SECURE === 'true', path: '/', maxAge: 8 * 60 * 60 });
+}
+export async function createCustomDemoSession(custom: { name: string; email: string; phone?: string; role?: string }) {
+  const token = randomBytes(32).toString('hex');
+  const user: Session = {
+    id: crypto.randomUUID(),
+    email: custom.email,
+    name: custom.name,
+    phone: custom.phone,
+    mode: 'demo',
+    ...(custom.role === 'staff' ? { demoRole: 'STAFF' as const } : custom.role === 'organizer' ? { demoRole: 'ORGANIZER' as const } : {})
+  };
+  for (const [key, session] of sessions) if (session.expires <= Date.now()) sessions.delete(key);
+  sessions.set(token, { user, expires: Date.now() + 8 * 60 * 60 * 1000 });
+  (await cookies()).set(cookieName, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production' && process.env.SUMMAPASS_COOKIE_SECURE === 'true',
+    path: '/',
+    maxAge: 8 * 60 * 60
+  });
+  return user;
+}
+export async function updateSessionProfile(data: { email?: string; name?: string; phone?: string; preferences?: { emailNotify?: boolean; interestedCategories?: string[] } }) {
+  if (authMode() === 'demo') {
+    const token = (await cookies()).get(cookieName)?.value;
+    const record = token ? sessions.get(token) : undefined;
+    if (!record || record.expires <= Date.now()) return null;
+    if (data.name) record.user.name = data.name;
+    if (data.email) record.user.email = data.email;
+    if (data.phone !== undefined) record.user.phone = data.phone;
+    if (data.preferences) record.user.preferences = { ...record.user.preferences, ...data.preferences };
+    return record.user;
+  }
+  const client = await supabaseServer();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) return null;
+  if (data.name) {
+    await client.from('profiles').update({ display_name: data.name }).eq('id', user.id);
+  }
+  const updatePayload: { email?: string; data?: Record<string, unknown> } = {};
+  if (data.email && data.email !== user.email) {
+    updatePayload.email = data.email;
+  }
+  if (data.phone !== undefined || data.preferences) {
+    updatePayload.data = {
+      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+      ...(data.preferences ? { preferences: data.preferences } : {})
+    };
+  }
+  if (Object.keys(updatePayload).length > 0) {
+    await client.auth.updateUser(updatePayload as any);
+  }
+  return getSession();
 }
 export async function getSession(): Promise<Session | null> {
   if (authMode() === 'demo') {
@@ -27,7 +88,15 @@ export async function getSession(): Promise<Session | null> {
   const { data: { user }, error } = await client.auth.getUser();
   if (error || !user) return null;
   const { data } = await client.from('profiles').select('display_name').eq('id', user.id).maybeSingle();
-  return { id: user.id, email: user.email ?? '', name: data?.display_name ?? 'Pengunjung', mode: 'supabase' };
+  const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
+  return {
+    id: user.id,
+    email: user.email ?? '',
+    name: data?.display_name ?? (typeof metadata.display_name === 'string' ? metadata.display_name : 'Pengunjung'),
+    phone: typeof metadata.phone === 'string' ? metadata.phone : undefined,
+    preferences: metadata.preferences as Session['preferences'],
+    mode: 'supabase'
+  };
 }
 export async function requireSession(returnTo = '/account') {
   const session = await getSession();
