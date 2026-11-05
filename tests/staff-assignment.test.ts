@@ -35,6 +35,8 @@ test('organizer can view, assign, and unassign staff per event in demo mode', ()
   const customEvent = store.createEvent('org-custom', {
     ...newEvent(),
     title: 'Konser Khusus Lapangan',
+    category: 'Musik' as const,
+    theme: 'play' as const,
   });
 
   // Petugas Pintu Barat is not yet assigned to custom event

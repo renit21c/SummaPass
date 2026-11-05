@@ -10,7 +10,8 @@ const assignInput = z.object({
 });
 
 export async function GET(r: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!sameOrigin(r)) return NextResponse.json({ error: 'Permintaan tidak diizinkan.' }, { status: 403 });
+  const origin = r.headers.get('origin');
+  if (origin && !sameOrigin(r)) return NextResponse.json({ error: 'Permintaan tidak diizinkan.' }, { status: 403 });
   try {
     const { id } = await params;
     const staff = await getEventStaff(id);

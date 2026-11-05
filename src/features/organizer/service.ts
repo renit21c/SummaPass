@@ -13,7 +13,7 @@ export async function getEventStaff(eventId:string):Promise<StaffAssignment[]>{
  if(user.mode==='demo')return demoEventStaff(user.id,eventId);
  const client=await supabaseServer();
  const {data,error}=await client.rpc('event_staff',{p_event:eventId});
- if(error)throw new BookingError('DATABASE','Gagal memuat daftar petugas.',503);
+ if(error)throw new BookingError('DATABASE','Fungsi event_staff belum tersedia di Supabase. Jalankan migrasi 202611050008_staff_assignment.sql di SQL Editor Supabase.',503);
  return (data??[]) as StaffAssignment[];
 }
 
@@ -21,9 +21,20 @@ export async function assignEventStaff(eventId:string,name:string,targetUserId?:
  const user=await getSession();if(!user)throw new BookingError('AUTH','Silakan masuk.',401);if(!await canAccessRole(user,'ORGANIZER'))throw new BookingError('FORBIDDEN','Akses organizer diperlukan.',403);
  if(user.mode==='demo')return demoAssignStaff(user.id,eventId,name,targetUserId);
  const client=await supabaseServer();
- const {data,error}=await client.rpc('assign_staff',{p_event:eventId,p_user:targetUserId});
- if(error||data?.error)throw new BookingError('FORBIDDEN',data?.message??'Gagal menugaskan petugas.',403);
- return {eventId,userId:data.userId,name:data.name,role:'STAFF',assignedAt:new Date().toISOString()};
+ let uid=targetUserId;
+ if(!uid||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)){
+  const {data:p}=await client.from('profiles').select('id').eq('display_name',name.trim()).maybeSingle();
+  if(p?.id){
+   uid=p.id;
+  } else {
+   const newId=crypto.randomUUID();
+   const {error:insErr}=await client.from('profiles').insert({id:newId,display_name:name.trim()});
+   if(!insErr)uid=newId;
+  }
+ }
+ const {data,error}=await client.rpc('assign_staff',{p_event:eventId,p_user:uid});
+ if(error||data?.error)throw new BookingError('FORBIDDEN',data?.message??'Gagal menugaskan petugas. Pastikan migrasi 202611050008_staff_assignment.sql sudah dijalankan di SQL Editor Supabase.',403);
+ return {eventId,userId:data.userId??uid,name:data.name??name,role:'STAFF',assignedAt:new Date().toISOString()};
 }
 
 export async function unassignEventStaff(eventId:string,targetUserId:string):Promise<void>{

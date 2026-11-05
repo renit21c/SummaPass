@@ -46,6 +46,9 @@ export function StaffManager({ eventId }: { eventId: string }) {
       if (!r.ok) throw new Error(data.error ?? 'Gagal menugaskan petugas.');
       setNameInput('');
       setMessage(`Petugas "${data.assigned?.name ?? nameInput}" berhasil ditugaskan!`);
+      if (data.assigned) {
+        setStaffList(prev => [data.assigned, ...prev.filter(s => s.userId !== data.assigned.userId)]);
+      }
       void loadStaff();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kendala.');
@@ -66,6 +69,7 @@ export function StaffManager({ eventId }: { eventId: string }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error ?? 'Gagal mencabut penugasan.');
       setMessage(`Akses petugas untuk "${name}" telah dicabut.`);
+      setStaffList(prev => prev.filter(s => s.userId !== userId));
       void loadStaff();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal mencabut petugas.');

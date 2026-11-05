@@ -4,7 +4,8 @@ import { failure } from '@/features/booking/http';
 import { staffReport } from '@/features/check-in/service';
 
 export async function GET(r: NextRequest) {
-  if (!sameOrigin(r)) return NextResponse.json({ error: 'Permintaan tidak diizinkan.' }, { status: 403 });
+  const origin = r.headers.get('origin');
+  if (origin && !sameOrigin(r)) return NextResponse.json({ error: 'Permintaan tidak diizinkan.' }, { status: 403 });
   try {
     const slug = r.nextUrl.searchParams.get('slug');
     if (!slug) return NextResponse.json({ error: 'Parameter slug diperlukan.' }, { status: 400 });
