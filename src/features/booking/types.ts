@@ -1,5 +1,21 @@
 import { z } from 'zod';
-export const reserveSchema = z.object({slug:z.string().regex(/^[a-z0-9-]+$/).max(100),categoryId:z.string().min(1).max(100),seats:z.array(z.object({seatId:z.string().min(1).max(100),name:z.string().trim().min(1,'Nama peserta wajib diisi.').max(100)})).min(1).max(6),key:z.string().uuid()}).refine(v=>new Set(v.seats.map(s=>s.seatId)).size===v.seats.length,'Kursi tidak boleh duplikat.');
+export const reserveSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]+$/).max(100),
+  categoryId: z.string().min(1).max(100),
+  seats: z.array(z.object({
+    seatId: z.string().min(1).max(100),
+    name: z.string().trim().min(1, 'Nama peserta wajib diisi.').max(100),
+    email: z.string().email().optional().or(z.literal('')),
+    identityNumber: z.string().max(50).optional(),
+    notes: z.string().max(200).optional()
+  })).min(1).max(6),
+  booker: z.object({
+    name: z.string().max(100).optional(),
+    email: z.string().email().optional().or(z.literal('')),
+    phone: z.string().max(30).optional()
+  }).optional(),
+  key: z.string().uuid()
+}).refine(v => new Set(v.seats.map(s => s.seatId)).size === v.seats.length, 'Kursi tidak boleh duplikat.');
 export type ReserveInput=z.infer<typeof reserveSchema>;
 export type SeatStatus='AVAILABLE'|'RESERVED'|'SOLD';
 export type Seat={id:string;section:string;row:string;number:number;x:number;y:number;status:SeatStatus};

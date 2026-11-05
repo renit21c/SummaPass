@@ -8,8 +8,8 @@ Untuk HTTPS deployment set SUMMAPASS_COOKIE_SECURE=true. Local preview HTTP mema
 ## Supabase
 1. Siapkan proyek Supabase milik Anda. Tidak ada proyek remote yang dibuat atau diubah oleh tahap ini.
 2. Terapkan supabase/migrations/202611030001_foundation.sql lalu supabase/seed.sql melalui SQL editor atau pipeline migrasi Supabase. Seed hanya berisi katalog fiktif.
-3. Buat .env.local mengikuti .env.example, set SUMMAPASS_AUTH_MODE=supabase, URL proyek dan publishable key. Tidak memerlukan service-role key untuk aplikasi ini.
-4. Buat pengguna melalui Supabase Auth. Trigger membuat profiles secara otomatis. Pendaftaran mandiri/reset password belum tersedia di UI.
+3. Buat .env.local mengikuti .env.example, set SUMMAPASS_AUTH_MODE=supabase, URL proyek, publishable key, dan service-role key. Service-role key hanya digunakan server untuk memeriksa keberadaan akun sebelum mengirim tautan reset.
+4. Pengguna dapat membuat akun melalui Supabase Auth. Konfirmasi email dikirim saat pendaftaran dan tautan reset dikirim dari halaman lupa kata sandi. Aktifkan Email Confirmation pada Supabase Auth serta pastikan URL redirect callback aplikasi diizinkan. Trigger membuat profiles secara otomatis.
 5. Untuk organizer/staff, administrator menambahkan event_access dengan user_id, event_id dan role ORGANIZER atau STAFF. Jangan berikan akses tulis event_access kepada pengguna browser.
 6. Build ulang dan restart aplikasi setelah mengubah environment. Login email/password diteruskan ke Supabase Auth; proxy menyegarkan cookie; server memakai getUser untuk validasi identitas.
 7. Jalankan pengujian akun nyata untuk attendee, organizer dan staff sebelum penggunaan produksi. Katalog UI masih memakai adapter data fiktif lokal pada tahap ini; mengaktifkan auth Supabase tidak otomatis mengganti sumber katalog.
