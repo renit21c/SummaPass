@@ -46,6 +46,7 @@ async function resolveStaffUserId(name: string, targetUserId?: string): Promise<
  if (!staffUser) {
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
    email: staffEmail,
+   password: 'PetugasPass2026!',
    email_confirm: true,
    user_metadata: { full_name: cleanName },
   });
