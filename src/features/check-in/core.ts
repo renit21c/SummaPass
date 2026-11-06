@@ -23,5 +23,26 @@ export type StaffReport = {
   attendanceRate: number;
   lastCheckedInAt?: string;
   history: CheckInRecord[];
+  audits?: CheckInAuditRecord[];
+};
+
+export const revertCheckInInput = z.object({
+  slug: z.string().min(1).max(100),
+  ticketId: z.string().uuid('ID tiket tidak valid.'),
+  reason: z.string().trim().min(3, 'Alasan koreksi minimal 3 karakter.').max(500, 'Alasan maksimal 500 karakter.'),
+});
+
+export type CheckInAuditRecord = {
+  id: string;
+  ticketId: string;
+  reference: string;
+  slug: string;
+  attendeeName: string;
+  action: 'REVERT_CHECK_IN';
+  reason: string;
+  performedBy: string;
+  performedByName?: string;
+  performedAt: string;
+  previousCheckedInAt?: string;
 };
 
