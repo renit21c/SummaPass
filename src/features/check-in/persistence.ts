@@ -36,3 +36,38 @@ export function saveCheckIns(items: PersistedCheckIn[]) {
   renameSync(temp, target);
 }
 
+export const persistedAuditSchema = z.object({
+  id: z.string(),
+  ticketId: z.string(),
+  reference: z.string(),
+  slug: z.string(),
+  attendeeName: z.string(),
+  action: z.literal('REVERT_CHECK_IN'),
+  reason: z.string(),
+  performedBy: z.string(),
+  performedByName: z.string().optional(),
+  performedAt: z.string(),
+  previousCheckedInAt: z.string().optional(),
+});
+
+export type PersistedAudit = z.infer<typeof persistedAuditSchema>;
+
+export function loadCheckInAudits(): PersistedAudit[] {
+  const path = join(dataRoot, 'check_in_audits.json');
+  if (!existsSync(path)) return [];
+  try {
+    const raw = readFileSync(path, 'utf8');
+    return z.array(persistedAuditSchema).parse(JSON.parse(raw));
+  } catch {
+    return [];
+  }
+}
+
+export function saveCheckInAudits(items: PersistedAudit[]) {
+  mkdirSync(dataRoot, { recursive: true });
+  const target = join(dataRoot, 'check_in_audits.json');
+  const temp = join(dataRoot, 'check_in_audits.tmp');
+  writeFileSync(temp, JSON.stringify(items, null, 2), 'utf8');
+  renameSync(temp, target);
+}
+

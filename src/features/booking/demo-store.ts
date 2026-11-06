@@ -1,4 +1,4 @@
-import type { CheckInResult,StaffReport } from '../check-in/core';
+import type { CheckInResult,StaffReport,CheckInAuditRecord } from '../check-in/core';
 import type { PersistedCheckIn } from '../check-in/persistence';
 import type { StaffAssignment } from '../organizer/staff-persistence';
 import { seedManaged,eventInput,dateParts,type ManagedEvent,type EventInput } from '../catalog/core';
@@ -9,10 +9,11 @@ import { randomUUID,randomBytes } from 'node:crypto';
 import { events } from '../events/data';
 import { BookingError,reserveSchema,type Booking,type Inventory,type ReserveInput } from './types';
 export class DemoBookingStore {
- private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>(); private checkIns:PersistedCheckIn[]=[]; private staffAssignments:StaffAssignment[]=[];
- constructor(private clock=()=>Date.now(),catalog?:ManagedEvent[],initialCheckIns?:PersistedCheckIn[],initialStaff?:StaffAssignment[]){
+ private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>(); private checkIns:PersistedCheckIn[]=[]; private staffAssignments:StaffAssignment[]=[]; private checkInAudits:CheckInAuditRecord[]=[];
+ constructor(private clock=()=>Date.now(),catalog?:ManagedEvent[],initialCheckIns?:PersistedCheckIn[],initialStaff?:StaffAssignment[],initialAudits?:CheckInAuditRecord[]){
   this.catalog=new Map((catalog??events.map(seedManaged)).map(e=>[e.slug,structuredClone(e)]));
   if(initialCheckIns)this.checkIns=[...initialCheckIns];
+  if(initialAudits)this.checkInAudits=[...initialAudits];
   if(initialStaff&&initialStaff.length){
    this.staffAssignments=[...initialStaff];
   } else {
@@ -165,7 +166,45 @@ export class DemoBookingStore {
    totalSold,
    attendanceRate,
    lastCheckedInAt:last?.checkedInAt,
-   history
+   history,
+   audits:this.checkInAudits.filter(a=>a.slug===slug).sort((a,b)=>Date.parse(b.performedAt)-Date.parse(a.performedAt))
   };
+ }
+ revertCheckIn(staffId:string,slug:string,ticketId:string,reason:string):{status:'REVERTED';ticket:CheckInResult['ticket'];audit:CheckInAuditRecord}{
+  if(!this.isStaffAssigned(staffId,slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+  if(!reason||reason.trim().length<3)throw new BookingError('INVALID_REASON','Alasan koreksi wajib diisi minimal 3 karakter.',400);
+  const ticket=this.issued.get(ticketId)??[...this.issued.values()].find(t=>t.id===ticketId);
+  if(!ticket)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);
+  if(ticket.slug!==slug)throw new BookingError('WRONG_EVENT','Tiket ini untuk event lain.',400);
+  if(!ticket.checkedInAt)throw new BookingError('NOT_CHECKED_IN','Tiket ini belum pernah di-check-in.',400);
+  const previousCheckedInAt=ticket.checkedInAt;
+  ticket.checkedInAt=undefined;
+  ticket.checkedInBy=undefined;
+  this.checkIns=this.checkIns.filter(c=>c.ticketId!==ticket.id);
+  const staff=this.staffAssignments.find(s=>s.userId===staffId&&s.slug===slug);
+  const now=new Date(this.clock()).toISOString();
+  const audit:CheckInAuditRecord={
+   id:randomUUID(),
+   ticketId:ticket.id,
+   reference:ticket.reference,
+   slug,
+   attendeeName:ticket.attendeeName,
+   action:'REVERT_CHECK_IN',
+   reason:reason.trim(),
+   performedBy:staffId,
+   performedByName:staff?.name??'Petugas Check-in',
+   performedAt:now,
+   previousCheckedInAt
+  };
+  this.checkInAudits.unshift(audit);
+  const view={id:ticket.id,reference:ticket.reference,attendeeName:ticket.attendeeName,seatLabel:ticket.seatLabel,categoryName:ticket.categoryName};
+  return {status:'REVERTED',ticket:view,audit};
+ }
+ getCheckInAudits(staffId:string,slug:string):CheckInAuditRecord[]{
+  if(!this.isStaffAssigned(staffId,slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+  return this.checkInAudits.filter(a=>a.slug===slug).sort((a,b)=>Date.parse(b.performedAt)-Date.parse(a.performedAt));
+ }
+ getAllCheckInAudits():CheckInAuditRecord[]{
+  return structuredClone(this.checkInAudits);
  }
 }

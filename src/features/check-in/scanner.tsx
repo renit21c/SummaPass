@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Camera, ScanLine, RefreshCw, UserCheck, Users, Clock, Search } from 'lucide-react';
-import { outcomeLabels, type CheckInResult, type StaffReport } from './core';
+import { Camera, ScanLine, RefreshCw, UserCheck, Users, Clock, Search, RotateCcw, FileText, History, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { outcomeLabels, type CheckInResult, type StaffReport, type CheckInAuditRecord } from './core';
 
 export function CheckInScanner({ events }: { events: { slug: string; title: string }[] }) {
   const [slug, setSlug] = useState(events[0]?.slug ?? '');
@@ -14,6 +14,15 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
   const [report, setReport] = useState<StaffReport | null>(null);
   const [historySearch, setHistorySearch] = useState('');
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Tab & Koreksi states
+  const [activeTab, setActiveTab] = useState<'history' | 'audit'>('history');
+  const [correctingTicket, setCorrectingTicket] = useState<{ ticketId: string; reference: string; attendeeName: string; seatLabel?: string } | null>(null);
+  const [correctPreset, setCorrectPreset] = useState('Salah scan tiket');
+  const [correctNote, setCorrectNote] = useState('');
+  const [correctBusy, setCorrectBusy] = useState(false);
+  const [correctSuccessMessage, setCorrectSuccessMessage] = useState('');
+  const [correctErrorMessage, setCorrectErrorMessage] = useState('');
 
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
