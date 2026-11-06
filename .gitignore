@@ -48,3 +48,7 @@ PEMBAGIAN_TUGAS.md
 /docs/**/qa/
 /docs/prd-lanjutan/build_prd.py
 /tests/inspect-http.mjs
+
+# Generated ticket PDF previews and render intermediates
+/output/pdf/
+/tmp/pdfs/

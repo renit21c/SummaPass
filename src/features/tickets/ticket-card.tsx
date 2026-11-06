@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { CalendarDays, MapPin, Ticket as TicketIcon, Printer, Download, Mail, CheckCircle, Send, AlertCircle, RefreshCw } from 'lucide-react';
 import type { Ticket } from './types';
@@ -10,8 +10,9 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
   const [resending, setResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showResendModal, setShowResendModal] = useState(false);
-  const [destinationEmail, setDestinationEmail] = useState('');
+  const requestKey=useRef<string|null>(null);
   const [cooldown, setCooldown] = useState(0);
+  useEffect(()=>{if(cooldown<=0)return;const timer=setTimeout(()=>setCooldown(cooldown-1),1000);return()=>clearTimeout(timer);},[cooldown]);
 
   async function handleDownloadPdf() {
     setDownloading(true);
@@ -28,8 +29,7 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      // Fallback to window.print() if network download fails
-      window.print();
+      setResendStatus({type:'error',message:'PDF belum dapat diunduh. Coba lagi.'});
     } finally {
       setDownloading(false);
     }
@@ -45,28 +45,18 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
       const res = await fetch(`/api/tickets/${ticket.id}/resend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: destinationEmail || undefined })
+        body: JSON.stringify({ key: requestKey.current??=crypto.randomUUID() })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Gagal mengirim ulang tiket.');
 
       setResendStatus({
         type: 'success',
-        message: data.message ?? `E-ticket ${ticket.reference} berhasil dikirim ulang!`
+        message: data.message ?? 'Permintaan kirim ulang masuk antrean.'
       });
       setShowResendModal(false);
 
-      // Start 30s cooldown
-      setCooldown(30);
-      const timer = setInterval(() => {
-        setCooldown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      setCooldown(60);
     } catch (err) {
       setResendStatus({
         type: 'error',
@@ -172,10 +162,11 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
         </button>
 
         <p style={{ margin: 0, fontSize: 11, color: 'var(--muted)' }}>
-          Unduh dokumen PDF langsung atau kirim salinan e-ticket ke email kontak pemesan.
+          Unduh PDF, cetak tiket, atau kirim PDF melalui email akun pemesan.
         </p>
       </div>
 
+      <div className="ticket-actions no-print"><button className="button button-light" type="button" disabled={downloading} onClick={()=>void handleDownloadPdf()}><Download size={18}/>{downloading?'Menyiapkan PDF...':'Unduh PDF'}</button><button className="button button-light" type="button" disabled={resending||cooldown>0} onClick={()=>{requestKey.current=crypto.randomUUID();setShowResendModal(true);}}><Mail size={18}/>{cooldown>0?`Tunggu ${cooldown} detik`:'Email e-ticket PDF'}</button></div>
       {/* Resend Ticket Dialog */}
       {showResendModal && (
         <div
@@ -189,31 +180,15 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
             boxShadow: '4px 4px 0 var(--ink)'
           }}
         >
-          <h3 style={{ fontSize: 18, margin: '0 0 6px', fontWeight: 800 }}>Kirim Ulang E-Ticket</h3>
+          <h3 style={{ fontSize: 18, margin: '0 0 6px', fontWeight: 800 }}>Kirim ulang e-ticket PDF</h3>
           <p style={{ fontSize: 13, margin: '0 0 16px' }}>
-            Kirimkan salinan QR e-ticket ini ke alamat email pemesan atau alamat tujuan baru.
+            PDF siap cetak dan tautan tiket dikirim ke email akun pemesan.
           </p>
 
           <form onSubmit={handleResendTicket} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <input
-              type="email"
-              placeholder="Alamat email penerima (opsional, default: email akun)"
-              value={destinationEmail}
-              onChange={e => setDestinationEmail(e.target.value)}
-              style={{
-                flex: 1,
-                minWidth: 260,
-                minHeight: 44,
-                padding: '10px 14px',
-                border: '1.5px solid var(--ink)',
-                borderRadius: 8,
-                background: '#fff',
-                fontSize: 13
-              }}
-            />
             <button className="button button-dark" type="submit" disabled={resending || cooldown > 0}>
               <Send size={16} />
-              {resending ? 'Mengirim...' : 'Kirim Sekarang'}
+              {resending ? 'Memproses...' : 'Minta kirim ulang'}
             </button>
             <button className="button button-light" type="button" onClick={() => setShowResendModal(false)}>
               Batal

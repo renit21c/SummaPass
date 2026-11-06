@@ -124,7 +124,7 @@ export function ProfileEditor({
             />
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <BellRing size={16} />
-              Kirimkan pengingat jadwal acara dan salinan tiket otomatis ke <strong>{email || initialUser.email}</strong>
+              Kirim pengingat acara melalui email ke <strong>{email || initialUser.email}</strong>
             </span>
           </label>
         </div>
