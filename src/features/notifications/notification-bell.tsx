@@ -5,7 +5,7 @@ import { Bell, Check, ArrowUpRight, Ticket, AlertCircle, Info, Calendar } from '
 import { useNotifications } from './store';
 
 export function NotificationBell() {
-  const { items, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { items, unreadCount, markAsRead, markAllAsRead, loading, error } = useNotifications();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -106,7 +106,7 @@ export function NotificationBell() {
           </div>
 
           <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-            {recent.length === 0 ? (
+            {loading ? <p role="status">Memuat notifikasi...</p> : error ? <p role="alert">{error}</p> : recent.length === 0 ? (
               <p style={{ textAlign: 'center', padding: 24, fontSize: 13, color: 'var(--muted)', margin: 0 }}>
                 Belum ada notifikasi.
               </p>

@@ -87,3 +87,30 @@ Verifikasi: 42tes lulus, typecheck lulus, build produksi lulus. seating-http.mjs
 ## Sinkronisasi main 5708638
 
 Merge terbaru Orang4 untuk koreksi check-in, alasan koreksi, audit dan staff history sudah diambil dari origin/main ke branch feature/flexible-seating-backend dengan fast-forward. Perubahan Tahap2 lokal dikembalikan tanpa konflik. Cadangan stash tetap disimpan. Migrasi denah lokal berganti nomor menjadi010 agar unik terhadap009_check_in_correction; isi SQL tetap sama. Pengguna telah melaporkan pemeriksaan metadata denah pada Supabase berhasil sebelum pergantian nama, sehingga SQL denah tidak perlu dijalankan ulang. Tidak ada migrasi atau perubahan data remote yang dijalankan saat sinkronisasi.
+
+
+## Tahap 3 Orang 1: backend notifikasi dan pengingat
+
+Branch feature/notifications-backend dibuat dari a074e2a setelah pengguna mengonfirmasi lingkup notifikasi/email/pengingat. Migrasi011 menambahkan notifications, notification_preferences dan notification_outbox, RLS pemilik, trigger reservasi/pembayaran/perubahan event, scheduler pengingat dan transactional outbox. Worker service-role memakai lease, token fencing, payload immutable, provider idempotency dan retry maksimal5 dalam23jam. Adapter Resend disiapkan; email default nonaktif.
+
+Pusat notifikasi dan bell memakai API akun, bukan notifikasi fiktif di localStorage. Endpoint baca/baca semua/clear, preferences, resend dan delivery history tersedia. Resend dibatasi email akun terverifikasi dengan cooldown60detik dan5permintaan per24jam. UI tidak lagi mengklaim email terkirim ketika hanya masuk antrean. Demo memakai booking/payment aktual dengan state per akun tersimpan, tetapi tidak mengirim email.
+
+Verifikasi lokal:53tes lulus, build produksi dan typecheck lulus. notifications-http.mjs lulus pada preview produksi demo3002 terisolasi: login, transaksi, dedup, owner isolation, read/clear, preference persistence, Origin/body limits, cron unauthorized dan explicit demo email rejection. Browser: akun baru tanpa contoh notifikasi; buat booking dan bayar simulasi menghasilkan2notifikasi, baca semua memperbarui badge, filter unread kosong setelah dibaca. Pemeriksaan viewport390/768 tidak overflow horizontal.
+
+Belum menerapkan migrasi011 atau cron ke Supabase remote dan tidak mengirim email nyata. Uji provider masih transport mock, database memakai PGlite. Aktivasi memerlukan migrasi, cron secret, scheduler dan konfigurasi Resend terverifikasi. UI preference/pagination lanjutan serta delivery webhook belum dibuat. Dokumen konfigurasi, kontrak API dan batas rilis ada di NOTIFICATIONS.md. Script supabase-check mendukung --notifications untuk metadata/read-only access checks.
+
+
+## E-ticket PDF siap cetak dan lampiran email
+
+Permintaan pengguna berikutnya menambahkan PDF pada email tiket dan desain yang mengikuti web. Generator PDF lama yang berisi pola QR ilustrasi diganti PDFKit dengan Plus Jakarta Sans tertanam dan QR vector asli dari qrcode. Unduhan dan email menggunakan generator yang sama. Satu PDF booking maksimal6halaman; resend satu tiket mendapat1halaman. Header oranye, panel pink/mint, aksen ungu, border dan bentuk tiket mengikuti identitas SummaPass. PDF A4 dan teks panjang diverifikasi dari render PNG.
+
+Migrasi012 menambahkan RPC worker untuk record tiket milik booking/owner job, metadata scope dan guard semua tiket lampiran tetap ACTIVE. Payload email baru termasuk PDF dienkripsi AES-GCM dengan HKDF key terpisah, metadata ticketIds diautentikasi, kemudian difreeze. Retry mempertahankan file dan payload yang sama; job lama tetap memakai payload lamanya. Kunci tambahan tidak diperlukan. Batas1MB PDF dan3MB envelope berlaku. Worker memeriksa migrasi012 sebelum claim.
+
+Verifikasi:57tes lulus termasuk render PDF via Poppler+jsQR, Unicode, kepemilikan, snapshot historis, enkripsi, dedup dan bundle dengan tiket dicabut. Setelah perbaikan kompatibilitas renderer server,3tes PDF terfokus kembali lulus, build produksi lulus dan HTTP notifications-http.mjs lulus pada preview demo terisolasi3002. Manifest trace kedua route memuat kedua font. Preview fiktif2halaman tersedia di output/pdf/summapass-e-ticket-preview.pdf dan diabaikan Git. Tidak ada email nyata dikirim atau migrasi remote dijalankan untuk fitur lampiran ini. Pengguna perlu menerapkan012, restart dan membuat request resend baru. Panduan ada di TICKET_PDF_EMAIL.md.
+
+
+## Review sebelum PR notifikasi dan PDF
+
+Branch diselaraskan ke origin/main847eb74 yang sudah memuat PR Tahap2. Pemeriksaan ulang menemukan runner dengan terlalu banyak proses PGlite dapat kehabisan memori; script npm test kini memakai concurrency2 tanpa mengurangi skenario. Sesudah perbaikan, seluruh57tes lulus dengan0skip, typecheck dan build produksi lulus. HTTP notifications/PDF kembali lulus pada preview demo terisolasi. Audit dependency produksi melaporkan0vulnerability dan pemeriksaan kecocokan secret tidak menemukan key aktual pada kandidat file commit; .env.local, .data dan previewPDF tetap di-ignore. Nomor migrasi unik.
+
+Pemeriksaan read-only Supabase terkonfigurasi memakai supabase-check --notifications lulus termasuk konfigurasi PDF versi2 serta penolakan RPC anonim. Pemeriksaan ini bukan uji transaksi/race remote atau bukti pengiriman PDF ke inbox. PR perlu mendokumentasikan rollout migrasi011dan012, konfigurasi sender, key dan cron sebelum deployment; scheduler tidak diaktifkan oleh PR.

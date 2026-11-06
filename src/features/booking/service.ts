@@ -60,3 +60,5 @@ export const demoUnassignStaff=(userId:string,eventId:string,targetUserId:string
  demoStore().unassignStaff(userId,eventId,targetUserId);
  try{saveStaffAssignments(demoStore().getStaffAssignments());}catch{}
 };
+
+export const demoNotificationContext=(userId:string)=>({bookings:demoStore().list(userId),events:demoStore().catalogItems()});

@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { getSession } from '@/lib/auth/session';
 import { ticket } from '@/features/booking/service';
 import { publicEvent } from '@/features/catalog/service';
-import { events } from '@/features/events/data';
 import { generateTicketPdf } from '@/features/tickets/pdf';
 
 export async function GET(
@@ -22,12 +21,12 @@ export async function GET(
 
   try {
     const ticketData = await ticket(session.id, id);
-    const event = (await publicEvent(ticketData.slug)) ?? events.find(e => e.slug === ticketData.slug);
+    const event = ticketData.event ?? await publicEvent(ticketData.slug);
     if (!event) {
       return NextResponse.json({ error: 'Data acara tidak ditemukan.' }, { status: 404 });
     }
 
-    const pdfBuffer = generateTicketPdf(ticketData, event);
+    const pdfBuffer = await generateTicketPdf(ticketData, event);
     const uint8 = new Uint8Array(pdfBuffer);
 
     return new NextResponse(uint8, {

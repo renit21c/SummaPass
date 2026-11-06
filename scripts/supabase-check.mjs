@@ -38,5 +38,18 @@ try {
     ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('Akses anonim konfigurasi denah harus ditolak. Periksa migrasi 010.');}
     console.log('OK: RPC denah menolak akses anonim');
   }
+  if(process.argv.includes('--notifications')) {
+    await requireResult('Notifikasi per akun', admin.from('notifications').select('id,user_id,kind,read_at,dismissed_at').limit(1));
+    await requireResult('Preferensi pengingat', admin.from('notification_preferences').select('user_id,booking_reminders,event_reminders,email_reminders').limit(1));
+    await requireResult('Antrean email', admin.from('notification_outbox').select('id,status,attempts,lease_until').limit(1));
+    for(const [name,args] of [
+      ['list_notifications',{p_cursor:null,p_limit:1}],
+      ['request_ticket_email',{p_ticket:'00000000-0000-4000-8000-000000000000',p_key:'00000000-0000-4000-8000-000000000000'}],
+      ['claim_notification_emails',{p_limit:1}]
+    ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('Akses anonim notifikasi harus ditolak. Periksa migrasi 011.');}
+    console.log('OK: RPC notifikasi menolak akses anonim');
+    const pdf = await requireResult('Lampiran PDF email', admin.rpc('notification_pdf_configuration'));
+    if(pdf?.version!==2)throw new Error('Terapkan migrasi 012 untuk email dengan PDF.');
+  }
   console.log('Selesai. Pemeriksaan ini hanya membaca konfigurasi dan metadata; bukan bukti pengujian transaksi atau Storage RLS lengkap.');
 } catch (error) { console.error(error instanceof Error ? error.message : 'Pemeriksaan Supabase gagal.'); process.exitCode = 1; }

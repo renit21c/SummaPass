@@ -10,4 +10,4 @@ export async function proxy(request: NextRequest) {
  response.headers.set('Cache-Control','private, no-store');response.headers.set('Referrer-Policy',referrerPolicy);
  return response;
 }
-export const config = { matcher: ['/account/:path*','/my-tickets/:path*','/api/tickets/:path*','/bookings/:path*','/events/:path*','/api/bookings/:path*','/login','/organizer/:path*','/api/organizer/:path*','/staff/:path*','/api/staff/:path*','/api/auth/:path*'] };
+export const config = { matcher: ['/notifications/:path*','/api/notifications/:path*','/account/:path*','/my-tickets/:path*','/api/tickets/:path*','/bookings/:path*','/events/:path*','/api/bookings/:path*','/login','/organizer/:path*','/api/organizer/:path*','/staff/:path*','/api/staff/:path*','/api/auth/:path*'] };

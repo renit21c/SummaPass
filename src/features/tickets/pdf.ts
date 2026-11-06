@@ -1,133 +1,69 @@
+import PDFDocument from 'pdfkit';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import QRCode from 'qrcode';
 import type { Ticket } from './types';
-import type { Event } from '../events/data';
-import { dateLabel, rupiah } from '../events/data';
+import { dateLabel,rupiah,type Event } from '../events/data';
 
-function escapePdfText(str: string): string {
-  return str.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+const colors={ink:'#252525',muted:'#625c56',cream:'#fff9f2',orange:'#ff681c',purple:'#6632cf',pink:'#ff7ac3',mint:'#51e3ab',yellow:'#ffe044',purpleLight:'#eee4ff',white:'#ffffff'};
+let fonts:{regular:Buffer;bold:Buffer}|undefined;
+function brandFonts(){return fonts??={regular:readFileSync(join(process.cwd(),'node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff')),bold:readFileSync(join(process.cwd(),'node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff'))};}
+export type TicketPdfPage={ticket:Ticket;event:Event};
+export const TICKET_QR_BOX={x:362,y:568,size:152};
+
+// Vector QR with a four-module quiet zone. The data is the existing opaque ticket token.
+function drawQr(doc:PDFKit.PDFDocument,token:string){
+ const qr=QRCode.create(token,{errorCorrectionLevel:'M'}),modules=qr.modules;
+ const {x,y,size}=TICKET_QR_BOX;
+ doc.rect(x,y,size,size).fill(colors.white);
+ doc.save().translate(x,y).scale(size/(modules.size+8));
+ for(let row=0;row<modules.size;row++)for(let col=0;col<modules.size;col++)if(modules.get(row,col))doc.rect(col+4,row+4,1,1);
+ doc.fill('#000000').restore();
 }
-
-export function generateTicketPdf(ticket: Ticket, event: Event): Buffer {
-  const width = 595; // A4 width in points
-  const height = 842; // A4 height in points
-
-  // Clean strings
-  const eventTitle = escapePdfText(event.title);
-  const categoryName = escapePdfText(ticket.categoryName);
-  const attendeeName = escapePdfText(ticket.attendeeName);
-  const seatLabel = escapePdfText(ticket.seatLabel);
-  const reference = escapePdfText(ticket.reference);
-  const eventDate = escapePdfText(dateLabel(event.date));
-  const eventTime = escapePdfText(event.time);
-  const venue = escapePdfText(event.area ?? 'Summarecon Mall Bandung');
-  const price = escapePdfText(rupiah(ticket.price));
-  const issuedAt = escapePdfText(new Date(ticket.issuedAt).toLocaleDateString('id-ID'));
-
-  // PDF stream operations
-  let stream = '';
-
-  // Background page tint (soft cream)
-  stream += '0.99 0.98 0.96 rg 0 0 595 842 re f\n';
-
-  // Outer Ticket Card Box
-  // x: 45, y: 320, w: 505, h: 460
-  stream += '0.14 0.13 0.12 RG 2 w 45 320 505 460 re S\n';
-
-  // Ticket Header Banner (Orange / Vibrant brand color)
-  stream += '1 0.41 0.11 rg 45 700 505 80 re f\n';
-  stream += '0.14 0.13 0.12 RG 1.5 w 45 700 505 80 re S\n';
-
-  // Header Text
-  stream += 'BT /F2 26 Tf 1 1 1 rg 65 742 Td (SummaPass) Tj ET\n';
-  stream += 'BT /F2 13 Tf 0.95 0.9 0.2 rg 210 742 Td (OFFICIAL E-TICKET) Tj ET\n';
-  stream += 'BT /F1 10 Tf 1 1 1 rg 65 718 Td (Summarecon Mall Bandung - Prototipe Tiket Independen) Tj ET\n';
-
-  // Event Title & Category
-  stream += 'BT /F2 22 Tf 0.14 0.13 0.12 rg 65 658 Td (' + eventTitle + ') Tj ET\n';
-  stream += 'BT /F2 11 Tf 0.4 0.2 0.8 rg 65 640 Td (Kategori: ' + categoryName + ') Tj ET\n';
-
-  // Event Details Box
-  stream += '0.95 0.92 0.86 rg 65 540 465 80 re f\n';
-  stream += '0.14 0.13 0.12 RG 1 w 65 540 465 80 re S\n';
-
-  stream += 'BT /F1 10 Tf 0.38 0.34 0.3 rg 80 596 Td (WAKTU & TANGGAL) Tj ET\n';
-  stream += 'BT /F2 12 Tf 0.14 0.13 0.12 rg 80 580 Td (' + eventDate + ' - ' + eventTime + ') Tj ET\n';
-
-  stream += 'BT /F1 10 Tf 0.38 0.34 0.3 rg 80 562 Td (LOKASI VENUE) Tj ET\n';
-  stream += 'BT /F2 11 Tf 0.14 0.13 0.12 rg 80 548 Td (' + venue + ') Tj ET\n';
-
-  // Attendee & Seat Info (Split Box)
-  stream += '0.92 0.88 0.98 rg 65 440 225 80 re f\n';
-  stream += '0.14 0.13 0.12 RG 1 w 65 440 225 80 re S\n';
-  stream += 'BT /F1 10 Tf 0.38 0.34 0.3 rg 80 498 Td (NAMA PESERTA / PEMEGANG TIKET) Tj ET\n';
-  stream += 'BT /F2 14 Tf 0.14 0.13 0.12 rg 80 476 Td (' + attendeeName + ') Tj ET\n';
-  stream += 'BT /F1 9 Tf 0.4 0.2 0.8 rg 80 454 Td (Status: LUNAS SIMULASI) Tj ET\n';
-
-  stream += '1 0.88 0.27 rg 305 440 225 80 re f\n';
-  stream += '0.14 0.13 0.12 RG 1 w 305 440 225 80 re S\n';
-  stream += 'BT /F1 10 Tf 0.38 0.34 0.3 rg 320 498 Td (NOMOR KURSI / SECTION) Tj ET\n';
-  stream += 'BT /F2 18 Tf 0.14 0.13 0.12 rg 320 472 Td (' + seatLabel + ') Tj ET\n';
-  stream += 'BT /F1 9 Tf 0.14 0.13 0.12 rg 320 454 Td (Harga: ' + price + ') Tj ET\n';
-
-  // Dashed Cut Line
-  stream += '[4 4] 0 d 0.14 0.13 0.12 RG 1 w 45 420 m 550 420 l S\n';
-  stream += '[] 0 d\n'; // reset dash
-
-  // QR & Validation Section
-  stream += 'BT /F1 9 Tf 0.38 0.34 0.3 rg 65 398 Td (KODE REFERENSI TIKET: ' + reference + ') Tj ET\n';
-  stream += 'BT /F1 8 Tf 0.38 0.34 0.3 rg 65 382 Td (Diterbitkan pada: ' + issuedAt + ' - Tunjukkan dokumen PDF atau QR ini kepada petugas pintu masuk.) Tj ET\n';
-  stream += 'BT /F1 8 Tf 0.5 0.5 0.5 rg 65 366 Td (Tiket demo SummaPass. Berlaku untuk verifikasi simulasi di Summarecon Mall Bandung.) Tj ET\n';
-
-  // Simulated QR Code Frame & Markers in Vector
-  // Outer QR white container
-  stream += '1 1 1 rg 420 335 110 75 re f\n';
-  stream += '0.14 0.13 0.12 RG 1 w 420 335 110 75 re S\n';
-  // QR pattern blocks
-  stream += '0.14 0.13 0.12 rg\n';
-  // Top-left square
-  stream += '430 380 25 25 re f\n';
-  stream += '1 1 1 rg 435 385 15 15 re f\n';
-  stream += '0.14 0.13 0.12 rg 439 389 7 7 re f\n';
-  // Top-right square
-  stream += '495 380 25 25 re f\n';
-  stream += '1 1 1 rg 500 385 15 15 re f\n';
-  stream += '0.14 0.13 0.12 rg 504 389 7 7 re f\n';
-  // Bottom-left square
-  stream += '430 342 25 25 re f\n';
-  stream += '1 1 1 rg 435 347 15 15 re f\n';
-  stream += '0.14 0.13 0.12 rg 439 351 7 7 re f\n';
-  // Center data matrix dots
-  stream += '465 350 8 8 re f 480 350 8 8 re f 465 365 8 8 re f 480 375 8 8 re f 495 355 8 8 re f\n';
-
-  // Footer Branding note
-  stream += 'BT /F1 9 Tf 0.4 0.4 0.4 rg 45 285 Td (SummaPass. Dilindungi hak cipta 2026. Dicetak secara digital melalui sistem tiket SummaPass.) Tj ET\n';
-
-  const streamLength = Buffer.byteLength(stream, 'utf8');
-
-  const objects: string[] = [];
-  objects[1] = '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n';
-  objects[2] = '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n';
-  objects[3] = '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + width + ' ' + height + '] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>\nendobj\n';
-  objects[4] = '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n';
-  objects[5] = '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n';
-  objects[6] = '6 0 obj\n<< /Length ' + streamLength + ' >>\nstream\n' + stream + 'endstream\nendobj\n';
-
-  let pdf = '%PDF-1.4\n';
-  const offsets: number[] = [0];
-
-  for (let i = 1; i <= 6; i++) {
-    offsets[i] = Buffer.byteLength(pdf, 'utf8');
-    pdf += objects[i];
-  }
-
-  const xrefOffset = Buffer.byteLength(pdf, 'utf8');
-  pdf += 'xref\n0 7\n';
-  pdf += '0000000000 65535 f \n';
-  for (let i = 1; i <= 6; i++) {
-    pdf += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
-  }
-
-  pdf += 'trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF\n';
-
-  return Buffer.from(pdf, 'utf8');
+function panel(doc:PDFKit.PDFDocument,x:number,y:number,w:number,h:number,fill:string){doc.roundedRect(x,y,w,h,12).fillAndStroke(fill,colors.ink);}
+function text(doc:PDFKit.PDFDocument,value:string,x:number,y:number,w:number,size=12,bold=false,color=colors.ink){doc.font(bold?'BrandBold':'Brand').fontSize(size).fillColor(color).text(value,x,y,{width:w,lineGap:3});}
+function fitted(doc:PDFKit.PDFDocument,value:string,x:number,y:number,w:number,h:number,size:number,bold=true){doc.font(bold?'BrandBold':'Brand');while(size>8){doc.fontSize(size);if(doc.heightOfString(value,{width:w,lineGap:3})<=h)break;size--;}text(doc,value,x,y,w,size,bold);}
+function drawPage(doc:PDFKit.PDFDocument,{ticket,event}:TicketPdfPage,index:number,total:number){
+ const active=ticket.status==='ACTIVE';
+ doc.lineWidth(1.5);
+ panel(doc,45,45,510,718,colors.ink);panel(doc,40,40,510,718,colors.cream);
+ doc.save().roundedRect(40,40,510,718,12).clip().rect(40,40,510,82).fill(colors.orange).restore();
+ doc.moveTo(40,122).lineTo(550,122).stroke(colors.ink);
+ // Ticket outline mark, matching the site's icon-based identity.
+ doc.save().translate(61,66).rotate(-12,{origin:[14,11]}).roundedRect(0,0,28,22,4).stroke(colors.ink).dash(2,{space:2}).moveTo(19,2).lineTo(19,20).stroke().undash().restore();
+ text(doc,'SummaPass',103,61,270,29,true);
+ panel(doc,439,66,89,30,active?colors.yellow:colors.pink);text(doc,active?'E-ticket':'DICABUT',450,73,72,11,true);
+ fitted(doc,event.title,62,145,466,82,28);
+ fitted(doc,`Kategori: ${ticket.categoryName}`,62,237,466,24,11,false);
+ panel(doc,62,276,466,126,colors.white);
+ text(doc,'Tanggal',78,291,245,10,false,colors.muted);text(doc,'Waktu',365,291,145,10,false,colors.muted);
+ fitted(doc,dateLabel(event.date),78,308,260,24,14);fitted(doc,event.time,365,308,145,24,14);
+ text(doc,'Lokasi',78,340,430,10,false,colors.muted);
+ fitted(doc,event.area||'Summarecon Mall Bandung',78,357,434,35,12,false);
+ panel(doc,62,420,280,120,colors.pink);panel(doc,358,420,170,120,colors.mint);
+ text(doc,'Nama peserta',78,436,248,10,false,colors.ink);
+ fitted(doc,ticket.attendeeName,78,457,248,67,18);
+ text(doc,'Kursi',374,436,138,10,false,colors.ink);
+ fitted(doc,ticket.seatLabel,374,457,138,67,18);
+ doc.dash(4,{space:4}).moveTo(40,556).lineTo(550,556).stroke(colors.ink).undash();
+ doc.circle(40,556,8).fillAndStroke(colors.white,colors.ink);doc.circle(550,556,8).fillAndStroke(colors.white,colors.ink);
+ text(doc,'Referensi tiket',62,579,275,10,false,colors.muted);
+ fitted(doc,ticket.reference,62,598,275,26,10);
+ text(doc,rupiah(ticket.price),62,638,275,21,true,colors.purple);
+ text(doc,active?'Tunjukkan QR saat check-in.':'Tiket ini sudah dicabut.',62,679,275,11,true);
+ text(doc,'Satu tiket untuk satu peserta.',62,698,275,10,false,colors.muted);
+ text(doc,'Cetak A4 pada skala 100%.',62,718,275,10,false,colors.muted);
+ if(active){drawQr(doc,ticket.token);text(doc,'Pindai saat masuk',362,727,152,9,false,colors.muted);}else{panel(doc,362,578,152,136,colors.purpleLight);text(doc,'Tidak berlaku',382,629,116,13,true);}
+ const issued=new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Jakarta'}).format(new Date(ticket.issuedAt));
+ text(doc,`Diterbitkan ${issued}`,40,785,340,9,false,colors.muted);
+ text(doc,'Pembayaran simulasi. Tidak ada tagihan nyata.',40,802,440,9,false,colors.muted);
+ text(doc,`${index+1} / ${total}`,499,785,50,9,true);
 }
-
+export async function generateTicketsPdf(pages:TicketPdfPage[]):Promise<Buffer>{
+ if(pages.length<1||pages.length>6)throw Error('PDF_TICKET_LIMIT');
+ const doc=new PDFDocument({size:'A4',margin:0,autoFirstPage:false,pdfVersion:'1.4',info:{Title:'SummaPass E-ticket',Author:'SummaPass',Creator:'SummaPass',CreationDate:new Date(pages[0].ticket.issuedAt),ModDate:new Date(pages[0].ticket.issuedAt)}});
+ const chunks:Buffer[]=[];const finished=new Promise<Buffer>((resolve,reject)=>{doc.on('data',(chunk:Buffer)=>chunks.push(chunk));doc.on('end',()=>resolve(Buffer.concat(chunks)));doc.on('error',reject);});
+ try{const font=brandFonts();doc.registerFont('Brand',font.regular);doc.registerFont('BrandBold',font.bold);pages.forEach((page,index)=>{doc.addPage();drawPage(doc,page,index,pages.length);});doc.end();}catch(error){doc.destroy();throw error;}
+ return finished;
+}
+export function generateTicketPdf(ticket:Ticket,event:Event){return generateTicketsPdf([{ticket,event}]);}
