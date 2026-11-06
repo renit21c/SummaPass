@@ -81,3 +81,12 @@ Events menambahkan organizer_name, area, theme, headline dan cover_url. public_c
 Tickets menambahkan event_snapshot JSONB, diisi trigger sebelum penerbitan dan dibaca lewat RPC owner-only. Tiket lama dibackfill dari metadata yang tersedia pada saat migrasi. Harga tetap berasal dari booking_items.price_snapshot_idr. Snapshot dapat dibaca pemilik walaupun event unpublished/archived.
 
 Storage bucket event-covers tetap privat, batas WebP5MB. Objek berformat eventUUID/fileUUID.webp. Kebijakan read mengizinkan organizer assigned atau cover current dari event PUBLISHED; insert hanya organizer assigned pada event nonarsip; delete hanya objek yang tidak direferensikan sebagai cover current. Tidak ada UPDATE objek. Trigger require_cover_object menolak linking cover yang belum diupload. Rincian setup dan bukti pengujian ada di SUPABASE_INTEGRATION.md.
+
+
+## Denah fleksibel pada migrasi 010
+
+Events menambahkan seating_version (optimistic concurrency), seating_managed (konfigurasi API baru), seating_width dan seating_height. Venue_sections menambahkan event_id nullable dengan FK komposit (event_id,venue_id) ke events. Section lama tetap shared; section custom dimiliki satu event. Partial unique indexes memisahkan nama shared per venue dan nama custom per event. Trigger pada event_seats/category_sections menolak pemetaan section custom milik event lain. RLS section draft custom mengikuti visibilitas event, sehingga tidak bocor melalui venue yang memiliki event publik.
+
+Ticket_categories menambahkan is_active. Bookings menambahkan category_name_snapshot, diisi trigger saat reservasi dan dibaca pada booking serta e-ticket. Harga historis tetap di booking_items.price_snapshot_idr. Denah custom tidak dapat diganti setelah ada riwayat booking sehingga seat ID dan label lama tetap stabil.
+
+Fungsi konfigurasi mengunci row event seperti reservasi dan pembayaran. GET hanya organizer assigned; PUT layout serta create/update kategori merupakan transaksi tunggal yang mengaudit before/after. Section/kategori baru tidak dapat ditulis langsung oleh browser. Penjelasan batas kuota, periode jual, lock, migrasi, serta kontrak API ada di [SEATING_API.md](SEATING_API.md).

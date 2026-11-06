@@ -26,5 +26,17 @@ try {
   if (bucket.public || bucket.file_size_limit !== 5242880 || !bucket.allowed_mime_types?.includes('image/webp')) throw new Error('Bucket cover harus privat dan dibatasi WebP 5 MB.');
   const denied = await anonymous.rpc('manage_event', { p_action: 'create', p_id: null, p_data: {} });
   if (!denied.error || denied.error.code !== '42501') throw new Error('RPC pengelolaan harus menolak akses anonim atau migrasi belum lengkap.');
+  if(process.argv.includes('--seating')) {
+    await requireResult('Versi dan ukuran denah', admin.from('events').select('id,seating_version,seating_managed,seating_width,seating_height').limit(1));
+    await requireResult('Section per event', admin.from('venue_sections').select('id,event_id').limit(1));
+    await requireResult('Status kategori', admin.from('ticket_categories').select('id,is_active').limit(1));
+    await requireResult('Snapshot nama kategori', admin.from('bookings').select('id,category_name_snapshot').limit(1));
+    for(const [name,args] of [
+      ['seating_configuration',{p_event:'00000000-0000-4000-8000-000000000000'}],
+      ['configure_event_layout',{p_event:'00000000-0000-4000-8000-000000000000',p_version:0,p_layout:{}}],
+      ['configure_ticket_category',{p_event:'00000000-0000-4000-8000-000000000000',p_category:null,p_version:0,p_data:{}}]
+    ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('Akses anonim konfigurasi denah harus ditolak. Periksa migrasi 010.');}
+    console.log('OK: RPC denah menolak akses anonim');
+  }
   console.log('Selesai. Pemeriksaan ini hanya membaca konfigurasi dan metadata; bukan bukti pengujian transaksi atau Storage RLS lengkap.');
 } catch (error) { console.error(error instanceof Error ? error.message : 'Pemeriksaan Supabase gagal.'); process.exitCode = 1; }

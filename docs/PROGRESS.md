@@ -73,3 +73,17 @@ Branch codex/supabase-integration menambahkan migrasi006 dan007: katalog publik 
 Verifikasi lokal: 25 pengujian lulus dan typecheck lulus. Tambahan pengujian memakai PostgreSQL PGlite dengan shim Auth/Storage, bukan layanan remote. Script supabase:check dan supabase:smoke serta panduan konfigurasi tersedia di SUPABASE_INTEGRATION.md. Kredensial belum tersedia sesuai arahan pengguna; tidak ada proyek remote dibuat atau diubah. Pemeriksaan koneksi melaporkan konfigurasi belum diisi.
 
 Verifikasi akhir integrasi: build produksi lulus; typecheck setelah perbaikan script staging lulus; catalog-http.mjs dan check-in-http.mjs lulus pada preview produksi uji port3002 dengan data terpisah. Script remote smoke menolak berjalan tanpa flag staging explicit. Supabase remote belum dikonfigurasi atau diuji.
+
+
+## Tahap 2 Orang 1: backend kategori dan denah fleksibel
+
+Branch kerja: feature/flexible-seating-backend. Migrasi010 menambahkan section khusus event, canvas dan kursi fleksibel, kategori/harga/kuota/periode jual/status aktif, optimistic version, audit dan snapshot nama kategori booking. Semua mutasi mengikuti lock row event yang sama dengan reservasi/payment. Topologi terkunci setelah ada riwayat booking; kuota dan section kategori menjaga sold/live holds. Shared sections lama tetap dipakai event lama tanpa terpengaruh denah baru.
+
+API GET/PUT organizer event seating dan POST/PATCH kategori tersedia dengan Zod, Origin check, autentikasi, assignment/RLS dan body streaming maksimal1MB. Public inventory/catalog dan pembaca seat map/list membaca konfigurasi baru. Editor lama tidak menimpa kategori fleksibel. Editor visual kategori/denah merupakan integrasi Orang3 berikutnya. Fitur konfigurasi fleksibel khusus mode Supabase; demo mengembalikan SUPABASE_REQUIRED.
+
+Verifikasi: 42tes lulus, typecheck lulus, build produksi lulus. seating-http.mjs lulus pada preview produksi demo terisolasi port3002: sesi/role, Origin, payload invalid, route wiring dan penolakan demo eksplisit. Tes PostgreSQL memakai PGlite, bukan proyek remote dan bukan uji koneksi paralel sungguhan. Belum QA visual denah custom atau load test2000kursi. Migrasi010 belum diterapkan remote. Kontrak API, petunjuk migrasi, batas fitur serta checklist staging ada di SEATING_API.md; supabase:check -- --seating menambah pemeriksaan metadata010 secara read-only.
+
+
+## Sinkronisasi main 5708638
+
+Merge terbaru Orang4 untuk koreksi check-in, alasan koreksi, audit dan staff history sudah diambil dari origin/main ke branch feature/flexible-seating-backend dengan fast-forward. Perubahan Tahap2 lokal dikembalikan tanpa konflik. Cadangan stash tetap disimpan. Migrasi denah lokal berganti nomor menjadi010 agar unik terhadap009_check_in_correction; isi SQL tetap sama. Pengguna telah melaporkan pemeriksaan metadata denah pada Supabase berhasil sebelum pergantian nama, sehingga SQL denah tidak perlu dijalankan ulang. Tidak ada migrasi atau perubahan data remote yang dijalankan saat sinkronisasi.
