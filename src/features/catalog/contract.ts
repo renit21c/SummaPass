@@ -3,7 +3,7 @@ import { managedSchema } from './core';
 import { BookingError } from '../booking/types';
 
 // Legacy records may predate editor length rules; new writes still validate input.
-export const catalogRecordSchema = managedSchema.safeExtend({ title: z.string(), description: z.string(), rules: z.string() });
+export const catalogRecordSchema = managedSchema.safeExtend({ frontQuota:z.number().int().min(1).max(2000),regularQuota:z.number().int().min(1).max(2000),title: z.string(), description: z.string(), rules: z.string() });
 export function catalogResult(data: unknown, error: unknown): unknown {
   if (error) throw new BookingError('DATABASE', 'Data event belum dapat diproses. Coba lagi.', 503);
   const failure = z.object({ error: z.string(), message: z.string().optional() }).safeParse(data);
