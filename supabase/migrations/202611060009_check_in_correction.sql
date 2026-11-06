@@ -78,8 +78,33 @@ create or replace function public.check_in_audits(p_slug text) returns jsonb lan
    and (public.has_event_access(e.id, 'STAFF') or public.has_event_access(e.id, 'ORGANIZER'));
 $$;
 
-revoke all on function public.revert_check_in(text, uuid, text), public.check_in_audits(text) from public, anon;
-grant execute on function public.revert_check_in(text, uuid, text), public.check_in_audits(text) to authenticated;
+-- Function to read check-in history for staff with attendee and seat details
+create or replace function public.staff_history(p_slug text) returns jsonb language sql stable security definer set search_path='' as $$
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'ticketId', c.ticket_id,
+   'reference', coalesce(t.reference, 'SPT-UNKNOWN'),
+   'attendeeName', coalesce(a.display_name, 'Peserta Tiket'),
+   'seatLabel', coalesce(vs.name || ' ' || s.row_label || s.number, 'Kursi'),
+   'categoryName', coalesce(tc.name, 'Regular'),
+   'checkedInAt', c.checked_in_at,
+   'staffId', c.staff_id,
+   'isMe', (c.staff_id = auth.uid())
+ ) order by c.checked_in_at desc), '[]'::jsonb)
+ from public.check_ins c
+ join public.events e on e.id = c.event_id
+ left join public.tickets t on t.id = c.ticket_id
+ left join public.booking_items bi on bi.id = t.booking_item_id
+ left join public.bookings b on b.id = bi.booking_id
+ left join public.seats s on s.id = bi.seat_id
+ left join public.venue_sections vs on vs.id = s.section_id
+ left join public.ticket_categories tc on tc.id = b.category_id
+ left join public.attendees a on a.booking_item_id = bi.id
+ where e.slug = p_slug
+   and (public.has_event_access(e.id, 'STAFF') or public.has_event_access(e.id, 'ORGANIZER'));
+$$;
+
+revoke all on function public.revert_check_in(text, uuid, text), public.check_in_audits(text), public.staff_history(text) from public, anon;
+grant execute on function public.revert_check_in(text, uuid, text), public.check_in_audits(text), public.staff_history(text) to authenticated;
 
 commit;
 
