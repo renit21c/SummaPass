@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <Ticket size={28} strokeWidth={2.3} />Summa<span>Pass</span><b>®</b>
             </Link>
             <nav aria-label="Navigasi utama">
-              <Link href="/events">Daftar event</Link>
+              <Link href="/gallery">Upcoming Event</Link>
               <Link href="/#cara-kerja">Cara pesan</Link>
               {session ? (
                 <Link href="/account">Akun saya</Link>
