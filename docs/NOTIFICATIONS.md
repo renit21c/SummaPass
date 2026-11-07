@@ -1,3 +1,5 @@
+> Update: migrasi 013 sampai 015 melengkapi undangan, expiry, cancellation, delivery receipt dan dashboard antrean. Worker lokal otomatis ikut npm run dev. Lihat [BACKEND_OPERATIONS.md](BACKEND_OPERATIONS.md); batas lama di bawah menjelaskan implementasi sebelum update ini.
+
 # Tahap 3 Orang 1: notifikasi, antrean email dan pengingat
 
 Branch: `feature/notifications-backend`, berdasarkan commit Tahap 2 `a074e2a`. Jika PR Tahap 2 belum masuk main, perubahan Tahap 3 bergantung pada branch Tahap 2. Jangan menghapus atau mengulang migrasi yang sudah diterapkan.

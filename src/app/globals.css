@@ -676,6 +676,9 @@ html,body{max-width:100%;overflow-x:hidden}
 }
 
 .event-preview-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
   width: min(720px, calc(100% - 32px));
   max-height: calc(100dvh - 32px);
   padding: 0;
@@ -710,6 +713,9 @@ html,body{max-width:100%;overflow-x:hidden}
   background: var(--cream);
 }
 .event-preview-cover {
+  align-self: center;
+  width: 100%;
+  min-width: 0;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border: 1.5px solid var(--ink);
@@ -720,7 +726,11 @@ html,body{max-width:100%;overflow-x:hidden}
   height: 100%;
   border: 0;
   border-radius: 0;
+  min-height: 0;
+  box-shadow: none;
+  transform: none;
 }
+.event-preview-cover .poster-upload img { object-fit: contain; }
 .event-preview-copy {
   align-self: center;
   padding-right: 26px;
@@ -770,3 +780,16 @@ html,body{max-width:100%;overflow-x:hidden}
   .event-preview-cover { width: 75%; margin-inline: auto; }
   .event-preview-copy { padding-right: 0; }
 }
+
+/* Backend operations pages use the existing SummaPass tokens. */
+.operations-card{background:var(--cream);border:2px solid var(--ink);border-radius:16px;padding:clamp(18px,3vw,30px);margin-block:24px;box-shadow:5px 5px 0 var(--ink);min-width:0}
+.operations-title,.operations-actions,.operations-form{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.operations-title{justify-content:space-between}.operations-title h2,.operations-danger h3{display:flex;align-items:center;gap:9px}
+.operations-form{align-items:end;margin-block:20px}.operations-form label{flex:1;min-width:min(100%,240px)}
+.operations-card label{display:grid;gap:8px;font-weight:700;margin-block:14px}.operations-card input,.operations-card textarea,.operations-card select{width:100%;padding:12px;border:1.5px solid var(--ink);border-radius:8px;background:var(--white,#fff);font:inherit;color:var(--ink)}
+.operations-card p{line-height:1.6}.operations-card textarea{min-height:90px}.operations-list{list-style:none;padding:0;overflow-wrap:anywhere}
+.operations-list li{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 0;border-bottom:1px solid var(--line)}.operations-list span{display:block;font-size:13px;margin-top:6px}
+.operations-danger{margin-top:28px;padding:20px;background:var(--pink-light,#ffe1ef);border:1.5px solid var(--ink);border-radius:12px}.operations-danger summary{cursor:pointer;font-weight:700}
+.operations-counts{display:flex;flex-wrap:wrap;gap:10px;margin-block:18px}.operations-counts span{padding:9px 12px;background:var(--yellow);border:1px solid var(--ink);border-radius:8px}
+.operations-table{overflow-x:auto;margin-block:20px}.operations-table table{border-collapse:collapse;width:100%;min-width:640px}.operations-table td,.operations-table th{text-align:left;padding:14px;border-bottom:1px solid var(--line);vertical-align:top}.operations-table th{background:var(--mint)}.operations-table small{display:block;margin-top:7px}.operations-retry{border:2px solid var(--purple);border-radius:12px;padding:20px;margin-top:24px}
+@media(max-width:600px){.operations-form .button{width:100%}.operations-card{box-shadow:3px 3px 0 var(--ink)}}

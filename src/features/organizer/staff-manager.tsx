@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Users, UserPlus, ShieldAlert, CheckCircle2, Trash2 } from 'lucide-react';
 import type { StaffAssignment } from './staff-persistence';
 
-export function StaffManager({ eventId }: { eventId: string }) {
+export function StaffManager({ eventId, mode }: { eventId: string; mode?: 'demo'|'supabase' }) {
   const [staffList, setStaffList] = useState<StaffAssignment[]>([]);
   const [nameInput, setNameInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -90,7 +90,7 @@ export function StaffManager({ eventId }: { eventId: string }) {
         </p>
       </div>
 
-      <form className="staff-form" onSubmit={handleAssign}>
+      {mode!=='supabase'&&<form className="staff-form" onSubmit={handleAssign}>
         <label>
           Nama Petugas atau Identitas
           <input
@@ -107,7 +107,7 @@ export function StaffManager({ eventId }: { eventId: string }) {
           <UserPlus size={16} />
           {busy ? 'Menugaskan...' : 'Tugaskan Petugas'}
         </button>
-      </form>
+      </form>}
 
       {message && (
         <p className="editor-message" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }} role="status">
