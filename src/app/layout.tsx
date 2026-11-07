@@ -34,7 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               )}
             </nav>
             <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <NotificationBell />
+              <NotificationBell loggedIn={Boolean(session)} />
               <Link className="button button-small" href="/events">Cari event <ArrowUpRight size={16} /></Link>
             </div>
               <MobileNavigation loggedIn={Boolean(session)} />

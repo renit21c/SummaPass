@@ -1,10 +1,10 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, Check, ArrowUpRight, Ticket, AlertCircle, Info, Calendar } from 'lucide-react';
+import { Bell, Check, ArrowUpRight, Ticket, AlertCircle, Info, Calendar, LogIn } from 'lucide-react';
 import { useNotifications } from './store';
 
-export function NotificationBell() {
+export function NotificationBell({ loggedIn }: { loggedIn: boolean }) {
   const { items, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -89,6 +89,19 @@ export function NotificationBell() {
             overflow: 'hidden'
           }}
         >
+          {!loggedIn ? (
+            <div style={{ padding: 24, textAlign: 'center' }}>
+              <div style={{ width: 48, height: 48, margin: '0 auto 14px', borderRadius: 12, border: '1.5px solid var(--ink)', background: 'var(--yellow)', display: 'grid', placeItems: 'center' }}>
+                <Bell size={22} />
+              </div>
+              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8 }}>Login untuk melihat notifikasi</strong>
+              <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 16 }}>Masuk ke akun terlebih dahulu agar notifikasi pemesanan dan tiket dapat ditampilkan.</p>
+              <Link href="/login" onClick={() => setOpen(false)} className="button button-small">
+                <LogIn size={16} /> Login sekarang
+              </Link>
+            </div>
+          ) : (
+            <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', borderBottom: '1px solid var(--line)', background: 'var(--yellow)' }}>
             <div>
               <strong style={{ fontSize: 15, display: 'block' }}>Notifikasi</strong>
@@ -165,6 +178,8 @@ export function NotificationBell() {
               Lihat semua notifikasi ({items.length}) <ArrowUpRight size={14} />
             </Link>
           </div>
+            </>
+          )}
         </div>
       )}
     </div>
