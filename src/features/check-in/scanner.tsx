@@ -14,8 +14,9 @@ import {
   History,
   X,
   CheckCircle2,
+  Download,
 } from 'lucide-react';
-import { outcomeLabels, type CheckInResult, type StaffReport } from './core';
+import { outcomeLabels, filterCheckInsByPeriod, type CheckInResult, type StaffReport, type CheckInPeriod } from './core';
 
 export function CheckInScanner({ events }: { events: { slug: string; title: string }[] }) {
   const [slug, setSlug] = useState(events[0]?.slug ?? '');
@@ -27,6 +28,8 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
   const [report, setReport] = useState<StaffReport | null>(null);
   const [historySearch, setHistorySearch] = useState('');
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [period, setPeriod] = useState<CheckInPeriod>('ALL');
+  const [staffScope, setStaffScope] = useState<'all' | 'me'>('all');
 
   // Tab & Koreksi states
   const [activeTab, setActiveTab] = useState<'history' | 'audit'>('history');
@@ -217,8 +220,10 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
     }
   }
 
+  const periodFiltered = filterCheckInsByPeriod(report?.history ?? [], period);
+  const staffFiltered = staffScope === 'me' ? periodFiltered.filter(i => i.isMe) : periodFiltered;
   const filteredHistory =
-    report?.history.filter(item => {
+    staffFiltered.filter(item => {
       if (!historySearch.trim()) return true;
       const q = historySearch.toLowerCase();
       return (
@@ -490,18 +495,74 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
 
               {activeTab === 'history' ? (
                 <>
-                  <div className="history-controls">
-                    <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
-                      Riwayat Masuk ({filteredHistory.length})
-                    </h3>
-                    <div className="history-search">
-                      <Search size={18} />
-                      <input
-                        type="search"
-                        placeholder="Cari nama peserta, nomor tiket, atau kursi..."
-                        value={historySearch}
-                        onChange={e => setHistorySearch(e.target.value)}
-                      />
+                  <div className="history-controls" style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
+                        Riwayat Masuk ({filteredHistory.length})
+                      </h3>
+                      <a
+                        className="button button-light"
+                        href={`/api/staff/export?slug=${encodeURIComponent(slug)}&period=${period}&staff=${staffScope}${historySearch.trim() ? `&q=${encodeURIComponent(historySearch.trim())}` : ''}`}
+                        download={`summapass-kehadiran-${slug}.csv`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '13px' }}
+                        title="Unduh file CSV riwayat kehadiran"
+                      >
+                        <Download size={15} />
+                        Ekspor CSV
+                      </a>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
+                        <span>Periode:</span>
+                        <select
+                          value={period}
+                          onChange={e => setPeriod(e.target.value as CheckInPeriod)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            border: '1.5px solid var(--ink)',
+                            fontSize: '13px',
+                            background: 'var(--paper)',
+                            color: 'var(--ink)',
+                          }}
+                        >
+                          <option value="ALL">Semua Waktu</option>
+                          <option value="1H">1 Jam Terakhir</option>
+                          <option value="4H">4 Jam Terakhir</option>
+                          <option value="TODAY">Hari Ini</option>
+                        </select>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
+                        <span>Petugas:</span>
+                        <select
+                          value={staffScope}
+                          onChange={e => setStaffScope(e.target.value as 'all' | 'me')}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            border: '1.5px solid var(--ink)',
+                            fontSize: '13px',
+                            background: 'var(--paper)',
+                            color: 'var(--ink)',
+                          }}
+                        >
+                          <option value="all">Semua Petugas</option>
+                          <option value="me">Hanya Saya</option>
+                        </select>
+                      </label>
+
+                      <div className="history-search" style={{ margin: 0 }}>
+                        <Search size={16} />
+                        <input
+                          type="search"
+                          placeholder="Cari nama, tiket, kursi..."
+                          value={historySearch}
+                          onChange={e => setHistorySearch(e.target.value)}
+                          style={{ width: '190px' }}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -598,10 +659,22 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                 </>
               ) : (
                 <>
-                  <div className="history-controls">
+                  <div className="history-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                     <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
                       Log Audit Koreksi ({report?.audits?.length ?? 0})
                     </h3>
+                    {!!report?.audits?.length && (
+                      <a
+                        className="button button-light"
+                        href={`/api/staff/export?slug=${encodeURIComponent(slug)}&type=audits`}
+                        download={`summapass-audit-koreksi-${slug}.csv`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '13px' }}
+                        title="Unduh file CSV riwayat log audit"
+                      >
+                        <Download size={15} />
+                        Ekspor Log Audit
+                      </a>
+                    )}
                   </div>
 
                   {!report?.audits?.length ? (
