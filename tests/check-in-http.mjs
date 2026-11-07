@@ -18,5 +18,31 @@ assert.equal((await (await post('/api/staff/check-in',{...data,slug:'senja-di-su
 assert.equal((await (await post('/api/staff/check-in',{...data,credential:'invalid'})).json()).status,'INVALID');
 r=await request('/my-tickets/'+id,{headers:{cookie:attendee}});assert.match(await r.text(),/Sudah masuk/);
 r=await request('/organizer',{headers:{cookie:org}});assert.match(await r.text(),/Sudah check-in:/);
+assert.equal((await request('/api/staff/history?slug=little-weekend',{headers:{origin,cookie:attendee}})).status,403);
+assert.equal((await request('/api/staff/history?slug=after-hours',{headers:{origin,cookie:staff}})).status,403);
+const historyRes=await request('/api/staff/history?slug=little-weekend',{headers:{origin,cookie:staff}});assert.equal(historyRes.status,200);const historyData=await historyRes.json();assert.ok(historyData.totalCheckedInByMe>=1);assert.ok(historyData.history.some(h=>h.reference===t.reference));
+
+// Tahap 2 Orang 4: Revert check-in endpoint & audit log tests
+assert.equal((await post('/api/staff/check-in/revert',{slug:'little-weekend',ticketId:id,reason:'Salah scan'},attendee)).status,403);
+assert.equal((await request('/api/staff/check-in/revert',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({slug:'little-weekend',ticketId:id,reason:'Salah scan'})})).status,401);
+assert.equal((await post('/api/staff/check-in/revert',{slug:'little-weekend',ticketId:id,reason:'no'},staff)).status,400);
+
+const revertRes=await post('/api/staff/check-in/revert',{slug:'little-weekend',ticketId:id,reason:'Salah scan tiket peserta'},staff);
+assert.equal(revertRes.status,200);
+const revertData=await revertRes.json();
+assert.equal(revertData.status,'REVERTED');
+
+// Ticket can be validated again
+r=await post('/api/staff/check-in',{slug:'little-weekend',credential:t.reference,confirm:false});
+assert.equal((await r.json()).status,'VALID');
+
+// Audit endpoint returns the correction log
+const auditRes=await request('/api/staff/check-in/audit?slug=little-weekend',{headers:{cookie:staff}});
+assert.equal(auditRes.status,200);
+const auditData=await auditRes.json();
+assert.ok(auditData.audits.length>=1);
+assert.equal(auditData.audits[0].ticketId,id);
+assert.equal(auditData.audits[0].reason,'Salah scan tiket peserta');
+
 assert.equal((await request('/api/staff/check-in',{method:'POST',headers:{origin:'https://example.test',cookie:staff,'Content-Type':'application/json'},body:JSON.stringify(data)})).status,403);
-console.log('PASS: staff-only access, event assignment, preview, one winner on simultaneous confirm, wrong event, invalid QR, attendee status and organizer attendance.');
+console.log('PASS: staff-only access, event assignment, preview, one winner on simultaneous confirm, wrong event, invalid QR, attendee status, history/report API, check-in correction, audit trail, and organizer attendance.');

@@ -1,3 +1,11 @@
 import type { NextConfig } from 'next';
-const config: NextConfig = { turbopack: { root: process.cwd() } };
+const ticketFonts=[
+ './node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff',
+ './node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff'
+];
+const config:NextConfig={
+ turbopack:{root:process.cwd()},
+ serverExternalPackages:['pdfkit'],
+ outputFileTracingIncludes:{'/api/tickets/*/pdf':ticketFonts,'/api/internal/notifications/run':ticketFonts}
+};
 export default config;

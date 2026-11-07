@@ -81,3 +81,28 @@ Events menambahkan organizer_name, area, theme, headline dan cover_url. public_c
 Tickets menambahkan event_snapshot JSONB, diisi trigger sebelum penerbitan dan dibaca lewat RPC owner-only. Tiket lama dibackfill dari metadata yang tersedia pada saat migrasi. Harga tetap berasal dari booking_items.price_snapshot_idr. Snapshot dapat dibaca pemilik walaupun event unpublished/archived.
 
 Storage bucket event-covers tetap privat, batas WebP5MB. Objek berformat eventUUID/fileUUID.webp. Kebijakan read mengizinkan organizer assigned atau cover current dari event PUBLISHED; insert hanya organizer assigned pada event nonarsip; delete hanya objek yang tidak direferensikan sebagai cover current. Tidak ada UPDATE objek. Trigger require_cover_object menolak linking cover yang belum diupload. Rincian setup dan bukti pengujian ada di SUPABASE_INTEGRATION.md.
+
+
+## Denah fleksibel pada migrasi 010
+
+Events menambahkan seating_version (optimistic concurrency), seating_managed (konfigurasi API baru), seating_width dan seating_height. Venue_sections menambahkan event_id nullable dengan FK komposit (event_id,venue_id) ke events. Section lama tetap shared; section custom dimiliki satu event. Partial unique indexes memisahkan nama shared per venue dan nama custom per event. Trigger pada event_seats/category_sections menolak pemetaan section custom milik event lain. RLS section draft custom mengikuti visibilitas event, sehingga tidak bocor melalui venue yang memiliki event publik.
+
+Ticket_categories menambahkan is_active. Bookings menambahkan category_name_snapshot, diisi trigger saat reservasi dan dibaca pada booking serta e-ticket. Harga historis tetap di booking_items.price_snapshot_idr. Denah custom tidak dapat diganti setelah ada riwayat booking sehingga seat ID dan label lama tetap stabil.
+
+Fungsi konfigurasi mengunci row event seperti reservasi dan pembayaran. GET hanya organizer assigned; PUT layout serta create/update kategori merupakan transaksi tunggal yang mengaudit before/after. Section/kategori baru tidak dapat ditulis langsung oleh browser. Penjelasan batas kuota, periode jual, lock, migrasi, serta kontrak API ada di [SEATING_API.md](SEATING_API.md).
+
+
+## Notifikasi dan outbox pada migrasi 011
+
+Notifications menghubungkan user_id ke profiles, event_id ke events, booking_id ke bookings serta ticket_id opsional ke tickets. Dedup_key unik mencegah pengulangan logical event. Index(user_id,created_at desc,id desc) mendukung daftar/cursor. Read_at dan dismissed_at menyimpan status baca serta soft clear tanpa menghapus dedup atau riwayat email.
+
+Notification_preferences menyimpan pilihan pengingat per user. Notification_outbox memiliki FK notification_id unik, state PENDING/PROCESSING/RETRY/SENT/FAILED/SKIPPED, attempts maksimal5, waktu retry dan lease, payload immutable, ID provider serta kode error. Index(status,next_attempt_at,lease_until) dipakai worker. Browser tidak memiliki hak akses outbox. RLS notifikasi/preferensi hanya pemilik, tanpa write grants langsung.
+
+Trigger booking membuat notifikasi reservasi dan outbox tiket sesudah status confirmed, dalam transaksi yang sama dengan perubahan booking. Trigger event membuat pemberitahuan perubahan judul/jadwal/lokasi bagi pemesan confirmed. Scheduler mengikuti lock event terlebih dahulu seperti payment/reservasi. RPC kirim ulang mengunci event lalu profil untuk pemeriksaan per-akun rate limit tanpa membalik urutan lock transaksi.
+
+Worker-only RPC memakai service_role: scheduler, claim maksimal5 dengan SKIP LOCKED dan lease5menit, context revalidation, freeze payload, dan ack dengan lease token. RPC pengguna tidak menerima ID pemilik. Pembatasan email, preferences, retry/idempotency dan panduan staging ada di [NOTIFICATIONS.md](NOTIFICATIONS.md).
+
+
+## Lampiran PDF pada migrasi 012
+
+Struktur tabel tidak berubah. prepare_notification_email menerima envelope terenkripsi versi2 sampai3MB dengan metadata ticketIds maksimal6. notification_email_context menambahkan kind/bookingId/ticketId dan memeriksa seluruh tiket lampiran tetap aktif serta milik booking/pemilik job. notification_attachment_tickets hanya dapat dipanggil service_role dengan lease yang valid dan mengembalikan record tiket aktif dari booking job atau satu tiket saat resend. notification_pdf_configuration dipakai preflight sebelum worker melakukan claim. Detail keamanan, kompatibilitas payload lama dan aktivasi ada di TICKET_PDF_EMAIL.md.

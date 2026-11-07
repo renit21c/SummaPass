@@ -1,4 +1,6 @@
-import type { CheckInResult } from '../check-in/core';
+import type { CheckInResult,StaffReport,CheckInAuditRecord } from '../check-in/core';
+import type { PersistedCheckIn } from '../check-in/persistence';
+import type { StaffAssignment } from '../organizer/staff-persistence';
 import { seedManaged,eventInput,dateParts,type ManagedEvent,type EventInput } from '../catalog/core';
 import { demoOrganizerEvents,type OrganizerSnapshot } from '../organizer/core';
 import { createTicketPack,decryptToken,tokenHash } from '../tickets/crypto';
@@ -7,8 +9,21 @@ import { randomUUID,randomBytes } from 'node:crypto';
 import { events } from '../events/data';
 import { BookingError,reserveSchema,type Booking,type Inventory,type ReserveInput } from './types';
 export class DemoBookingStore {
- private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>();
- constructor(private clock=()=>Date.now(),catalog?:ManagedEvent[]){this.catalog=new Map((catalog??events.map(seedManaged)).map(e=>[e.slug,structuredClone(e)]));}
+ private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>(); private checkIns:PersistedCheckIn[]=[]; private staffAssignments:StaffAssignment[]=[]; private checkInAudits:CheckInAuditRecord[]=[];
+ constructor(private clock=()=>Date.now(),catalog?:ManagedEvent[],initialCheckIns?:PersistedCheckIn[],initialStaff?:StaffAssignment[],initialAudits?:CheckInAuditRecord[]){
+  this.catalog=new Map((catalog??events.map(seedManaged)).map(e=>[e.slug,structuredClone(e)]));
+  if(initialCheckIns)this.checkIns=[...initialCheckIns];
+  if(initialAudits)this.checkInAudits=[...initialAudits];
+  if(initialStaff&&initialStaff.length){
+   this.staffAssignments=[...initialStaff];
+  } else {
+   for(const e of this.catalog.values()){
+    if(demoOrganizerEvents.includes(e.slug)){
+     this.staffAssignments.push({eventId:e.id,slug:e.slug,userId:'staff-demo',name:'Petugas Check-in Demo',email:'petugas@summapass.id',role:'STAFF',assignedAt:'2026-11-03T00:00:00.000Z'});
+    }
+   }
+  }
+ }
  private expire(){for(const b of this.bookings.values())if(b.status==='PENDING_PAYMENT'&&Date.parse(b.expiresAt)<=this.clock()){b.status='EXPIRED';b.paymentStatus='EXPIRED';}}
  inventory(slug:string,privateRead=false):Inventory{
   const event=this.catalog.get(slug);if(!event||(!privateRead&&event.status!=='PUBLISHED'))throw new BookingError('NOT_FOUND','Event tidak ditemukan.',404);this.expire();
@@ -59,9 +74,45 @@ export class DemoBookingStore {
  updateEvent(userId:string,id:string,raw:EventInput){const old=this.assignedEvent(userId,id),input=eventInput.parse(raw);if(old.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event arsip tidak dapat diedit.');this.expire();const live=[...this.bookings.values()].filter(b=>b.slug===old.slug&&(b.status==='CONFIRMED'||b.status==='PENDING_PAYMENT'));if(live.length&&(Date.parse(input.startsAt)!==Date.parse(old.startsAt)||Date.parse(input.endsAt)!==Date.parse(old.endsAt)||input.area!==old.area))throw new BookingError('EVENT_LOCKED','Jadwal dan lokasi tidak dapat diubah saat ada tiket terjual atau hold aktif.');const inv=this.inventory(old.slug,true);for(const [section,quota] of [['Front',input.frontQuota],['Regular',input.regularQuota]] as const)if(quota<inv.seats.filter(s=>s.section===section&&s.status!=='AVAILABLE').length)throw new BookingError('QUOTA','Kuota tidak boleh di bawah jumlah kursi terjual dan hold aktif.');const e:ManagedEvent={...old,...input,...dateParts(input.startsAt),headline:input.title.toUpperCase()};this.catalog.set(e.slug,e);return structuredClone(e);}
  eventStatus(userId:string,id:string,action:'publish'|'unpublish'|'archive'){const e=this.assignedEvent(userId,id);this.expire();if(e.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event sudah diarsipkan.');if(action==='publish'&&Date.parse(e.startsAt)<=this.clock())throw new BookingError('DATE','Acara yang sudah dimulai tidak dapat dipublikasikan.');if(action==='archive'&&(Date.parse(e.endsAt)>this.clock()||[...this.bookings.values()].some(b=>b.slug===e.slug&&b.status==='PENDING_PAYMENT')))throw new BookingError('ACTIVE','Arsip hanya setelah acara selesai dan tidak ada hold aktif.');e.status=action==='publish'?'PUBLISHED':action==='unpublish'?'UNPUBLISHED':'ARCHIVED';this.catalog.set(e.slug,e);return structuredClone(e);}
  eventCover(userId:string,id:string,url:string){const e=this.assignedEvent(userId,id);if(e.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event arsip tidak dapat diedit.');if(!url.startsWith(`/api/covers/${id}_`)||!/^\/api\/covers\/[a-f0-9-]{36}_[a-f0-9-]{36}\.webp$/.test(url))throw new BookingError('COVER','Cover tidak valid.',400);e.coverUrl=url;this.catalog.set(e.slug,e);return structuredClone(e);}
- staffEvents(){return [...this.catalog.values()].filter(e=>demoOrganizerEvents.includes(e.slug)).map(e=>({slug:e.slug,title:e.title}));}
+ getStaffAssignments(){return structuredClone(this.staffAssignments);}
+ eventStaff(userId:string,eventId:string):StaffAssignment[]{
+  const e=this.assignedEvent(userId,eventId);
+  return this.staffAssignments.filter(s=>s.eventId===e.id||s.slug===e.slug);
+ }
+ assignStaff(userId:string,eventId:string,name:string,targetUserId?:string):StaffAssignment{
+  const e=this.assignedEvent(userId,eventId);
+  const uid=targetUserId||`staff-${randomUUID().slice(0,8)}`;
+  const existing=this.staffAssignments.find(s=>(s.eventId===e.id||s.slug===e.slug)&&(s.userId===uid||s.name.toLowerCase()===name.trim().toLowerCase()));
+  if(existing)return structuredClone(existing);
+  const item:StaffAssignment={
+   eventId:e.id,
+   slug:e.slug,
+   userId:uid,
+   name:name.trim(),
+   email:`${name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'.')}@summapass.id`,
+   role:'STAFF',
+   assignedAt:new Date(this.clock()).toISOString()
+  };
+  this.staffAssignments.push(item);
+  return structuredClone(item);
+ }
+ unassignStaff(userId:string,eventId:string,targetUserId:string){
+  const e=this.assignedEvent(userId,eventId);
+  this.staffAssignments=this.staffAssignments.filter(s=>!((s.eventId===e.id||s.slug===e.slug)&&s.userId===targetUserId));
+ }
+ isStaffAssigned(staffId:string,slug:string):boolean{
+  const e=this.catalog.get(slug)??[...this.catalog.values()].find(x=>x.slug===slug||x.id===slug);
+  if(!e)return false;
+  if(demoOrganizerEvents.includes(e.slug)){
+   return true;
+  }
+  return this.staffAssignments.some(s=>(s.eventId===e.id||s.slug===e.slug)&&(s.userId===staffId||(!staffId&&s.role==='STAFF')));
+ }
+ staffEvents(staffId?:string){
+  return [...this.catalog.values()].filter(e=>this.isStaffAssigned(staffId??'staff-demo',e.slug)).map(e=>({slug:e.slug,title:e.title}));
+ }
  checkIn(staffId:string,slug:string,credential:string,confirm:boolean):CheckInResult{
-  if(!demoOrganizerEvents.includes(slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+  if(!this.isStaffAssigned(staffId,slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
   const ticket=[...this.issued.values()].find(t=>/^SPT-[A-F0-9]{32}$/i.test(credential)?t.reference===credential.toUpperCase():t.tokenHash===tokenHash(credential));
   if(!ticket)return {status:'INVALID'};
   if(ticket.slug!==slug)return {status:'WRONG_EVENT'};
@@ -69,8 +120,91 @@ export class DemoBookingStore {
   const booking=this.bookings.get(ticket.bookingId);if(!booking||booking.status!=='CONFIRMED'||booking.paymentStatus!=='PAID')return {status:'UNPAID'};
   const view=()=>({id:ticket.id,reference:ticket.reference,attendeeName:ticket.attendeeName,seatLabel:ticket.seatLabel,categoryName:ticket.categoryName,...(ticket.checkedInAt?{checkedInAt:ticket.checkedInAt}:{})});
   if(ticket.checkedInAt)return {status:'ALREADY_USED',ticket:view()};
-  if(confirm){ticket.checkedInAt=new Date(this.clock()).toISOString();ticket.checkedInBy=staffId;return {status:'CHECKED_IN',ticket:view()};}
+  if(confirm){
+   const now=new Date(this.clock()).toISOString();
+   ticket.checkedInAt=now;
+   ticket.checkedInBy=staffId;
+   this.checkIns.push({
+    ticketId:ticket.id,
+    reference:ticket.reference,
+    attendeeName:ticket.attendeeName,
+    seatLabel:ticket.seatLabel,
+    categoryName:ticket.categoryName,
+    checkedInAt:now,
+    staffId,
+    slug
+   });
+   return {status:'CHECKED_IN',ticket:view()};
+  }
   return {status:'VALID',ticket:view()};
  }
-
+ getCheckIns(){return structuredClone(this.checkIns);}
+ staffReport(staffId:string,slug:string):StaffReport{
+  if(!this.isStaffAssigned(staffId,slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+  const event=this.catalog.get(slug);
+  const eventCheckIns=this.checkIns.filter(c=>c.slug===slug);
+  const totalCheckedInByMe=eventCheckIns.filter(c=>c.staffId===staffId).length;
+  const totalEventCheckedIn=eventCheckIns.length;
+  const totalSold=this.inventory(slug,true).seats.filter(s=>s.status==='SOLD').length;
+  const attendanceRate=totalSold>0?Math.min(100,Math.round((totalEventCheckedIn/totalSold)*100)):0;
+  const last=eventCheckIns.filter(c=>c.staffId===staffId).sort((a,b)=>Date.parse(b.checkedInAt)-Date.parse(a.checkedInAt))[0];
+  const history=eventCheckIns.map(c=>({
+   ticketId:c.ticketId,
+   reference:c.reference,
+   attendeeName:c.attendeeName,
+   seatLabel:c.seatLabel,
+   categoryName:c.categoryName,
+   checkedInAt:c.checkedInAt,
+   staffId:c.staffId,
+   isMe:c.staffId===staffId
+  })).sort((a,b)=>Date.parse(b.checkedInAt)-Date.parse(a.checkedInAt));
+  return {
+   slug,
+   eventTitle:event?.title??slug,
+   totalCheckedInByMe,
+   totalEventCheckedIn,
+   totalSold,
+   attendanceRate,
+   lastCheckedInAt:last?.checkedInAt,
+   history,
+   audits:this.checkInAudits.filter(a=>a.slug===slug).sort((a,b)=>Date.parse(b.performedAt)-Date.parse(a.performedAt))
+  };
+ }
+ revertCheckIn(staffId:string,slug:string,ticketId:string,reason:string):{status:'REVERTED';ticket:CheckInResult['ticket'];audit:CheckInAuditRecord}{
+  if(!this.isStaffAssigned(staffId,slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+  if(!reason||reason.trim().length<3)throw new BookingError('INVALID_REASON','Alasan koreksi wajib diisi minimal 3 karakter.',400);
+  const ticket=this.issued.get(ticketId)??[...this.issued.values()].find(t=>t.id===ticketId);
+  if(!ticket)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);
+  if(ticket.slug!==slug)throw new BookingError('WRONG_EVENT','Tiket ini untuk event lain.',400);
+  if(!ticket.checkedInAt)throw new BookingError('NOT_CHECKED_IN','Tiket ini belum pernah di-check-in.',400);
+  const previousCheckedInAt=ticket.checkedInAt;
+  ticket.checkedInAt=undefined;
+  ticket.checkedInBy=undefined;
+  this.checkIns=this.checkIns.filter(c=>c.ticketId!==ticket.id);
+  const staff=this.staffAssignments.find(s=>s.userId===staffId&&s.slug===slug);
+  const now=new Date(this.clock()).toISOString();
+  const audit:CheckInAuditRecord={
+   id:randomUUID(),
+   ticketId:ticket.id,
+   reference:ticket.reference,
+   slug,
+   attendeeName:ticket.attendeeName,
+   action:'REVERT_CHECK_IN',
+   reason:reason.trim(),
+   performedBy:staffId,
+   performedByName:staff?.name??'Petugas Check-in',
+   performedAt:now,
+   previousCheckedInAt
+  };
+  this.checkInAudits.unshift(audit);
+  const view={id:ticket.id,reference:ticket.reference,attendeeName:ticket.attendeeName,seatLabel:ticket.seatLabel,categoryName:ticket.categoryName};
+  return {status:'REVERTED',ticket:view,audit};
+ }
+ getCheckInAudits(staffId:string,slug:string):CheckInAuditRecord[]{
+  if(!this.isStaffAssigned(staffId,slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+  return this.checkInAudits.filter(a=>a.slug===slug).sort((a,b)=>Date.parse(b.performedAt)-Date.parse(a.performedAt));
+ }
+ getAllCheckInAudits():CheckInAuditRecord[]{
+  return structuredClone(this.checkInAudits);
+ }
 }

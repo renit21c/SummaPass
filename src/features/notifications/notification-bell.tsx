@@ -119,7 +119,7 @@ export function NotificationBell({ loggedIn }: { loggedIn: boolean }) {
           </div>
 
           <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-            {recent.length === 0 ? (
+            {loading ? <p role="status">Memuat notifikasi...</p> : error ? <p role="alert">{error}</p> : recent.length === 0 ? (
               <p style={{ textAlign: 'center', padding: 24, fontSize: 13, color: 'var(--muted)', margin: 0 }}>
                 Belum ada notifikasi.
               </p>

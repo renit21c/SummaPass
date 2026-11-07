@@ -19,8 +19,8 @@ export const reserveSchema = z.object({
 export type ReserveInput=z.infer<typeof reserveSchema>;
 export type SeatStatus='AVAILABLE'|'RESERVED'|'SOLD';
 export type Seat={id:string;section:string;row:string;number:number;x:number;y:number;status:SeatStatus};
-export type Category={id:string;name:string;price:number;quota:number;sections:string[]};
-export type Inventory={eventId:string;slug:string;categories:Category[];seats:Seat[];serverNow:string;mode:'demo'|'supabase'};
+export type Category={id:string;name:string;price:number;quota:number;salesStart?:string;salesEnd?:string;remaining?:number;sections:string[]};
+export type Inventory={eventId:string;slug:string;width?:number;height?:number;version?:number;categories:Category[];seats:Seat[];serverNow:string;mode:'demo'|'supabase'};
 export type Booking={id:string;reference:string;slug:string;eventTitle?:string;userId:string;categoryId:string;categoryName:string;status:'PENDING_PAYMENT'|'CANCELLED'|'EXPIRED'|'CONFIRMED'|'FAILED';expiresAt:string;total:number;paymentStatus?:'PENDING'|'PAID'|'FAILED'|'EXPIRED'|'CANCELLED';items:{seatId:string;label:string;name:string;price:number}[]};
 export class BookingError extends Error{constructor(public code:string,message:string,public status=409){super(message);this.name='BookingError';}}
 export const statusLabel={AVAILABLE:'Tersedia',RESERVED:'Ditahan',SOLD:'Terjual'};

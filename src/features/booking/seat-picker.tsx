@@ -43,6 +43,11 @@ export function SeatPicker({
 
   const category = data.categories.find(c => c.id === categoryId);
   const chosen = data.seats.filter(s => selected.includes(s.id));
+  useEffect(() => {
+    const current=data.categories.find(c=>c.id===categoryId);
+    if(!current){setCategoryId(data.categories[0]?.id??'');setSelected([]);return;}
+    setSelected(previous=>previous.filter(id=>data.seats.some(s=>s.id===id&&s.status==='AVAILABLE'&&current.sections.includes(s.section))).slice(0,Math.min(6,current.remaining??current.quota)));
+  },[data,categoryId]);
 
   // Sync first ticket name if user opted in
   useEffect(() => {
@@ -121,8 +126,8 @@ export function SeatPicker({
       if (previous.includes(id)) {
         return previous.filter(s => s !== id);
       }
-      if (previous.length >= 6) {
-        setMessage('Maksimal 6 kursi dalam satu reservasi.');
+      if (previous.length >= Math.min(6, category?.remaining ?? category?.quota ?? 0)) {
+        setMessage('Batas kursi atau kuota kategori sudah tercapai.');
         return previous;
       }
       return [...previous, id];
@@ -197,7 +202,7 @@ export function SeatPicker({
             {data.categories.map(c => {
               const isActive = c.id === categoryId;
               const isVip = c.name.toLowerCase().includes('vip');
-              const availableInCat = data.seats.filter(s => c.sections.includes(s.section) && s.status === 'AVAILABLE').length;
+              const availableInCat = Math.min(c.remaining ?? c.quota, data.seats.filter(s => c.sections.includes(s.section) && s.status === 'AVAILABLE').length);
 
               return (
                 <button
@@ -252,17 +257,21 @@ export function SeatPicker({
 
           {view === 'map' ? (
             <div className="seat-map">
-              <svg viewBox="0 0 520 570" role="group" aria-label="Peta kursi venue, gunakan Tab dan Enter atau Spasi untuk memilih">
-                <rect x="85" y="12" width="350" height="45" rx="8" className="stage" />
-                <text x="260" y="41" textAnchor="middle" className="stage-label">PANGGUNG</text>
-                {sections.map((section, index) => (
-                  <g key={section}>
-                    <text x="260" y={100 + index * 235} textAnchor="middle" className="section-label">{section}</text>
-                    {['A', 'B', 'C'].map((row, r) => (
-                      <text key={row} x="25" y={156 + index * 235 + r * 54} className="row-label">{row}</text>
-                    ))}
-                  </g>
-                ))}
+              <svg viewBox={`0 0 ${data.width ?? 520} ${data.height ?? 570}`} role="group" aria-label="Peta kursi venue, gunakan Tab dan Enter atau Spasi untuk memilih">
+                <rect x={((data.width??520)-Math.min(350,(data.width??520)-40))/2} y="12" width={Math.min(350,(data.width??520)-40)} height="45" rx="8" className="stage" />
+                <text x={(data.width??520)/2} y="41" textAnchor="middle" className="stage-label">PANGGUNG</text>
+                {sections.map(section=>{
+                  const seats=data.seats.filter(s=>s.section===section);
+                  const left=Math.min(...seats.map(s=>s.x)),right=Math.max(...seats.map(s=>s.x))+32;
+                  const x=(left+right)/2,y=Math.min(...seats.map(s=>s.y))-28,half=section.length*5+12;
+                  const blocked=data.seats.some(s=>s.x-6<x+half&&s.x+38>x-half&&s.y-8<y+6&&s.y+36>y-18);
+                  return blocked?null:<text key={section} x={x} y={y} textAnchor="middle" className="section-label">{section}</text>;
+                })}
+                {sections.flatMap(section => [...new Set(data.seats.filter(s=>s.section===section).map(s=>s.row))].map(row=>{
+                  const seats=data.seats.filter(s=>s.section===section&&s.row===row);
+                  const first=seats.reduce((a,b)=>a.x<b.x?a:b);
+                  return <text key={`${section}:${row}`} x={first.x-16} y={first.y+18} textAnchor="end" className="row-label">{row}</text>;
+                }))}
                 {data.seats.map(s => {
                   const eligible = !!category?.sections.includes(s.section);
                   const isSelected = selected.includes(s.id);
@@ -301,7 +310,7 @@ export function SeatPicker({
               {sections.filter(s => category?.sections.includes(s)).map(section => (
                 <div key={section}>
                   <h3>{section}</h3>
-                  {['A', 'B', 'C'].map(row => (
+                  {[...new Set(data.seats.filter(s=>s.section===section).map(s=>s.row))].map(row => (
                     <div className="seat-list-row" key={row}>
                       <span>Baris {row}</span>
                       <div>

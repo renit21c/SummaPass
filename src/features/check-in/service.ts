@@ -1,10 +1,77 @@
 import 'server-only';
 import { getSession,canAccessRole } from '@/lib/auth/session';
 import { BookingError } from '../booking/types';
-import { demoCheckIn,demoStaffEvents } from '../booking/service';
+import { demoCheckIn,demoStaffEvents,demoStaffReport,demoRevertCheckIn,demoCheckInAudits } from '../booking/service';
 import { supabaseServer } from '@/lib/supabase/server';
 import { tokenHash } from '../tickets/crypto';
-import type { CheckInResult } from './core';
+import type { CheckInResult,StaffReport,CheckInAuditRecord } from './core';
 async function staff(){const user=await getSession();if(!user)throw new BookingError('AUTH','Silakan masuk kembali.',401);if(!await canAccessRole(user,'STAFF'))throw new BookingError('FORBIDDEN','Akses petugas diperlukan.',403);return user;}
-export async function staffEvents(){const user=await staff();if(user.mode==='demo')return demoStaffEvents();const client=await supabaseServer();const {data,error}=await client.rpc('staff_events');if(error)throw new BookingError('DATABASE','Daftar event belum tersedia. Periksa migrasi check-in.',503);return data as {slug:string;title:string}[];}
+export async function staffEvents(){const user=await staff();if(user.mode==='demo')return demoStaffEvents(user.id);const client=await supabaseServer();const {data,error}=await client.rpc('staff_events');if(error)throw new BookingError('DATABASE','Daftar event belum tersedia. Periksa migrasi check-in.',503);return data as {slug:string;title:string}[];}
 export async function checkIn(slug:string,credential:string,confirm:boolean):Promise<CheckInResult>{const user=await staff();if(user.mode==='demo')return demoCheckIn(user.id,slug,credential,confirm);const reference=/^SPT-[A-F0-9]{32}$/i.test(credential)?credential.toUpperCase():null;const {data,error}=await (await supabaseServer()).rpc('validate_check_in',{p_slug:slug,p_reference:reference,p_hash:reference?null:tokenHash(credential),p_confirm:confirm});if(error)throw new BookingError('DATABASE','Tiket belum dapat diperiksa. Coba lagi.',503);if(data?.error)throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);return data as CheckInResult;}
+export async function staffReport(slug:string):Promise<StaffReport>{
+  const user=await staff();
+  if(user.mode==='demo')return demoStaffReport(user.id,slug);
+  const client=await supabaseServer();
+  const {data:events,error:eErr}=await client.from('events').select('id,title,slug').eq('slug',slug);
+  if(eErr||!events?.length)throw new BookingError('NOT_FOUND','Event tidak ditemukan.',404);
+  const event=events[0];
+  const {data:hasAccess}=await client.rpc('has_event_access',{target_event:event.id,target_role:'STAFF'});
+  if(!hasAccess)throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
+
+  // Try staff_history RPC first, fallback to check_ins table
+  const { data: histData } = await client.rpc('staff_history', { p_slug: slug });
+  let history: StaffReport['history'] = [];
+  if (Array.isArray(histData) && histData.length > 0) {
+    history = histData as StaffReport['history'];
+  } else {
+    const {data:ciData,error:ciErr}=await client.from('check_ins').select('ticket_id,checked_in_at,staff_id').eq('event_id',event.id).order('checked_in_at',{ascending:false});
+    if(ciErr)throw new BookingError('DATABASE','Gagal memuat riwayat check-in.',503);
+    const list=(ciData??[]) as {ticket_id:string;checked_in_at:string;staff_id:string}[];
+    history = list.map(c=>({
+      ticketId:c.ticket_id,
+      reference:'SPT-'+c.ticket_id.replaceAll('-','').toUpperCase(),
+      attendeeName:'Peserta Tiket',
+      seatLabel:'Kursi',
+      categoryName:'Regular',
+      checkedInAt:c.checked_in_at,
+      staffId:c.staff_id,
+      isMe:c.staff_id===user.id
+    }));
+  }
+
+  const myCheckIns=history.filter(c=>c.isMe || c.staffId===user.id);
+  const { data: auditData } = await client.rpc('check_in_audits', { p_slug: slug });
+  const audits = (auditData ?? []) as CheckInAuditRecord[];
+  return {
+    slug,
+    eventTitle:event.title,
+    totalCheckedInByMe:myCheckIns.length,
+    totalEventCheckedIn:history.length,
+    totalSold:history.length,
+    attendanceRate:100,
+    lastCheckedInAt:myCheckIns[0]?.checkedInAt,
+    history,
+    audits
+  };
+}
+
+export async function revertCheckIn(slug:string,ticketId:string,reason:string){
+ const user=await staff();
+ if(user.mode==='demo')return demoRevertCheckIn(user.id,slug,ticketId,reason);
+ const client=await supabaseServer();
+ const {data,error}=await client.rpc('revert_check_in',{p_slug:slug,p_ticket_id:ticketId,p_reason:reason.trim()});
+ if(error||data?.error){
+  const message=data?.message??error?.message??'Gagal membatalkan check-in.';
+  throw new BookingError(data?.error??'FORBIDDEN',message,data?.error==='NOT_FOUND'?404:403);
+ }
+ return data;
+}
+
+export async function checkInAudits(slug:string):Promise<CheckInAuditRecord[]>{
+ const user=await staff();
+ if(user.mode==='demo')return demoCheckInAudits(user.id,slug);
+ const client=await supabaseServer();
+ const {data,error}=await client.rpc('check_in_audits',{p_slug:slug});
+ if(error)throw new BookingError('DATABASE','Gagal memuat log audit check-in.',503);
+ return (data??[]) as CheckInAuditRecord[];
+}
