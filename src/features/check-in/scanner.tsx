@@ -15,6 +15,10 @@ import {
   X,
   CheckCircle2,
   Download,
+  SwitchCamera,
+  Upload,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { outcomeLabels, filterCheckInsByPeriod, type CheckInResult, type StaffReport, type CheckInPeriod } from './core';
 
@@ -25,11 +29,14 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [camera, setCamera] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [report, setReport] = useState<StaffReport | null>(null);
   const [historySearch, setHistorySearch] = useState('');
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [period, setPeriod] = useState<CheckInPeriod>('ALL');
   const [staffScope, setStaffScope] = useState<'all' | 'me'>('all');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Tab & Koreksi states
   const [activeTab, setActiveTab] = useState<'history' | 'audit'>('history');
@@ -87,6 +94,41 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
     }
   }, [slug]);
 
+  function playBeep(success = true) {
+    if (!soundEnabled) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      if (success) {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+      } else {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.25);
+      }
+    } catch {
+      // Audio autoplay policy fallback
+    }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(success ? [100] : [100, 60, 100]);
+      } catch {}
+    }
+  }
+
   async function inspect(value: string, confirm = false) {
     stop();
     setBusy(true);
@@ -99,12 +141,21 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
         body: JSON.stringify({ slug, credential: value, confirm }),
       });
       const data = await r.json();
-      if (!r.ok) throw Error(data.error);
+      if (!r.ok) {
+        playBeep(false);
+        throw Error(data.error);
+      }
       setResult(data);
+      if (data.status === 'VALID' || data.status === 'CHECKED_IN') {
+        playBeep(true);
+      } else {
+        playBeep(false);
+      }
       if (confirm && data.status === 'CHECKED_IN') {
         void fetchReport(slug);
       }
     } catch (e) {
+      playBeep(false);
       setError(e instanceof Error ? e.message : 'Koneksi terputus. Periksa ulang tiket sebelum mencoba lagi.');
     } finally {
       setBusy(false);
@@ -163,7 +214,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
     }
   }
 
-  async function start() {
+  async function start(customFacing?: 'environment' | 'user') {
     stop();
     setResult(null);
     setError('');
@@ -171,11 +222,12 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
       setError('Kamera tidak tersedia di browser ini. Gunakan nomor tiket di bawah.');
       return;
     }
+    const targetMode = customFacing ?? facingMode;
     const run = generation.current;
     setCamera(true);
     try {
       const media = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: { facingMode: { ideal: targetMode } },
         audio: false,
       });
       if (run !== generation.current) {
@@ -217,6 +269,60 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
         stop();
         setError('Kamera tidak dapat dibuka. Periksa izin kamera atau gunakan nomor tiket.');
       }
+    }
+  }
+
+  function switchFacingMode() {
+    const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(nextMode);
+    if (camera) {
+      void start(nextMode);
+    }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setError('');
+    try {
+      const { default: decode } = await import('jsqr');
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          setError('Gagal membaca gambar QR.');
+          setBusy(false);
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const qr = decode(imgData.data, imgData.width, imgData.height);
+        if (qr?.data) {
+          setCredential(qr.data);
+          void inspect(qr.data);
+        } else {
+          setError('QR code tidak terdeteksi pada gambar. Pastikan gambar jelas atau gunakan input manual.');
+          playBeep(false);
+          setBusy(false);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        setError('Gagal memuat file gambar.');
+        setBusy(false);
+      };
+      img.src = objectUrl;
+    } catch {
+      setError('Terjadi kesalahan saat memproses gambar.');
+      setBusy(false);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
 
@@ -285,10 +391,56 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                   <span>Kamera belum aktif</span>
                 </div>
               )}
-              <button className="button" disabled={busy} onClick={() => (camera ? stop() : void start())}>
-                <Camera size={20} />
-                {camera ? 'Hentikan kamera' : 'Buka kamera'}
-              </button>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '12px' }}>
+                <button className="button" disabled={busy} onClick={() => (camera ? stop() : void start())}>
+                  <Camera size={18} />
+                  {camera ? 'Hentikan kamera' : 'Buka kamera'}
+                </button>
+
+                {camera && (
+                  <button
+                    className="button button-light"
+                    type="button"
+                    disabled={busy}
+                    onClick={switchFacingMode}
+                    title={facingMode === 'environment' ? 'Ganti ke kamera depan' : 'Ganti ke kamera belakang'}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <SwitchCamera size={18} />
+                    <span>{facingMode === 'environment' ? 'Kamera Belakang' : 'Kamera Depan'}</span>
+                  </button>
+                )}
+
+                <button
+                  className="button button-light"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Pindai QR dari file gambar"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Upload size={18} />
+                  <span>Unggah QR</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
+
+                <button
+                  className="button button-light"
+                  type="button"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  title={soundEnabled ? 'Matikan suara scan' : 'Aktifkan suara scan'}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}
+                  aria-label={soundEnabled ? 'Matikan suara scan' : 'Aktifkan suara scan'}
+                >
+                  {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                </button>
+              </div>
             </section>
 
             <section className="checkin-manual">
