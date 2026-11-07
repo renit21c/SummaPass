@@ -45,11 +45,27 @@ try {
     for(const [name,args] of [
       ['list_notifications',{p_cursor:null,p_limit:1}],
       ['request_ticket_email',{p_ticket:'00000000-0000-4000-8000-000000000000',p_key:'00000000-0000-4000-8000-000000000000'}],
-      ['claim_notification_emails',{p_limit:1}]
+      ['claim_notification_emails',{p_limit:0}]
     ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('Akses anonim notifikasi harus ditolak. Periksa migrasi 011.');}
     console.log('OK: RPC notifikasi menolak akses anonim');
     const pdf = await requireResult('Lampiran PDF email', admin.rpc('notification_pdf_configuration'));
     if(pdf?.version!==2)throw new Error('Terapkan migrasi 012 untuk email dengan PDF.');
+  }
+  if(process.argv.includes('--operations')) {
+    const configuration=await requireResult('Operasional notifikasi versi 3',admin.rpc('notification_operations_configuration'));
+    if(configuration?.version!==3)throw new Error('Terapkan migrasi 013 sampai 015.');
+    await requireResult('Undangan petugas',admin.from('staff_invitations').select('id,status,expires_at').limit(1));
+    await requireResult('Pembatalan event',admin.from('events').select('id,cancelled_at').limit(1));
+    await requireResult('Receipt pengiriman',admin.from('notification_receipts').select('webhook_id,event_type').limit(1));
+    const id='00000000-0000-4000-8000-000000000000';
+    for(const [name,args] of [
+      ['invite_event_staff',{p_event:id,p_email:'metadata@example.test',p_key:id}],
+      ['accept_staff_invitation',{p_id:id}],
+      ['cancel_event',{p_event:id,p_reason:'Metadata check only',p_key:id}],
+      ['notification_operations',{p_event:id}],
+      ['record_notification_receipt',{p_webhook:null,p_provider:null,p_type:'email.delivered',p_at:null}]
+    ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('RPC operasional harus menolak akses anonim: '+name);}
+    console.log('OK: RPC operasional menolak akses anonim');
   }
   console.log('Selesai. Pemeriksaan ini hanya membaca konfigurasi dan metadata; bukan bukti pengujian transaksi atau Storage RLS lengkap.');
 } catch (error) { console.error(error instanceof Error ? error.message : 'Pemeriksaan Supabase gagal.'); process.exitCode = 1; }

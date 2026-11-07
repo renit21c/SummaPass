@@ -137,7 +137,7 @@ export function EventGalleryCarousel({ events }: { events: Event[] }) {
             <button type="button" className="event-preview-close" onClick={closePreview} aria-label="Tutup preview">
               <X size={21} />
             </button>
-            <div className="event-preview-cover"><Poster event={selectedEvent} large /></div>
+            <div className="event-preview-cover"><Poster event={selectedEvent} /></div>
             <div className="event-preview-copy">
               <span className="category-badge">{selectedEvent.category}</span>
               <h2 id="event-preview-title">{selectedEvent.title}</h2>

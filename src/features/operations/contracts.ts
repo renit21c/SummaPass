@@ -1,0 +1,11 @@
+import { z } from 'zod';
+export const uuid = z.string().uuid();
+export const inviteInput = z.object({ email: z.string().trim().email().max(254), key: uuid });
+export const invitationAction = z.object({ action: z.enum(['revoke', 'resend']), key: uuid });
+export const cancelInput = z.object({ reason: z.string().trim().min(10).max(1000), key: uuid });
+export const retryInput = z.object({ jobId: uuid, reason: z.string().trim().min(10).max(500) });
+export const queueStatus = z.enum(['PENDING', 'PROCESSING', 'RETRY', 'SENT', 'FAILED', 'SKIPPED']);
+export const invitationSchema = z.object({ id: uuid, email: z.string(), status: z.string(), expiresAt: z.string(), createdAt: z.string(), acceptedAt: z.string().nullable() });
+export type Invitation = z.infer<typeof invitationSchema>;
+export const queuePage = z.object({ items: z.array(z.object({ id: uuid, kind: z.string(), status: queueStatus, deliveryStatus: z.string().nullable(), attempts: z.number(), createdAt: z.string(), sentAt: z.string().nullable(), nextAttemptAt: z.string(), errorCode: z.string().nullable(), canRetry: z.boolean() })), nextCursor: uuid.nullable(), counts: z.record(z.string(), z.number()) });
+export type QueuePage = z.infer<typeof queuePage>;

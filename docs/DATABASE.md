@@ -106,3 +106,14 @@ Worker-only RPC memakai service_role: scheduler, claim maksimal5 dengan SKIP LOC
 ## Lampiran PDF pada migrasi 012
 
 Struktur tabel tidak berubah. prepare_notification_email menerima envelope terenkripsi versi2 sampai3MB dengan metadata ticketIds maksimal6. notification_email_context menambahkan kind/bookingId/ticketId dan memeriksa seluruh tiket lampiran tetap aktif serta milik booking/pemilik job. notification_attachment_tickets hanya dapat dipanggil service_role dengan lease yang valid dan mengembalikan record tiket aktif dari booking job atau satu tiket saat resend. notification_pdf_configuration dipakai preflight sebelum worker melakukan claim. Detail keamanan, kompatibilitas payload lama dan aktivasi ada di TICKET_PDF_EMAIL.md.
+
+
+## Operasional backend, migrasi 013 sampai 015
+
+`staff_invitations` menyimpan event, email tujuan, inviter, expiry, status dan idempotency key. Tidak ada grant browser langsung; RPC memeriksa organizer atau email Auth terverifikasi penerima. Index unik pending per event/email, index email/status, dan unique inviter/request key menjaga dedup.
+
+`notifications` menambahkan invitation_id; owner dan booking boleh kosong hanya pada kind STAFF_INVITED. Kind baru BOOKING_EXPIRED dan EVENT_CANCELLED memakai outbox yang sama. Penerimaan undangan menghubungkan notifikasi ke akun penerima. `events` menambahkan cancelled_at/cancellation_reason/cancellation_key dengan constraint kelengkapan. Status pembayaran historis tidak diubah menjadi refund. Scheduler membersihkan expiry dengan event lock dan bounded batch.
+
+`notification_receipts` menyimpan webhook ID unik, provider ID, jenis event dan waktu, tanpa body/PII provider. RLS aktif, tidak ada akses langsung browser. Status delivery dihitung melalui provider ID agar receipt sebelum ack tetap terbaca. RPC operasi antrean hanya metadata event assigned. Retry tidak mereset attempts, payload atau first_attempt_at.
+
+Seluruh helper serializer/RPC lama yang dibungkus dicabut akses langsungnya. Migration 015 menyelaraskan lock assignment/check-in; assignment ditinjau ulang setelah memperoleh event lock. Lihat [BACKEND_OPERATIONS.md](BACKEND_OPERATIONS.md) untuk kontrak, aktivasi dan acceptance staging.

@@ -8,11 +8,13 @@ import type { StoredTicket } from '@/features/tickets/types';
 import { authMode } from '@/lib/auth/config';
 import { BookingError } from '@/features/booking/types';
 const jobSchema=z.object({id:z.string().uuid(),leaseToken:z.string().uuid(),attempts:z.number().int()});
-const contextSchema=z.object({userId:z.string().uuid(),kind:z.string(),bookingId:z.string().uuid(),ticketId:z.string().uuid().nullable(),title:z.string(),message:z.string(),link:z.string(),isReminder:z.boolean(),payload:storedEmailPayload.nullable()});
+const contextSchema=z.object({userId:z.string().uuid().nullable(),recipientEmail:z.string().email().optional(),kind:z.string(),bookingId:z.string().uuid().nullable(),ticketId:z.string().uuid().nullable(),title:z.string(),message:z.string(),link:z.string(),isReminder:z.boolean(),payload:storedEmailPayload.nullable()});
 export async function runNotifications(){
  if(authMode()!=='supabase')throw new BookingError('SUPABASE_REQUIRED','Worker memerlukan mode Supabase.',409);
  const admin=notificationAdmin();
  async function rpc(name:string,args:Record<string,unknown>={}){const {data,error}=await admin.rpc(name,args);if(error)throw new BookingError('DATABASE','Antrean notifikasi belum dapat diproses.',503);return data as unknown;}
+ const operations=await admin.rpc('notification_operations_configuration');
+ if(operations.error||operations.data?.version!==3)throw new BookingError('MIGRATION_REQUIRED','Terapkan migrasi 013 sampai 015 sebelum menjalankan worker.',503);
  const scheduled=await rpc('enqueue_due_notifications');
  const enabled=process.env.SUMMAPASS_EMAIL_ENABLED==='true',key=process.env.RESEND_API_KEY,from=process.env.SUMMAPASS_EMAIL_FROM,origin=process.env.SUMMAPASS_APP_URL;
  if(!enabled||!key||!from||!origin)return {scheduled,emailEnabled:false,processed:0};
@@ -32,18 +34,25 @@ export async function runNotifications(){
    let raw=await rpc('notification_email_context',args);
    const skipped=z.object({skip:z.string()}).safeParse(raw);if(skipped.success){if(skipped.data.skip==='LEASE_LOST')counts.leaseLost++;else await finish('SKIPPED',skipped.data.skip);continue;}
    const context=contextSchema.parse(raw);
-   const {data,error}=await admin.auth.admin.getUserById(context.userId);
-   if(error){await finish('RETRY','RECIPIENT_LOOKUP_FAILED');continue;}
-   const user=data.user;
-   if(!user?.email||!user.email_confirmed_at){await finish('SKIPPED','VERIFIED_EMAIL_REQUIRED');continue;}
-   if(context.isReminder&&user.user_metadata?.preferences?.emailNotify===false){await finish('SKIPPED','PREFERENCE_DISABLED');continue;}
+   let recipient=context.recipientEmail;
+   if(context.kind!=='STAFF_INVITED'){
+    if(!context.userId){await finish('SKIPPED','RECIPIENT_REQUIRED');continue;}
+    const {data,error}=await admin.auth.admin.getUserById(context.userId);
+    if(error){await finish('RETRY','RECIPIENT_LOOKUP_FAILED');continue;}
+    const user=data.user;
+    if(!user?.email||!user.email_confirmed_at){await finish('SKIPPED','VERIFIED_EMAIL_REQUIRED');continue;}
+    if(context.isReminder&&user.user_metadata?.preferences?.emailNotify===false){await finish('SKIPPED','PREFERENCE_DISABLED');continue;}
+    recipient=user.email;
+   }
+   if(!recipient){await finish('SKIPPED','RECIPIENT_REQUIRED');continue;}
    const existing=context.payload?openEmail(context.payload,ticketKey):null;
-   if(existing&&existing.to[0].toLowerCase()!==user.email.toLowerCase()){await finish('SKIPPED','RECIPIENT_CHANGED');continue;}
+   if(existing&&existing.to[0].toLowerCase()!==recipient.toLowerCase()){await finish('SKIPPED','RECIPIENT_CHANGED');continue;}
    let prepared=context.payload;
    if(!prepared){
-    const candidate=renderEmail({from,to:user.email,origin,title:context.title,message:context.message,link:context.link});
+    const candidate=renderEmail({from,to:recipient,origin,title:context.title,message:context.message,link:context.link});
     let ticketIds:string[]=[];
     if(context.kind==='TICKET_READY'||context.kind==='TICKET_RESEND'){
+     if(!context.userId||!context.bookingId)throw Error('ATTACHMENT_SCOPE_REQUIRED');
      const rows=await rpc('notification_attachment_tickets',args);
      if(!Array.isArray(rows))throw Error('ATTACHMENT_FETCH_FAILED');
      const bundle=await ticketPdfAttachment(rows as StoredTicket[],{userId:context.userId,bookingId:context.bookingId,ticketId:context.ticketId},ticketKey);

@@ -5,7 +5,7 @@ import { Bell, Check, ArrowUpRight, Ticket, AlertCircle, Info, Calendar, LogIn }
 import { useNotifications } from './store';
 
 export function NotificationBell({ loggedIn }: { loggedIn: boolean }) {
-  const { items, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { items, unreadCount, loading, error, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
