@@ -1,3 +1,9 @@
-import { requireSession } from '@/lib/auth/session';
-import { NotificationsContent } from '@/features/notifications/page-content';
-export default async function NotificationsPage(){await requireSession('/notifications');return <NotificationsContent/>;}
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/auth/session';
+import { NotificationsCenter } from '@/features/notifications/notifications-center';
+
+export default async function NotificationsPage() {
+  const session = await getSession();
+  if (!session) redirect('/login');
+  return <NotificationsCenter />;
+}

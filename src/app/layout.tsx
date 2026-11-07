@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <Ticket size={28} strokeWidth={2.3} />Summa<span>Pass</span><b>®</b>
             </Link>
             <nav aria-label="Navigasi utama">
-              <Link href="/events">Daftar event</Link>
+              <Link href="/gallery">Upcoming Event</Link>
               <Link href="/#cara-kerja">Cara pesan</Link>
               {session ? (
                 <Link href="/account">Akun saya</Link>
@@ -34,7 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               )}
             </nav>
             <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <NotificationBell />
+              <NotificationBell loggedIn={Boolean(session)} />
               <Link className="button button-small" href="/events">Cari event <ArrowUpRight size={16} /></Link>
             </div>
               <MobileNavigation loggedIn={Boolean(session)} />
