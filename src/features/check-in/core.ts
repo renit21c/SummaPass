@@ -46,3 +46,100 @@ export type CheckInAuditRecord = {
   previousCheckedInAt?: string;
 };
 
+export type CheckInPeriod = 'ALL' | '1H' | '4H' | 'TODAY';
+
+export function filterCheckInsByPeriod(
+  records: CheckInRecord[],
+  period: CheckInPeriod,
+  referenceTime: Date = new Date()
+): CheckInRecord[] {
+  if (period === 'ALL') return records;
+  const nowMs = referenceTime.getTime();
+  return records.filter(record => {
+    const checkInMs = new Date(record.checkedInAt).getTime();
+    if (isNaN(checkInMs)) return false;
+    if (period === '1H') {
+      return nowMs - checkInMs <= 60 * 60 * 1000 && checkInMs <= nowMs + 1000;
+    }
+    if (period === '4H') {
+      return nowMs - checkInMs <= 4 * 60 * 60 * 1000 && checkInMs <= nowMs + 1000;
+    }
+    if (period === 'TODAY') {
+      const refDate = new Date(referenceTime).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
+      const targetDate = new Date(record.checkedInAt).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
+      return refDate === targetDate;
+    }
+    return true;
+  });
+}
+
+function cell(value: unknown): string {
+  const text = String(value ?? '');
+  return '"' + (/^[\s]*[=+@-]/.test(text) ? "'" + text : text).replaceAll('"', '""') + '"';
+}
+
+export function exportCheckInHistory(records: CheckInRecord[], eventTitle?: string): string {
+  const headers = [
+    'Nomor Tiket',
+    'Nama Acara',
+    'Nama Peserta',
+    'Kategori',
+    'Kursi / Section',
+    'Waktu Check-in (WIB)',
+    'ID Petugas',
+    'Status',
+  ];
+  const rows = records.map(r => {
+    const wibDate = new Date(r.checkedInAt).toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      dateStyle: 'medium',
+      timeStyle: 'medium',
+    });
+    return [
+      r.reference,
+      eventTitle ?? '',
+      r.attendeeName,
+      r.categoryName,
+      r.seatLabel,
+      wibDate,
+      r.staffId,
+      'HADIR',
+    ];
+  });
+  return '\uFEFF' + [headers, ...rows].map(row => row.map(cell).join(',')).join('\r\n');
+}
+
+export function exportAuditHistory(audits: CheckInAuditRecord[], eventTitle?: string): string {
+  const headers = [
+    'ID Audit',
+    'Nomor Tiket',
+    'Nama Acara',
+    'Nama Peserta',
+    'Tindakan',
+    'Alasan Koreksi',
+    'Petugas',
+    'Waktu Koreksi (WIB)',
+    'Waktu Check-in Sebelumnya',
+  ];
+  const rows = audits.map(a => {
+    const wibDate = new Date(a.performedAt).toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      dateStyle: 'medium',
+      timeStyle: 'medium',
+    });
+    return [
+      a.id,
+      a.reference,
+      eventTitle ?? a.slug,
+      a.attendeeName,
+      a.action,
+      a.reason,
+      a.performedByName ?? a.performedBy,
+      wibDate,
+      a.previousCheckedInAt ? new Date(a.previousCheckedInAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) : '',
+    ];
+  });
+  return '\uFEFF' + [headers, ...rows].map(row => row.map(cell).join(',')).join('\r\n');
+}
+
+
