@@ -171,3 +171,4 @@ test('exportAuditHistory outputs valid CSV with audit metadata', () => {
   assert.ok(lines[1].includes('"Salah scan tiket pengunjung lain"'));
   assert.ok(lines[1].includes('"Budi Petugas Gate 1"'));
 });
+
