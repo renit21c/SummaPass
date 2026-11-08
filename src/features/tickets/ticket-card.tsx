@@ -8,6 +8,7 @@ import { dateLabel, rupiah, type Event } from '@/features/events/data';
 export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; event: Event }) {
   const [ticket, setTicket] = useState<Ticket>(initialTicket);
   const [downloading, setDownloading] = useState(false);
+  const [printingPdf, setPrintingPdf] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showResendModal, setShowResendModal] = useState(false);
@@ -50,6 +51,57 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
       setResendStatus({ type: 'error', message: 'PDF belum dapat diunduh. Coba lagi.' });
     } finally {
       setDownloading(false);
+    }
+  }
+
+  async function handlePrintPdf() {
+    if (printingPdf) return;
+    setPrintingPdf(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}/pdf`);
+      if (!res.ok) throw new Error('Gagal memuat dokumen PDF untuk dicetak.');
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.top = '-9999px';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+
+      let printed = false;
+      const triggerPrint = () => {
+        if (printed) return;
+        printed = true;
+        setPrintingPdf(false);
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch {
+          window.open(blobUrl, '_blank');
+        }
+        setTimeout(() => {
+          try {
+            document.body.removeChild(iframe);
+          } catch {}
+          window.URL.revokeObjectURL(blobUrl);
+        }, 60000);
+      };
+
+      iframe.onload = () => {
+        setTimeout(triggerPrint, 300);
+      };
+      setTimeout(triggerPrint, 1500);
+    } catch (err) {
+      setResendStatus({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Gagal menyiapkan PDF untuk dicetak.'
+      });
+      setPrintingPdf(false);
     }
   }
 
@@ -282,11 +334,43 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
           <TicketIcon size={32} />
           <h2>{event.title}</h2>
           <div className="ticket-status-row">
-            <span style={isCancelled ? { background: '#fff0ed', color: '#d92d20', borderColor: '#d92d20' } : {}}>
-              {isCancelled ? 'Tiket dibatalkan (Refunded)' : 'Tiket aktif'}
+            <span
+              style={
+                isCancelled
+                  ? { background: '#fff0ed', color: '#d92d20', borderColor: '#d92d20' }
+                  : ticket.previousAttendeeName
+                  ? { background: '#f3e8ff', color: 'var(--purple)', borderColor: 'var(--purple)' }
+                  : {}
+              }
+            >
+              {isCancelled
+                ? 'Tiket dibatalkan (Refunded)'
+                : ticket.previousAttendeeName
+                ? `Dialihkan ke ${ticket.attendeeName}`
+                : 'Tiket aktif'}
             </span>
-            <span>{isCancelled ? 'Dana simulasi dikembalikan' : 'Pembayaran simulasi lunas'}</span>
+            <span>
+              {isCancelled
+                ? 'Dana simulasi dikembalikan'
+                : ticket.previousAttendeeName
+                ? 'E-ticket telah diperbarui'
+                : 'Pembayaran simulasi lunas'}
+            </span>
           </div>
+
+          {!isCancelled && ticket.previousAttendeeName && (
+            <div style={{ marginTop: 14, padding: '12px 16px', background: '#f3e8ff', border: '1.5px solid var(--purple)', borderRadius: 8 }}>
+              <strong style={{ display: 'block', color: 'var(--purple)', fontSize: 13, marginBottom: 4 }}>
+                Tiket Telah Dialihkan
+              </strong>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--ink)' }}>
+                Pemegang tiket telah diubah dari <strong>{ticket.previousAttendeeName}</strong> ke <strong>{ticket.attendeeName}</strong>.
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
+                QR code lama telah dirotasi dan dinonaktifkan demi keamanan. Silakan bagikan e-ticket terbaru ini ke {ticket.attendeeName}.
+              </p>
+            </div>
+          )}
 
           {isCancelled && (
             <div style={{ marginTop: 14, padding: '12px 16px', background: '#fff0ed', border: '1.5px solid #d92d20', borderRadius: 8 }}>
@@ -395,9 +479,10 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
         <button
           className="button button-light"
           type="button"
-          onClick={() => window.print()}
+          disabled={printingPdf}
+          onClick={() => void handlePrintPdf()}
         >
-          <Printer size={18} /> Cetak E-Ticket
+          <Printer size={18} /> {printingPdf ? 'Menyiapkan Cetak PDF...' : 'Cetak E-Ticket'}
         </button>
 
         {!isCancelled && !ticket.checkedInAt && (

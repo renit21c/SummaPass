@@ -11,7 +11,24 @@ export async function confirmSupabasePayment(userId:string,booking:Booking,outco
  const result=z.object({error:z.string().optional(),message:z.string().optional()}).passthrough().parse(data);
  if(result.error)throw new BookingError(result.error,result.message??'Pembayaran belum berhasil.',result.error==='NOT_FOUND'?404:409);
 }
-export async function supabaseTickets(userId:string,id?:string):Promise<Ticket[]>{const {client,key}=paymentConfiguration();const {data,error}=await client.rpc('issued_tickets_for_owner',{p_user:userId,p_ticket:id??null});if(error)throw new BookingError('TICKET_ERROR','Tiket belum dapat dimuat. Silakan coba kembali.',503);const records=data as StoredTicket[];return records.map(({userId:owner,encryptedToken,tokenHash:hash,...ticket})=>({...ticket,token:decryptToken(encryptedToken,key)}));}
+export async function supabaseTickets(userId:string,id?:string):Promise<Ticket[]>{
+  const {client,key}=paymentConfiguration();
+  const {data,error}=await client.rpc('issued_tickets_for_owner',{p_user:userId,p_ticket:id??null});
+  if(error)throw new BookingError('TICKET_ERROR','Tiket belum dapat dimuat. Silakan coba kembali.',503);
+  const records=data as (StoredTicket & { event?: Record<string, unknown> })[];
+  return records.map(({userId:owner,encryptedToken,tokenHash:hash,...ticket})=>{
+    const transfer = ticket.event && typeof ticket.event === 'object' && '_transfer' in ticket.event
+      ? (ticket.event as Record<string, any>)._transfer
+      : undefined;
+    return {
+      ...ticket,
+      token:decryptToken(encryptedToken,key),
+      previousAttendeeName: transfer?.previousAttendeeName ?? ticket.previousAttendeeName,
+      transferredAt: transfer?.transferredAt ?? ticket.transferredAt,
+      attendeeEmail: transfer?.attendeeEmail ?? ticket.attendeeEmail
+    };
+  });
+}
 export async function supabaseRefundTicket(userId:string,id:string,reason:string){
  const {client}=paymentConfiguration();
  const tickets=await supabaseTickets(userId,id);
@@ -44,17 +61,26 @@ export async function supabaseTransferTicket(userId:string,id:string,newAttendee
  const cleanName=newAttendeeName?.trim();
  if(!cleanName||cleanName.length<2)throw new BookingError('INVALID_NAME','Nama peserta baru minimal 2 karakter.',400);
 
- const {data:ticketRow}=await client.from('tickets').select('booking_item_id').eq('id',id).single();
+ const {data:ticketRow}=await client.from('tickets').select('booking_item_id, event_snapshot').eq('id',id).single();
  if(!ticketRow?.booking_item_id)throw new BookingError('DATABASE','Data tiket tidak valid.',503);
 
  const {error:attendeeError}=await client.from('attendees').update({display_name:cleanName}).eq('booking_item_id',ticketRow.booking_item_id);
  if(attendeeError)throw new BookingError('DATABASE','Gagal memperbarui nama peserta tiket.',503);
 
+ const now=new Date().toISOString();
+ const updatedSnapshot = {
+  ...(typeof ticketRow.event_snapshot === 'object' && ticketRow.event_snapshot ? ticketRow.event_snapshot : {}),
+  _transfer: {
+   previousAttendeeName: target.attendeeName,
+   transferredAt: now,
+   attendeeEmail: newAttendeeEmail?.trim().toLowerCase()
+  }
+ };
+
  const pack=createTicketPack(target.seatId,key);
- await client.from('tickets').update({token_hash:pack.tokenHash}).eq('id',id);
+ await client.from('tickets').update({token_hash:pack.tokenHash, event_snapshot: updatedSnapshot}).eq('id',id);
  await client.from('ticket_secrets').update({encrypted_token:pack.encryptedToken}).eq('ticket_id',id);
 
- const now=new Date().toISOString();
  return {
   ticket:{
    ...target,
