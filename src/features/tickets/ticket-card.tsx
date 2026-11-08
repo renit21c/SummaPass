@@ -348,7 +348,6 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             </div>
           ) : (
             <div style={{ padding: '36px 16px', border: '2px dashed #d92d20', borderRadius: 12, background: '#fff8f6', maxWidth: 240, textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>⛔</div>
               <strong style={{ display: 'block', fontSize: 13, color: '#d92d20', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Tiket Tidak Aktif
               </strong>
@@ -618,7 +617,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             </label>
 
             <div style={{ background: '#f8f8fb', border: '1px dashed var(--purple)', borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: 'var(--ink)' }}>
-              🛡️ <strong>Keamanan Tiket:</strong> Token QR lama akan otomatis tidak berlaku. Tiket baru hanya dapat divalidasi oleh petugas melalui QR kode terbaru.
+              <strong>Keamanan Tiket:</strong> Token QR lama akan otomatis tidak berlaku. Tiket baru hanya dapat divalidasi oleh petugas melalui QR kode terbaru.
             </div>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>

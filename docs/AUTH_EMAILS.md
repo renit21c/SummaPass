@@ -28,7 +28,7 @@ Masih di Authentication > Email, buka masing-masing template:
 | Confirm sign up | `Verifikasi email kamu - SummaPass` | Seluruh isi `supabase/templates/confirm-signup.html` |
 | Reset password | `Reset kata sandi - SummaPass` | Seluruh isi `supabase/templates/reset-password.html` |
 
-Simpan masing-masing. Pertahankan `{{ .ConfirmationURL }}` persis seperti di file, termasuk pada tombol dan tautan cadangan. Supabase akan menggantinya dengan link keamanan. `{{ .SiteURL }}` digunakan untuk tautan logo. Jangan mengganti confirmation URL dengan halaman reset biasa karena itu menghilangkan token.
+Deploy route `/auth/confirm` terlebih dahulu, lalu simpan masing-masing template. Template baru memakai `{{ .TokenHash }}` dan tujuan tetap `https://summapass.web.id/auth/confirm`. Server memanggil `verifyOtp` untuk membuat sesi sebelum membuka halaman verifikasi atau reset. Tautan dapat dibuka pada browser lain tanpa cookie PKCE dari browser asal. Pertahankan seluruh baris `$link` dan variabelnya persis seperti file. `{{ .SiteURL }}` hanya digunakan untuk tautan logo. Template ini khusus production; staging perlu hostname staging tersendiri.
 
 ## 3. URL
 
@@ -38,11 +38,13 @@ Di Authentication > URL Configuration:
 - Redirect URLs: `https://summapass.web.id/auth/callback**` dan `https://summapass.vercel.app/auth/callback**` bila domain Vercel masih dipakai. Suffix `**` mengizinkan query `next` dari aplikasi; gunakan host production yang spesifik.
 - Vercel Production: `SUMMAPASS_APP_URL=https://summapass.web.id`.
 
+Site URL wajib URL lengkap dengan `https://`. Nilai seperti `summapass.vercel.app` akan dianggap path relatif dan dapat mengarah ke `PROJECT.supabase.co/summapass.vercel.app`, menghasilkan `requested path is invalid`. Jika URL juga berisi `otp_expired`, minta email baru setelah konfigurasi disimpan. Tautan lama tidak menjadi valid kembali.
+
 ## 4. Pengujian nyata
 
-1. Daftar akun uji baru yang kamu kendalikan. Email Confirm sign up harus menggunakan sender SummaPass dan desain baru. Klik verifikasi pada browser yang dipakai mendaftar, lalu pastikan login berhasil.
+1. Daftar akun uji baru yang kamu kendalikan. Email Confirm sign up harus menggunakan sender SummaPass dan desain baru. Klik verifikasi, lalu pastikan login berhasil. Ulangi pada browser lain dengan akun uji lain.
 2. Dari akun lain yang belum verified, uji tombol kirim ulang. Callback harus menuju domain production.
-3. Logout, pilih Lupa kata sandi untuk akun uji, buka email Reset password pada browser yang sama, lalu simpan kata sandi baru. Pastikan kata sandi baru bisa dipakai login.
+3. Logout, pilih Lupa kata sandi untuk akun uji, buka email Reset password, lalu simpan kata sandi baru. Pastikan kata sandi baru bisa dipakai login. Uji juga browser lain dan tautan yang telah digunakan.
 4. Cek Resend Emails untuk status penerimaan provider. Jika gagal, cek Supabase Auth Logs. Jangan menyimpan URL token atau kata sandi pada log/screenshot publik.
 
 Mengganti template/SMTP di dashboard berlaku untuk email baru tanpa redeploy. Perbaikan kode redirect kirim ulang membutuhkan deploy aplikasi. Email yang sudah masuk sebelumnya tidak berubah.
