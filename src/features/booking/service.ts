@@ -28,6 +28,7 @@ export const demoPublicEvent=(slug:string)=>demoStore().publicEvent(slug);
 export const demoAssignedEvent=(userId:string,id:string)=>demoStore().assignedEvent(userId,id);
 function persistMutation<T>(operation:()=>T):T{const previous=demoStore().catalogItems();try{const result=operation();saveCatalog(demoStore().catalogItems());return result;}catch(e){demoStore().restoreCatalog(previous);throw e;}}
 export function demoCreateEvent(userId:string,input:EventInput){return persistMutation(()=>demoStore().createEvent(userId,input));}
+export function demoDuplicateEvent(userId:string,id:string){return persistMutation(()=>demoStore().duplicateEvent(userId,id));}
 export function demoEditEvent(userId:string,id:string,input:EventInput){return persistMutation(()=>demoStore().updateEvent(userId,id,input));}
 export function demoEventStatus(userId:string,id:string,action:'publish'|'unpublish'|'archive'){return persistMutation(()=>demoStore().eventStatus(userId,id,action));}
 export function demoEventCover(userId:string,id:string,url:string){return persistMutation(()=>demoStore().eventCover(userId,id,url));}

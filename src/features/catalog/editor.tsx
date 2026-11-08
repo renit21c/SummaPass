@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useRef, useState, type ChangeEvent } from 'react';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Copy } from 'lucide-react';
 import { eventFieldLimits, type ManagedEvent } from './core';
 import { coverDimensionsError, coverFileError, editorValidation, type EditorValues } from './editor-validation';
 import { EventOperations } from '@/features/operations/event-operations';
@@ -9,7 +10,8 @@ import { StaffManager } from '@/features/organizer/staff-manager';
 const local = (v:string) => new Date(Date.parse(v)+25200000).toISOString().slice(0,16);
 const dates = ['startsAt','endsAt','salesStart','salesEnd'];
 export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:string;mode?:'demo'|'supabase'}) {
- const [saved,setSaved]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[failed,setFailed]=useState(false);
+ const router=useRouter();
+ const [saved,setSaved]=useState(initial),[busy,setBusy]=useState(false),[duplicating,setDuplicating]=useState(false),[message,setMessage]=useState(''),[failed,setFailed]=useState(false);
  const [submitted,setSubmitted]=useState(false),[touched,setTouched]=useState<Record<string,boolean>>({});
  const [values,setValues]=useState<EditorValues>(()=>({title:initial?.title??'',description:initial?.description??'',category:initial?.category??'Musik',organizer:initial?.organizer??'SummaPass Demo',area:initial?.area??'Summarecon Mall Bandung',startsAt:initial?local(initial.startsAt):'',endsAt:initial?local(initial.endsAt):'',salesStart:initial?local(initial.salesStart):now?local(now):'',salesEnd:initial?local(initial.salesEnd):'',price:String(initial?.price??75000),frontPrice:String(initial?.frontPrice??125000),regularQuota:String(initial?.regularQuota??24),frontQuota:String(initial?.frontQuota??24),rules:initial?.rules??'Datang 30 menit sebelum acara. Satu tiket untuk satu peserta dan satu kursi.',theme:initial?.theme??'sunset'}));
  const [coverError,setCoverError]=useState(''),[coverBusy,setCoverBusy]=useState(false);
@@ -54,6 +56,16 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
   try {const r=await fetch(`/api/organizer/events/${saved.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});const data=await r.json();if(!r.ok)throw Error(data.error);setSaved(data);setMessage('Status event diperbarui.');}
   catch(e){setFailed(true);setMessage(e instanceof Error?e.message:'Gagal.');}finally{setBusy(false);}
  }
+ async function duplicate() {
+  if(!saved||duplicating)return;
+  setDuplicating(true);setMessage('');setFailed(false);
+  try {
+   const r=await fetch(`/api/organizer/events/${saved.id}/duplicate`,{method:'POST',headers:{'Content-Type':'application/json'}});
+   const data=await r.json();if(!r.ok)throw Error(data.error||'Gagal menduplikasi event.');
+   const newId=data.event?.id??data.id;
+   router.push(`/organizer/events/${newId}/edit`);
+  }catch(e){setFailed(true);setMessage(e instanceof Error?e.message:'Gagal menduplikasi event.');setDuplicating(false);}
+ }
  return <main id="main" className="container section event-editor"><Link className="text-link" href="/organizer">Kembali ke organizer</Link><h1>{initial?'Edit event':'Tambah event'}</h1><p>{saved?.cancelledAt?'Status: Dibatalkan':saved?`Status: ${{DRAFT:'Draf',PUBLISHED:'Dipublikasikan',UNPUBLISHED:'Disembunyikan',ARCHIVED:'Diarsipkan'}[saved.status]}`:'Isi detail dan simpan sebagai draf.'}</p>
   <form noValidate onSubmit={e=>{e.preventDefault();void submit(e.currentTarget);}}>
    {submitted&&Object.keys(errors).length>0&&<div className="editor-error-summary" role="alert"><AlertCircle size={20} aria-hidden="true"/><div><strong>Periksa isian berikut.</strong><ul>{Object.entries(errors).map(([name,error])=><li key={name}><a href={`#${name}`}>{error}</a></li>)}</ul></div></div>}
@@ -68,5 +80,6 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
   {message&&<p className={`editor-message${failed?' editor-message-error':''}`} role={failed?'alert':'status'}>{failed?<AlertCircle size={20} aria-hidden="true"/>:<CheckCircle2 size={20} aria-hidden="true"/>}{message}</p>}
   {saved?.id&&<><StaffManager eventId={saved.id} mode={mode}/>{mode==='supabase'&&<EventOperations eventId={saved.id} cancelledAt={saved.cancelledAt}/>}</>}
   {saved&&!saved.cancelledAt&&saved.status!=='ARCHIVED'&&<section className="editor-actions"><h2>Publikasi</h2><p>Simpan perubahan sebelum publikasi.</p><button className="button" disabled={busy} onClick={()=>void action(saved.status==='PUBLISHED'?'unpublish':'publish')}>{saved.status==='PUBLISHED'?'Sembunyikan event':'Publikasikan event'}</button>{saved.status==='PUBLISHED'&&<Link className="button button-light" href={`/events/${saved.slug}`}>Lihat event</Link>}<button className="text-link" disabled={busy} onClick={()=>void action('archive')}>Arsipkan setelah acara selesai</button></section>}
+ {saved?.id&&<section className="editor-actions"><h2>Duplikasi</h2><p>Buat draf baru dengan menyalin detail, kuota, dan harga dari event ini.</p><button type="button" className="button button-light" disabled={busy||duplicating} onClick={()=>void duplicate()}><Copy size={16} aria-hidden="true"/>{duplicating?'Menduplikasi...':'Duplikat event ini'}</button></section>}
  </main>;
 }
