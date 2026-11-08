@@ -67,3 +67,4 @@ test('ticket refund rejects unauthorized users, checked-in tickets, and double r
   // Refund must fail with ALREADY_CHECKED_IN
   assert.throws(() => store.refundTicket('u3', tCheckin.id, 'Mau refund setelah masuk'), (err: any) => err.code === 'ALREADY_CHECKED_IN');
 });
+

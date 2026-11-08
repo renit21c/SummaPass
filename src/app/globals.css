@@ -819,3 +819,66 @@ html,body{max-width:100%;overflow-x:hidden}
  .organizer-event-actions>.text-link{align-self:flex-start;min-height:44px}
  .correction-actions>.button{flex:1 1 160px}
 }
+
+/* My Tickets enhanced contrast & status styling */
+.my-ticket-card.is-revoked {
+  background: #f7f7f8;
+  opacity: 0.88;
+  border-style: dashed;
+}
+.my-ticket-card.is-revoked:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 5px 0 var(--ink);
+}
+.ticket-card-art.is-revoked {
+  background: #e2e4e8 !important;
+  color: var(--muted);
+  border-bottom: 1.5px dashed var(--ink);
+}
+.ticket-badge-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--mint);
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.ticket-badge-revoked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #fff0ed;
+  border: 1.5px solid #d92d20;
+  color: #d92d20;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.my-tickets-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.my-tickets-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1.5px solid var(--ink);
+  background: var(--cream);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.my-tickets-tab.active {
+  background: var(--yellow);
+  box-shadow: 2px 3px 0 var(--ink);
+}
+
