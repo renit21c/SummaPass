@@ -1,7 +1,5 @@
 # SummaPass
 
-Status backend terbaru: undangan petugas, notifikasi expiry/pembatalan, webhook email, antrean terotorisasi dan worker lokal otomatis tersedia. Setup migrasi 013 sampai 015 dan batas pengujian ada di [BACKEND_OPERATIONS.md](docs/BACKEND_OPERATIONS.md). Dokumen PROGRESS mencatat hasil pengujian setiap tahap.
-
 Prototipe tiket event fiktif di Summarecon Mall Bandung. Tahap yang tersedia: discovery/detail event, login demo dan adapter Supabase Auth, akun, pemilihan kursi, reservasi 10 menit, pembayaran simulasi berhasil/gagal, Tiket Saya dan QR e-ticket, serta unduh PDF A4 dan email lampiran e-ticket.
 
 Dashboard organizer, editor event/cover, assignment dan undangan petugas, serta check-in kamera/manual tersedia. Adapter Supabase menyimpan data permanen; mode demo dipisah. Penugasan petugas demo masih terbatas pada tiga event awal. Tidak ada pembayaran nyata. Seluruh event dan harga adalah data demo. Nama SummaPass ditetapkan pengguna; ketersediaan merek/domain belum diverifikasi.
