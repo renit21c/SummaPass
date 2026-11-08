@@ -585,6 +585,7 @@ export function SeatPicker({
         slug={data.slug}
         categories={data.categories}
         seats={data.seats}
+        activeCategoryId={categoryId}
         selectedSeatId={selected[0]}
         onSimulationComplete={refresh}
       />

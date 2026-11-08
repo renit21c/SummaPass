@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Zap,
   X,
@@ -36,6 +36,7 @@ export function ConcurrencySimulatorModal({
   slug,
   categories,
   seats,
+  activeCategoryId,
   selectedSeatId,
   onSimulationComplete,
 }: {
@@ -44,20 +45,36 @@ export function ConcurrencySimulatorModal({
   slug: string;
   categories: CategoryItem[];
   seats: SeatItem[];
+  activeCategoryId?: string;
   selectedSeatId?: string;
   onSimulationComplete?: () => void;
 }) {
   const availableSeats = seats.filter(s => s.status === 'AVAILABLE');
-  const initialSeat =
-    (selectedSeatId && availableSeats.find(s => s.id === selectedSeatId)?.id) ||
-    availableSeats[0]?.id ||
-    '';
 
-  const [seatId, setSeatId] = useState(initialSeat);
+  const [seatId, setSeatId] = useState('');
   const [autoRelease, setAutoRelease] = useState(true);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ConcurrencySimulationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      const activeCat = categories.find(c => c.id === activeCategoryId);
+      const seatsInActiveCat = activeCat
+        ? availableSeats.filter(s => activeCat.sections.includes(s.section))
+        : availableSeats;
+
+      const preferred =
+        (selectedSeatId && availableSeats.find(s => s.id === selectedSeatId)?.id) ||
+        seatsInActiveCat[0]?.id ||
+        availableSeats[0]?.id ||
+        '';
+
+      setSeatId(preferred);
+      setResult(null);
+      setError(null);
+    }
+  }, [isOpen, selectedSeatId, activeCategoryId, categories, availableSeats]);
 
   if (!isOpen) return null;
 
@@ -153,18 +170,33 @@ export function ConcurrencySimulatorModal({
                     {availableSeats.length === 0 ? (
                       <option value="">Semua kursi sudah terisi</option>
                     ) : (
-                      availableSeats.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.section} — Baris {s.row}, Kursi #{s.number} (Tersedia)
-                        </option>
-                      ))
+                      categories.map(cat => {
+                        const catSeats = availableSeats.filter(s => cat.sections.includes(s.section));
+                        if (!catSeats.length) return null;
+                        return (
+                          <optgroup key={cat.id} label={`Kategori ${cat.name} (${catSeats.length} kursi tersedia)`}>
+                            {catSeats.map(s => (
+                              <option key={s.id} value={s.id}>
+                                {s.section} — Baris {s.row}, Kursi #{s.number}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })
                     )}
                   </select>
                 </div>
 
                 <div className="concurrency-field">
                   <label>Kategori Tiket:</label>
-                  <div className="concurrency-readonly-badge">
+                  <div
+                    className="concurrency-readonly-badge"
+                    style={{
+                      borderColor: currentCategory?.name.toLowerCase().includes('vip') || currentCategory?.name.toLowerCase().includes('front') ? 'var(--purple)' : 'var(--ink)',
+                      color: currentCategory?.name.toLowerCase().includes('vip') || currentCategory?.name.toLowerCase().includes('front') ? 'var(--purple)' : 'var(--ink)',
+                      fontWeight: 800,
+                    }}
+                  >
                     {currentCategory ? currentCategory.name : '-'}
                   </div>
                 </div>
