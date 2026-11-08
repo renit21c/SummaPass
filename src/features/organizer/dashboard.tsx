@@ -20,6 +20,7 @@ import {
   Wallet,
   Ticket,
   Search,
+  Copy,
 } from "lucide-react";
 import { metrics, type OrganizerSnapshot } from "./core";
 import { rupiah } from "@/features/events/data";
@@ -44,6 +45,25 @@ export function OrganizerDashboard({
   range?: { from?: string; to?: string };
 }) {
   const router = useRouter();
+  const [duplicating, setDuplicating] = useState<string | null>(null);
+
+  async function handleDuplicate(eventId: string) {
+    if (duplicating) return;
+    setDuplicating(eventId);
+    try {
+      const res = await fetch(`/api/organizer/events/${eventId}/duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menduplikasi event.');
+      const newId = data.event?.id ?? data.id;
+      router.push(`/organizer/events/${newId}/edit`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Gagal menduplikasi event.');
+      setDuplicating(null);
+    }
+  }
   const [tab, setTab] = useState("overview"),
     [event, setEvent] = useState(""),
     [query, setQuery] = useState(""),
@@ -318,6 +338,15 @@ export function OrganizerDashboard({
                   >
                     Kelola event
                   </Link>
+                  <button
+                    type="button"
+                    className="button button-light"
+                    disabled={duplicating === e.id}
+                    onClick={() => void handleDuplicate(e.id)}
+                  >
+                    <Copy size={16} aria-hidden="true" />
+                    {duplicating === e.id ? 'Menduplikasi...' : 'Duplikat'}
+                  </button>
                   {data.mode === "supabase" && (
                     <Link
                       className="button button-light"

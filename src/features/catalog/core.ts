@@ -26,3 +26,27 @@ export type EventInput=z.infer<typeof eventInput>;
 export function dateParts(startsAt:string){const date=new Date(startsAt);const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);const part=(type:string)=>parts.find(p=>p.type===type)!.value;return {date:`${part('year')}-${part('month')}-${part('day')}`,time:new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(date)+' WIB'};}
 export function seedManaged(e:Event,index:number):ManagedEvent{const startsAt=new Date(`${e.date}T${e.time.replace(' WIB','').replace('.',':')}:00+07:00`).toISOString();return {...e,id:`20000000-0000-4000-8000-${String(index+1).padStart(12,'0')}`,status:'PUBLISHED',startsAt,endsAt:new Date(Date.parse(startsAt)+3*3600000).toISOString(),salesStart:'2026-10-31T17:00:00.000Z',salesEnd:startsAt,frontPrice:e.price+50000,frontQuota:24,regularQuota:24,rules:'Datang 30 menit sebelum acara. Satu tiket berlaku untuk satu peserta dan satu kursi.',organizer:'SummaPass Demo',area:'Summarecon Mall Bandung',coverUrl:''};}
 export const managedSchema=eventInput.safeExtend({cancelledAt:z.string().nullable().optional(),cancellationReason:z.string().nullable().optional(),customSeating:z.boolean().optional(),seatingVersion:z.number().int().min(0).optional(),ownerId:z.string().optional(),id:z.string().uuid(),slug:z.string().regex(/^[a-z0-9-]+$/),status:z.enum(['DRAFT','PUBLISHED','UNPUBLISHED','ARCHIVED']),date:z.string(),time:z.string(),headline:z.string(),coverUrl:z.string().refine(v=>!v||/^\/api\/covers\/[a-f0-9-]{36}_[a-f0-9-]{36}\.webp$/.test(v))});
+export function duplicateEventInput(source:ManagedEvent,nowMs=Date.now()):EventInput{
+ const sourceStart=Date.parse(source.startsAt),sourceEnd=Date.parse(source.endsAt);
+ const duration=Math.max(3600000,Number.isFinite(sourceEnd-sourceStart)&&sourceEnd>sourceStart?sourceEnd-sourceStart:3*3600000);
+ let startsAt=source.startsAt,endsAt=source.endsAt,salesStart=source.salesStart,salesEnd=source.salesEnd;
+ if(sourceStart<=nowMs+86400000){
+  const targetMin=nowMs+7*86400000;
+  const daysDiff=Math.ceil((targetMin-sourceStart)/(7*86400000))*7;
+  const shiftDays=Math.max(7,daysDiff);
+  const newStart=new Date(sourceStart+shiftDays*86400000);
+  const newEnd=new Date(newStart.getTime()+duration);
+  startsAt=newStart.toISOString();endsAt=newEnd.toISOString();salesStart=new Date(nowMs).toISOString();salesEnd=startsAt;
+ }else{
+  if(Date.parse(salesEnd)<=nowMs)salesEnd=startsAt;
+  const sEnd=Date.parse(salesEnd);
+  if(Date.parse(salesStart)>=sEnd){salesStart=new Date(Math.min(nowMs,sEnd-3600000)).toISOString();}
+ }
+ const suffix=' (Salinan)',maxBase=eventFieldLimits.title.max-suffix.length;
+ const baseTitle=source.title.length>maxBase?source.title.slice(0,maxBase).trim():source.title;
+ const title=`${baseTitle}${suffix}`;
+ const validCategories=['Musik','Workshop','Keluarga'] as const,validThemes=['sunset','clay','play','night'] as const;
+ const category=(validCategories.includes(source.category as typeof validCategories[number])?source.category:'Musik') as typeof validCategories[number];
+ const theme=(validThemes.includes(source.theme as typeof validThemes[number])?source.theme:'sunset') as typeof validThemes[number];
+ return eventInput.parse({title,description:source.description,category,startsAt,endsAt,salesStart,salesEnd,price:Math.max(0,Math.floor(source.price)),frontPrice:Math.max(0,Math.floor(source.frontPrice??source.price)),frontQuota:Math.min(24,Math.max(1,Math.floor(source.frontQuota??24))),regularQuota:Math.min(24,Math.max(1,Math.floor(source.regularQuota??24))),rules:source.rules,organizer:source.organizer,area:source.area,theme});
+}
