@@ -68,6 +68,7 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
               <Link
                 href={`/my-tickets/${t.id}`}
                 className={`my-ticket-card ${isRevoked ? 'is-revoked' : ''}`}
+                style={{ display: 'flex', flexDirection: 'column' }}
                 key={t.id}
                 aria-label={`Tiket ${event?.title ?? t.slug}, Kursi ${t.seatLabel}, Status ${isRevoked ? 'Dibatalkan' : 'Aktif'}`}
               >
@@ -81,7 +82,7 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
                 </div>
 
                 {/* Card copy */}
-                <div className="my-ticket-copy">
+                <div className="my-ticket-copy" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <h2>{event?.title ?? t.slug}</h2>
                   <p>{event ? dateLabel(event.date) : ''}</p>
 
@@ -91,30 +92,34 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
                   </div>
 
                   {/* Status badge with clear contrast */}
-                  {isRevoked ? (
-                    <div className="ticket-badge-revoked">
-                      <XCircle size={14} aria-hidden="true" />
-                      <span>Dibatalkan / Refunded</span>
-                    </div>
-                  ) : (
-                    <div className="ticket-badge-active">
-                      <CheckCircle2 size={14} aria-hidden="true" />
-                      <span>Aktif · Siap Digunakan</span>
-                    </div>
-                  )}
+                  <div style={{ marginBottom: 20 }}>
+                    {isRevoked ? (
+                      <div className="ticket-badge-revoked" style={{ margin: 0 }}>
+                        <XCircle size={14} aria-hidden="true" />
+                        <span>Dibatalkan / Refunded</span>
+                      </div>
+                    ) : (
+                      <div className="ticket-badge-active" style={{ margin: 0 }}>
+                        <CheckCircle2 size={14} aria-hidden="true" />
+                        <span>Aktif · Siap Digunakan</span>
+                      </div>
+                    )}
+                  </div>
 
-                  {/* Action Link */}
-                  {isRevoked ? (
-                    <span className="text-link" style={{ color: 'var(--muted)', fontSize: 13 }}>
-                      Lihat detail pembatalan
-                      <ArrowUpRight size={16} />
-                    </span>
-                  ) : (
-                    <span className="text-link" style={{ fontSize: 13 }}>
-                      Buka QR e-ticket
-                      <ArrowUpRight size={16} />
-                    </span>
-                  )}
+                  {/* Action Link pinned at bottom */}
+                  <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                    {isRevoked ? (
+                      <span className="text-link" style={{ color: 'var(--muted)', fontSize: 13, display: 'inline-flex' }}>
+                        Lihat detail pembatalan
+                        <ArrowUpRight size={16} />
+                      </span>
+                    ) : (
+                      <span className="text-link" style={{ fontSize: 13, display: 'inline-flex' }}>
+                        Buka QR e-ticket
+                        <ArrowUpRight size={16} />
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
             );
@@ -124,3 +129,4 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
     </div>
   );
 }
+
