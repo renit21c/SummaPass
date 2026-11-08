@@ -26,17 +26,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <Ticket size={28} strokeWidth={2.3} />Summa<span>Pass</span><b>®</b>
             </Link>
             <nav aria-label="Navigasi utama">
-              <Link href="/gallery">Upcoming Event</Link>
+              <Link href="/events">Cari event</Link>
               <Link href="/#cara-kerja">Cara pesan</Link>
-              {session ? (
-                <Link href="/account">Akun saya</Link>
-              ) : (
-                <Link href="/login">Masuk / Daftar</Link>
-              )}
             </nav>
             <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <NotificationBell loggedIn={Boolean(session)} />
-              <Link className="button button-small" href="/events">Cari event <ArrowUpRight size={16} /></Link>
+              <Link className="button button-small" href={session ? '/account' : '/login'}>
+                Akun saya <ArrowUpRight size={16} />
+              </Link>
             </div>
               <MobileNavigation loggedIn={Boolean(session)} />
           </div>
