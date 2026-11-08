@@ -181,9 +181,46 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
     }
   }
 
-  function handleShareWhatsApp() {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const ticketUrl = origin ? `${origin}/my-tickets` : 'https://summapass.vercel.app/my-tickets';
+  async function generateQrImageFile(token: string, reference: string): Promise<File> {
+    try {
+      const QRCode = (await import('qrcode')).default;
+      const dataUrl = await QRCode.toDataURL(token, { width: 600, margin: 2 });
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], `SummaPass-QR-${reference}.png`, { type: 'image/png' });
+    } catch {
+      const svg = document.querySelector('.ticket-qr svg') as SVGElement | null;
+      if (svg) {
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 600;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        return new Promise<File>((resolve, reject) => {
+          img.onload = () => {
+            if (ctx) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, 600, 600);
+              ctx.drawImage(img, 50, 50, 500, 500);
+            }
+            URL.revokeObjectURL(url);
+            canvas.toBlob(blob => {
+              if (blob) resolve(new File([blob], `SummaPass-QR-${reference}.png`, { type: 'image/png' }));
+              else reject(new Error('Canvas to blob failed'));
+            }, 'image/png');
+          };
+          img.onerror = () => reject(new Error('Image load failed'));
+          img.src = url;
+        });
+      }
+      throw new Error('QR code element not found');
+    }
+  }
+
+  async function handleShareWhatsApp() {
     const lines = [
       'Halo! Ini rincian e-ticket SummaPass saya:',
       '',
@@ -195,12 +232,43 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
       `- Pemegang Tiket: *${ticket.attendeeName}*`,
       `- Kode Tiket: ${ticket.reference}`,
       '',
-      'Buka dan scan QR e-ticket di tautan berikut:',
-      ticketUrl,
-      '',
-      'Tunjukkan kode QR ini kepada petugas saat tiba di pintu masuk venue.'
+      'Tunjukkan kode QR e-ticket saat tiba di pintu masuk venue.'
     ];
     const text = lines.join('\n');
+
+    // Cara 1: Web Share API (Khusus browser yang mendukung kirim file seperti di HP)
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        const file = await generateQrImageFile(ticket.token, ticket.reference);
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `E-Ticket ${event.title}`,
+            text: text,
+          });
+          return;
+        }
+      } catch (err: unknown) {
+        if ((err as Error)?.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback Desktop / Komputer: Salin gambar ke clipboard dan buka WhatsApp
+    try {
+      const file = await generateQrImageFile(ticket.token, ticket.reference);
+      if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.write === 'function') {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': file })
+        ]);
+        setResendStatus({
+          type: 'success',
+          message: 'Foto QR code telah disalin ke clipboard! Tekan Ctrl + V di chat WhatsApp untuk menempelkan foto.'
+        });
+      }
+    } catch {
+      // non-fatal
+    }
+
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   }
