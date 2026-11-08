@@ -882,3 +882,445 @@ html,body{max-width:100%;overflow-x:hidden}
   box-shadow: 2px 3px 0 var(--ink);
 }
 
+/* Concurrency Simulator Styles */
+.concurrency-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffe044;
+  border: 2px solid #24221f;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #24221f;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #24221f;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.concurrency-trigger-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #24221f;
+  background: #ffeb77;
+}
+.concurrency-trigger-btn:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 #24221f;
+}
+
+.concurrency-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(36, 34, 31, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.concurrency-modal-card {
+  background: #ffffff;
+  border: 3px solid #24221f;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 8px 8px 0 #24221f;
+  display: flex;
+  flex-direction: column;
+}
+
+.concurrency-modal-header {
+  padding: 20px 24px;
+  border-bottom: 2px solid #24221f;
+  background: #fafafa;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.concurrency-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #6632cf;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.concurrency-modal-title-wrap h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+  color: #24221f;
+}
+
+.concurrency-subtitle {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.concurrency-modal-close {
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 4px;
+  cursor: pointer;
+  color: #24221f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.concurrency-modal-close:hover {
+  background: #f0f0f0;
+  border-color: #24221f;
+}
+
+.concurrency-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.concurrency-setup-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.concurrency-setup-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 580px) {
+  .concurrency-setup-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.concurrency-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.concurrency-field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #24221f;
+}
+
+.concurrency-select {
+  padding: 10px 12px;
+  border: 2px solid #24221f;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #ffffff;
+  color: #24221f;
+  outline: none;
+}
+
+.concurrency-readonly-badge {
+  padding: 10px 12px;
+  border: 2px dashed #999;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #f8f9fa;
+  color: #555;
+}
+
+.concurrency-scenario-note {
+  background: #f8f8fb;
+  border: 2px solid #e2e4ed;
+  border-left: 4px solid #6632cf;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #24221f;
+}
+.concurrency-scenario-note strong {
+  color: #6632cf;
+}
+.concurrency-scenario-note p {
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+}
+
+.concurrency-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+}
+.concurrency-checkbox-label input {
+  margin-top: 3px;
+  accent-color: #6632cf;
+  width: 16px;
+  height: 16px;
+}
+
+.concurrency-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 2px solid #ef4444;
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.concurrency-run-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffe044;
+  border: 2px solid #24221f;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #24221f;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #24221f;
+  transition: all 0.15s ease;
+}
+.concurrency-run-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0 #24221f;
+  background: #ffd829;
+}
+.concurrency-run-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Results */
+.concurrency-result-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.concurrency-outcome-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ecfdf5;
+  border: 2px solid #059669;
+  border-radius: 10px;
+  padding: 14px 18px;
+  color: #065f46;
+}
+.concurrency-outcome-banner h3 {
+  margin: 0 0 2px 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.concurrency-outcome-banner p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.concurrency-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 600px) {
+  .concurrency-split-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.buyer-result-card {
+  border: 2px solid #24221f;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 3px 3px 0 #24221f;
+  background: #fff;
+}
+.buyer-result-card.is-winner {
+  border-color: #059669;
+  background: #f0fdf4;
+}
+.buyer-result-card.is-rejected {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.buyer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(36, 34, 31, 0.2);
+}
+
+.buyer-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.buyer-identity h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #24221f;
+}
+.buyer-email {
+  font-size: 11px;
+  color: #666;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill-winner {
+  background: #059669;
+  color: #fff;
+}
+.pill-rejected {
+  background: #dc2626;
+  color: #fff;
+}
+
+.buyer-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.metric-row span {
+  color: #666;
+}
+.metric-row code {
+  background: rgba(36, 34, 31, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.booking-ref-badge {
+  background: #6632cf !important;
+  color: #fff !important;
+}
+
+.buyer-message-box {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 4px;
+}
+.buyer-message-box p {
+  margin: 0;
+  line-height: 1.35;
+  color: #24221f;
+  font-weight: 600;
+}
+
+.concurrency-audit-box {
+  background: #fafafa;
+  border: 2px solid #24221f;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.audit-box-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #6632cf;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.audit-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.audit-list code {
+  background: #eef0f3;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.concurrency-result-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.concurrency-secondary-btn {
+  padding: 10px 16px;
+  border: 2px solid #24221f;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #24221f;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #24221f;
+}
+.concurrency-secondary-btn:hover {
+  background: #f5f5f5;
+}
+.concurrency-primary-btn {
+  padding: 10px 18px;
+  border: 2px solid #24221f;
+  background: #ffe044;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #24221f;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #24221f;
+}
+.concurrency-primary-btn:hover {
+  background: #ffd829;
+}
+
+

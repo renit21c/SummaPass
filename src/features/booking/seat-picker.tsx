@@ -1,24 +1,59 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { rupiah } from '@/features/events/data';
 import { statusLabel, type Inventory } from './types';
+import { ConcurrencySimulatorModal } from './concurrency-simulator-modal';
 
 export function SeatPicker({
   initial,
   title,
   realtime,
-  user
+  user,
+  initialCategory,
 }: {
   initial: Inventory;
   title: string;
   realtime?: { url: string; key: string };
   user?: { name: string; email: string; phone?: string };
+  initialCategory?: string;
 }) {
   const router = useRouter();
   const [data, setData] = useState(initial);
-  const [categoryId, setCategoryId] = useState(initial.categories[initial.categories.length - 1]?.id ?? '');
+
+  const resolveInitialCategoryId = () => {
+    if (!initial.categories.length) return '';
+    if (initialCategory) {
+      const clean = initialCategory.toLowerCase().trim();
+      const direct = initial.categories.find(c => c.id.toLowerCase() === clean);
+      if (direct) return direct.id;
+
+      if (clean.includes('vip') || clean.includes('front')) {
+        const vipOrFront = initial.categories.find(c =>
+          c.name.toLowerCase().includes('front') ||
+          c.name.toLowerCase().includes('vip') ||
+          c.id.toLowerCase().includes('front') ||
+          c.id.toLowerCase().includes('vip')
+        );
+        if (vipOrFront) return vipOrFront.id;
+      }
+
+      if (clean.includes('reg') || clean.includes('regular') || clean.includes('reguler')) {
+        const reg = initial.categories.find(c =>
+          c.name.toLowerCase().includes('reg') ||
+          c.id.toLowerCase().includes('reg')
+        );
+        if (reg) return reg.id;
+      }
+
+      const matchName = initial.categories.find(c => c.name.toLowerCase().includes(clean));
+      if (matchName) return matchName.id;
+    }
+    return initial.categories[0]?.id ?? '';
+  };
+
+  const [categoryId, setCategoryId] = useState(resolveInitialCategoryId);
   const [selected, setSelected] = useState<string[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [emails, setEmails] = useState<Record<string, string>>({});
@@ -38,6 +73,7 @@ export function SeatPicker({
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [terms, setTerms] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
   const pending = useRef(false);
   const requestKey = useRef('');
 
@@ -238,9 +274,20 @@ export function SeatPicker({
 
           <div className="map-toolbar">
             <h2>Denah kursi</h2>
-            <div className="view-switch">
-              <button className={view === 'map' ? 'active' : ''} onClick={() => setView('map')} aria-pressed={view === 'map'}>Peta</button>
-              <button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-pressed={view === 'list'}>Daftar</button>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="concurrency-trigger-btn"
+                onClick={() => setShowSimulator(true)}
+                title="Uji ketahanan race condition perebutan kursi serentak"
+              >
+                <Zap size={14} />
+                <span>⚡ Simulasi War Tiket</span>
+              </button>
+              <div className="view-switch">
+                <button className={view === 'map' ? 'active' : ''} onClick={() => setView('map')} aria-pressed={view === 'map'}>Peta</button>
+                <button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-pressed={view === 'list'}>Daftar</button>
+              </div>
             </div>
           </div>
 
@@ -531,6 +578,17 @@ export function SeatPicker({
           {error && <div role="alert" className="form-error">{error}</div>}
         </aside>
       </div>
+
+      <ConcurrencySimulatorModal
+        isOpen={showSimulator}
+        onClose={() => setShowSimulator(false)}
+        slug={data.slug}
+        categories={data.categories}
+        seats={data.seats}
+        activeCategoryId={categoryId}
+        selectedSeatId={selected[0]}
+        onSimulationComplete={refresh}
+      />
     </>
   );
 }

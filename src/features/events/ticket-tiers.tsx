@@ -62,6 +62,7 @@ export function TicketTiers({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
         {displayTiers.map((tier: any) => {
           const isVip = tier.name.toLowerCase().includes('vip');
+          const categoryQuery = isVip ? 'front' : (tier.id?.toLowerCase().includes('reg') ? 'regular' : (tier.id || 'regular'));
           const perks = tier.perks ?? [
             `Tempat duduk di ${tier.sections?.join(', ') || 'Venue'}`,
             'Akses e-ticket dengan QR terenkripsi',
@@ -117,7 +118,7 @@ export function TicketTiers({
 
               <div>
                 <Link
-                  href={`/events/${slug}/seats`}
+                  href={`/events/${slug}/seats?category=${categoryQuery}`}
                   className={`button ${isVip ? '' : 'button-dark'}`}
                   style={{ width: '100%', textDecoration: 'none' }}
                 >
