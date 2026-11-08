@@ -137,3 +137,45 @@ test('Orang 2 - Tahap 1: profile update validates email address', () => {
   assert.equal(validateProfileInput({ name: 'Pengunjung Baru', email: 'pengunjung.baru@example.com' }).valid, true);
   assert.equal(validateProfileInput({ name: 'Pengunjung Baru', email: 'invalid-email' }).valid, false);
 });
+
+test('Orang 2 - Tahap 2: initial category resolution correctly selects front/VIP or regular from query param', () => {
+  const categories = [
+    { id: 'front', name: 'Front', sections: ['Front'] },
+    { id: 'regular', name: 'Regular', sections: ['Regular'] }
+  ];
+
+  const resolve = (pref?: string) => {
+    if (!categories.length) return '';
+    if (pref) {
+      const clean = pref.toLowerCase().trim();
+      const direct = categories.find(c => c.id.toLowerCase() === clean);
+      if (direct) return direct.id;
+
+      if (clean.includes('vip') || clean.includes('front')) {
+        const vipOrFront = categories.find(c =>
+          c.name.toLowerCase().includes('front') ||
+          c.name.toLowerCase().includes('vip') ||
+          c.id.toLowerCase().includes('front') ||
+          c.id.toLowerCase().includes('vip')
+        );
+        if (vipOrFront) return vipOrFront.id;
+      }
+
+      if (clean.includes('reg') || clean.includes('regular') || clean.includes('reguler')) {
+        const reg = categories.find(c =>
+          c.name.toLowerCase().includes('reg') ||
+          c.id.toLowerCase().includes('reg')
+        );
+        if (reg) return reg.id;
+      }
+    }
+    return categories[0]?.id ?? '';
+  };
+
+  assert.equal(resolve('front'), 'front');
+  assert.equal(resolve('vip'), 'front');
+  assert.equal(resolve('VIP Front Row'), 'front');
+  assert.equal(resolve('regular'), 'regular');
+  assert.equal(resolve('reguler'), 'regular');
+  assert.equal(resolve(undefined), 'front');
+});

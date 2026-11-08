@@ -10,16 +10,50 @@ export function SeatPicker({
   initial,
   title,
   realtime,
-  user
+  user,
+  initialCategory,
 }: {
   initial: Inventory;
   title: string;
   realtime?: { url: string; key: string };
   user?: { name: string; email: string; phone?: string };
+  initialCategory?: string;
 }) {
   const router = useRouter();
   const [data, setData] = useState(initial);
-  const [categoryId, setCategoryId] = useState(initial.categories[initial.categories.length - 1]?.id ?? '');
+
+  const resolveInitialCategoryId = () => {
+    if (!initial.categories.length) return '';
+    if (initialCategory) {
+      const clean = initialCategory.toLowerCase().trim();
+      const direct = initial.categories.find(c => c.id.toLowerCase() === clean);
+      if (direct) return direct.id;
+
+      if (clean.includes('vip') || clean.includes('front')) {
+        const vipOrFront = initial.categories.find(c =>
+          c.name.toLowerCase().includes('front') ||
+          c.name.toLowerCase().includes('vip') ||
+          c.id.toLowerCase().includes('front') ||
+          c.id.toLowerCase().includes('vip')
+        );
+        if (vipOrFront) return vipOrFront.id;
+      }
+
+      if (clean.includes('reg') || clean.includes('regular') || clean.includes('reguler')) {
+        const reg = initial.categories.find(c =>
+          c.name.toLowerCase().includes('reg') ||
+          c.id.toLowerCase().includes('reg')
+        );
+        if (reg) return reg.id;
+      }
+
+      const matchName = initial.categories.find(c => c.name.toLowerCase().includes(clean));
+      if (matchName) return matchName.id;
+    }
+    return initial.categories[0]?.id ?? '';
+  };
+
+  const [categoryId, setCategoryId] = useState(resolveInitialCategoryId);
   const [selected, setSelected] = useState<string[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [emails, setEmails] = useState<Record<string, string>>({});
