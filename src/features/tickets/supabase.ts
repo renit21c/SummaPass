@@ -34,3 +34,38 @@ export async function supabaseRefundTicket(userId:string,id:string,reason:string
   reason:cleanReason
  };
 }
+export async function supabaseTransferTicket(userId:string,id:string,newAttendeeName:string,newAttendeeEmail?:string){
+ const {client,key}=paymentConfiguration();
+ const tickets=await supabaseTickets(userId,id);
+ const target=tickets[0];
+ if(!target)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);
+ if(target.status!=='ACTIVE')throw new BookingError('ALREADY_REVOKED','Hanya tiket aktif yang dapat dialihkan.',409);
+ if(target.checkedInAt)throw new BookingError('ALREADY_CHECKED_IN','Tiket yang sudah digunakan check-in tidak dapat dialihkan.',409);
+ const cleanName=newAttendeeName?.trim();
+ if(!cleanName||cleanName.length<2)throw new BookingError('INVALID_NAME','Nama peserta baru minimal 2 karakter.',400);
+
+ const {data:ticketRow}=await client.from('tickets').select('booking_item_id').eq('id',id).single();
+ if(!ticketRow?.booking_item_id)throw new BookingError('DATABASE','Data tiket tidak valid.',503);
+
+ const {error:attendeeError}=await client.from('attendees').update({display_name:cleanName}).eq('booking_item_id',ticketRow.booking_item_id);
+ if(attendeeError)throw new BookingError('DATABASE','Gagal memperbarui nama peserta tiket.',503);
+
+ const pack=createTicketPack(target.seatId,key);
+ await client.from('tickets').update({token_hash:pack.tokenHash}).eq('id',id);
+ await client.from('ticket_secrets').update({encrypted_token:pack.encryptedToken}).eq('ticket_id',id);
+
+ const now=new Date().toISOString();
+ return {
+  ticket:{
+   ...target,
+   attendeeName:cleanName,
+   previousAttendeeName:target.attendeeName,
+   attendeeEmail:newAttendeeEmail?.trim().toLowerCase(),
+   transferredAt:now,
+   token:decryptToken(pack.encryptedToken,key)
+  },
+  previousAttendeeName:target.attendeeName,
+  newAttendeeName:cleanName,
+  transferredAt:now
+ };
+}

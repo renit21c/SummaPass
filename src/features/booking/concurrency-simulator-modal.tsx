@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Zap,
   X,
@@ -56,9 +56,11 @@ export function ConcurrencySimulatorModal({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ConcurrencySimulationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const prevOpenRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
+    // Only initialize/reset when the modal is freshly opened from closed state
+    if (isOpen && !prevOpenRef.current) {
       const activeCat = categories.find(c => c.id === activeCategoryId);
       const seatsInActiveCat = activeCat
         ? availableSeats.filter(s => activeCat.sections.includes(s.section))
@@ -74,6 +76,7 @@ export function ConcurrencySimulatorModal({
       setResult(null);
       setError(null);
     }
+    prevOpenRef.current = isOpen;
   }, [isOpen, selectedSeatId, activeCategoryId, categories, availableSeats]);
 
   if (!isOpen) return null;

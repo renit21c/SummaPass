@@ -99,6 +99,41 @@ export class DemoBookingStore {
    reason:cleanReason
   };
  }
+ transferTicket(userId:string,id:string,newAttendeeName:string,newAttendeeEmail?:string,reason?:string){
+  const ticket=this.issued.get(id);
+  if(!ticket||ticket.userId!==userId)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);
+  if(ticket.status!=='ACTIVE')throw new BookingError('ALREADY_REVOKED','Hanya tiket aktif yang dapat dialihkan atau diubah nama pesertanya.',409);
+  if(ticket.checkedInAt)throw new BookingError('ALREADY_CHECKED_IN','Tiket yang sudah digunakan check-in tidak dapat dialihkan.',409);
+  const event=this.catalog.get(ticket.slug);
+  if(event){
+   const start=Date.parse(`${event.date}T${event.time.replace(' WIB','').replace('.',':')}:00+07:00`);
+   if(this.clock()>=start)throw new BookingError('EVENT_STARTED','Pengalihan tiket hanya dapat dilakukan sebelum acara dimulai.',409);
+  }
+  const cleanName=newAttendeeName?.trim();
+  if(!cleanName||cleanName.length<2)throw new BookingError('INVALID_NAME','Nama peserta baru minimal 2 karakter.',400);
+
+  const prevName=ticket.attendeeName;
+  const pack=createTicketPack(ticket.seatId,this.encryptionKey);
+  ticket.previousAttendeeName=prevName;
+  ticket.attendeeName=cleanName;
+  if(newAttendeeEmail)ticket.attendeeEmail=newAttendeeEmail.trim().toLowerCase();
+  ticket.transferredAt=new Date(this.clock()).toISOString();
+  ticket.tokenHash=pack.tokenHash;
+  ticket.encryptedToken=pack.encryptedToken;
+
+  const booking=this.bookings.get(ticket.bookingId);
+  if(booking){
+   const item=booking.items.find(i=>i.seatId===ticket.seatId);
+   if(item)item.name=cleanName;
+  }
+
+  return {
+   ticket:this.ticket(userId,ticket.id),
+   previousAttendeeName:prevName,
+   newAttendeeName:cleanName,
+   transferredAt:ticket.transferredAt
+  };
+ }
  organizerSnapshot(userId?:string):OrganizerSnapshot{this.expire();const assigned=[...this.catalog.values()].filter(e=>demoOrganizerEvents.includes(e.slug)||(!!userId&&e.ownerId===userId));return {events:assigned.map(e=>structuredClone(e)),bookings:[...this.bookings.values()].filter(b=>assigned.some(e=>e.slug===b.slug)).reverse().map(b=>structuredClone(b)),inventory:assigned.map(e=>this.inventory(e.slug,true)),attendance:assigned.map(e=>({slug:e.slug,checkedIn:[...this.issued.values()].filter(t=>t.slug===e.slug&&t.checkedInAt).length})),mode:'demo'};}
  publicEvents(){return [...this.catalog.values()].filter(e=>e.status==='PUBLISHED').map(e=>structuredClone(e));}
  restoreCatalog(items:ManagedEvent[]){this.catalog=new Map(items.map(e=>[e.slug,structuredClone(e)]));}
