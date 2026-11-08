@@ -182,7 +182,25 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
   }
 
   function handleShareWhatsApp() {
-    const text = `Halo! Ini e-ticket SummaPass saya:\n\n*${event.title}*\n🗓 Tanggal: ${dateLabel(event.date)}\n⏰ Waktu: ${event.time}\n📍 Lokasi: Summarecon Mall Bandung (${event.area ?? 'Venue Utama'})\n💺 Kursi: *${ticket.seatLabel}* (${ticket.categoryName})\n👤 Pemegang: *${ticket.attendeeName}*\n🎫 Kode Tiket: ${ticket.reference}\n\nTunjukkan QR e-ticket saat tiba di pintu masuk!`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const ticketUrl = origin ? `${origin}/my-tickets` : 'https://summapass.vercel.app/my-tickets';
+    const lines = [
+      'Halo! Ini rincian e-ticket SummaPass saya:',
+      '',
+      `*${event.title}*`,
+      `- Tanggal: ${dateLabel(event.date)}`,
+      `- Waktu: ${event.time}`,
+      `- Lokasi: Summarecon Mall Bandung (${event.area ?? 'Venue Utama'})`,
+      `- Kursi: *${ticket.seatLabel}* (${ticket.categoryName})`,
+      `- Pemegang Tiket: *${ticket.attendeeName}*`,
+      `- Kode Tiket: ${ticket.reference}`,
+      '',
+      'Buka dan scan QR e-ticket di tautan berikut:',
+      ticketUrl,
+      '',
+      'Tunjukkan kode QR ini kepada petugas saat tiba di pintu masuk venue.'
+    ];
+    const text = lines.join('\n');
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   }
