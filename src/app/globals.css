@@ -793,3 +793,17 @@ html,body{max-width:100%;overflow-x:hidden}
 .operations-counts{display:flex;flex-wrap:wrap;gap:10px;margin-block:18px}.operations-counts span{padding:9px 12px;background:var(--yellow);border:1px solid var(--ink);border-radius:8px}
 .operations-table{overflow-x:auto;margin-block:20px}.operations-table table{border-collapse:collapse;width:100%;min-width:640px}.operations-table td,.operations-table th{text-align:left;padding:14px;border-bottom:1px solid var(--line);vertical-align:top}.operations-table th{background:var(--mint)}.operations-table small{display:block;margin-top:7px}.operations-retry{border:2px solid var(--purple);border-radius:12px;padding:20px;margin-top:24px}
 @media(max-width:600px){.operations-form .button{width:100%}.operations-card{box-shadow:3px 3px 0 var(--ink)}}
+
+/* Inline organizer validation, using existing SummaPass tokens. */
+.event-editor .editor-hint,.event-editor .editor-counter{font-size:.8rem;font-weight:500;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.event-editor .editor-text-meta{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.event-editor .editor-counter{font-variant-numeric:tabular-nums;white-space:nowrap}
+.event-editor [aria-invalid="true"]{border-color:var(--purple);box-shadow:0 0 0 2px var(--purple-light)}
+.event-editor .editor-field-error{display:flex;align-items:flex-start;gap:7px;color:var(--ink);font-size:.82rem;line-height:1.5;font-weight:650;background:var(--purple-light);padding:9px 11px;border-left:3px solid var(--purple);border-radius:6px}
+.event-editor .editor-field-error svg,.event-editor .editor-error-summary>svg,.event-editor .editor-message>svg{flex-shrink:0;margin-top:2px}
+.event-editor .editor-error-summary{display:flex;gap:12px;padding:18px 20px;border:2px solid var(--purple);border-radius:14px;background:var(--purple-light);margin-top:24px}
+.event-editor .editor-error-summary ul{margin:8px 0 0;padding-left:20px;font-size:.88rem;line-height:1.7}
+.event-editor .editor-error-summary a{text-decoration:underline;text-underline-offset:3px}
+.event-editor .editor-message{display:flex;gap:10px;align-items:flex-start}
+.event-editor .editor-message-error{background:var(--purple-light);border:2px solid var(--purple)}
+.event-editor :is(input,textarea,select){scroll-margin-top:110px}
