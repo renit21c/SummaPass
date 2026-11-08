@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "src/app/api/schedules/notifications/route.ts": {
+      "experimentalTriggers": [{ "type": "schedule/v1beta" }]
+    }
+  },
+  "schedules": {
+    "notifications-worker": {
+      "schedule": "*/15 * * * *",
+      "jitter": 15,
+      "function": "api/schedules/notifications"
+    }
+  }
+}
