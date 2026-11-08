@@ -74,6 +74,8 @@ Deploy ke project `renisdue/summapass`. Schedules harus tersedia untuk tim terse
 
 Worker memproses maksimal 5 job per putaran. Jadwal Hobby cocok untuk demo volume kecil; antrean lebih besar menambah waktu tunggu. Pengingat pembayaran dengan jendela dua menit tidak dijamin sempat terkirim dengan cadence ini. Untuk pengiriman cepat gunakan cadence lebih sering pada paket yang mendukung atau worker terpisah.
 
+Setelah API pembayaran mengonfirmasi booking, `after()` Next.js langsung memicu satu putaran worker di server tanpa menunda respons pembayaran. Kegagalan email tidak membatalkan pembayaran; antrean yang tersisa atau retry tetap diproses Schedules. Pada antrean besar, satu putaran belum tentu mencapai semua tiket baru. File font PDF wajib dibundel untuk route pembayaran dan function Schedules melalui `outputFileTracingIncludes`.
+
 Verifikasi CLI: `vercel schedules list`, `vercel schedules inspect notifications-worker`, dan `vercel schedules executions list notifications-worker`. Referensi: https://vercel.com/docs/schedules/quickstart.
 
 Contoh PowerShell setelah secret dimuat ke environment:
