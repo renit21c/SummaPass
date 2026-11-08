@@ -19,7 +19,7 @@ export async function supabaseRefundTicket(userId:string,id:string,reason:string
  if(!target)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);
  if(target.status!=='ACTIVE')throw new BookingError('ALREADY_REVOKED','Tiket sudah tidak aktif atau sudah dibatalkan.',409);
  if(target.checkedInAt)throw new BookingError('ALREADY_CHECKED_IN','Tiket yang sudah digunakan check-in tidak dapat dibatalkan.',409);
- const {error:updateError}=await client.from('tickets').update({status:'REVOKED'}).eq('id',id).eq('user_id',userId);
+ const {error:updateError}=await client.from('tickets').update({status:'REVOKED'}).eq('id',id);
  if(updateError)throw new BookingError('DATABASE','Gagal membatalkan tiket.',503);
  const {data:ticketRow}=await client.from('tickets').select('booking_item_id').eq('id',id).single();
  if(ticketRow?.booking_item_id){
