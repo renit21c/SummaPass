@@ -58,7 +58,7 @@ export function MobileNavigation({ loggedIn }: { loggedIn: boolean }) {
               </button>
             </div>
             <nav>
-              <Link href="/events" onClick={() => setOpen(false)}>Daftar event</Link>
+              <Link href="/events" onClick={() => setOpen(false)}>Cari event</Link>
               <Link href="/#cara-kerja" onClick={() => setOpen(false)}>Cara pesan</Link>
               {loggedIn ? (
                 <Link href="/account" onClick={() => setOpen(false)}>Akun saya</Link>
