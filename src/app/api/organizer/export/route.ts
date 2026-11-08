@@ -1,5 +1,41 @@
-import { NextRequest,NextResponse } from 'next/server';
-import { organizerSnapshot } from '@/features/organizer/service';
-import { exportBookings } from '@/features/organizer/core';
-import { failure } from '@/features/booking/http';
-export async function GET(request:NextRequest){try{const data=await organizerSnapshot();const slug=request.nextUrl.searchParams.get('event');if(slug&&!data.events.some(e=>e.slug===slug))return NextResponse.json({error:'Event tidak ditugaskan.'},{status:403});const query=(request.nextUrl.searchParams.get('q')??'').toLowerCase().slice(0,100),status=request.nextUrl.searchParams.get('status');const rows=data.bookings.filter(b=>(!slug||b.slug===slug)&&(!status||b.status===status)&&(`${b.reference} ${b.items.map(i=>i.name).join(' ')}`.toLowerCase().includes(query)));return new NextResponse(exportBookings(rows),{headers:{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="summapass-bookings.csv"','Cache-Control':'private, no-store'}});}catch(error){return failure(error);}}
+import { reportRange } from "@/features/organizer/tools-core";
+import { NextRequest, NextResponse } from "next/server";
+import { organizerReportSnapshot } from "@/features/organizer/service";
+import { exportBookings } from "@/features/organizer/core";
+import { failure } from "@/features/booking/http";
+export async function GET(request: NextRequest) {
+  try {
+    const range = reportRange.parse({
+      from: request.nextUrl.searchParams.get("from") || undefined,
+      to: request.nextUrl.searchParams.get("to") || undefined,
+    });
+    const data = await organizerReportSnapshot(range);
+    const slug = request.nextUrl.searchParams.get("event");
+    if (slug && !data.events.some((e) => e.slug === slug))
+      return NextResponse.json(
+        { error: "Event tidak ditugaskan." },
+        { status: 403 },
+      );
+    const query = (request.nextUrl.searchParams.get("q") ?? "")
+        .toLowerCase()
+        .slice(0, 100),
+      status = request.nextUrl.searchParams.get("status");
+    const rows = data.bookings.filter(
+      (b) =>
+        (!slug || b.slug === slug) &&
+        (!status || b.status === status) &&
+        `${b.reference} ${b.items.map((i) => i.name).join(" ")}`
+          .toLowerCase()
+          .includes(query),
+    );
+    return new NextResponse(exportBookings(rows), {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="summapass-bookings.csv"',
+        "Cache-Control": "private, no-store",
+      },
+    });
+  } catch (error) {
+    return failure(error);
+  }
+}

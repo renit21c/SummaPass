@@ -1,7 +1,7 @@
 import { z } from 'zod';
 export const emailAttachment=z.object({filename:z.string().regex(/^[a-zA-Z0-9_-]+\.pdf$/).max(120),content:z.string().min(1).max(1398104).regex(/^[A-Za-z0-9+/]+={0,2}$/),content_type:z.literal('application/pdf')});
 export type EmailAttachment=z.infer<typeof emailAttachment>;
-export const emailPayload=z.object({from:z.string().min(3).max(300),to:z.array(z.string().email()).length(1),subject:z.string().min(1).max(200),text:z.string().max(12000),html:z.string().max(12000),attachments:z.array(emailAttachment).max(1).optional()});
+export const emailPayload=z.object({from:z.string().min(3).max(300),to:z.array(z.string().email()).length(1),subject:z.string().min(1).max(200),text:z.string().max(12000),html:z.string().max(32000),attachments:z.array(emailAttachment).max(1).optional()});
 export type EmailPayload=z.infer<typeof emailPayload>;
 export function escapeHtml(value:string){return value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));}
 const emailColors={orange:'#ff681c',purple:'#6632cf',yellow:'#ffe044',mint:'#51e3ab',pink:'#ff7ac3',paper:'#f0f1f3',ink:'#24221f',muted:'#60564d',white:'#ffffff'};
