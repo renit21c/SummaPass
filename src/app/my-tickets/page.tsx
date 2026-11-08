@@ -1,7 +1,59 @@
 import Link from 'next/link';
-import { ArrowUpRight,Ticket as TicketIcon } from 'lucide-react';
+import { Ticket as TicketIcon } from 'lucide-react';
 import { requireSession } from '@/lib/auth/session';
 import { tickets } from '@/features/booking/service';
-import { events,dateLabel } from '@/features/events/data';
-export const metadata={title:'Tiket saya',robots:{index:false,follow:false}};
-export default async function MyTickets({searchParams}:{searchParams:Promise<{booking?:string}>}){const user=await requireSession('/my-tickets');const {booking}=await searchParams;let list;try{list=await tickets(user.id,booking);}catch{return <main id="main" className="container section empty-state"><h1>Tiket gagal dimuat.</h1><p>Muat ulang atau hubungi penyelenggara.</p><Link className="button" href="/my-tickets">Coba lagi</Link></main>;}return <main id="main" className="container section"><div className="page-heading"><h1>Tiket saya</h1><p>Tiket muncul setelah pembayaran berhasil.</p></div>{list.length===0?<div className="empty-state"><TicketIcon size={40}/><h2>Belum ada tiket</h2><p>Selesaikan pembayaran untuk mendapatkan tiket.</p><Link className="button" href="/bookings">Lihat reservasi</Link></div>:<div className="my-ticket-grid">{list.map(t=>{const event=t.event??events.find(e=>e.slug===t.slug);return <Link href={`/my-tickets/${t.id}`} className="my-ticket-card" key={t.id}><div className={`ticket-card-art ${event?.theme??'sunset'}`} aria-hidden="true"><TicketIcon size={52}/><ArrowUpRight size={27}/></div><div className="my-ticket-copy"><h2>{event?.title??t.slug}</h2><p>{event?dateLabel(event.date):''}</p><div className="my-ticket-person"><strong>{t.attendeeName}</strong><span>{t.seatLabel}</span></div><span className="ticket-card-status">{t.status==='ACTIVE'?'Aktif · Lunas simulasi':'Tidak aktif'}</span><span className="text-link">Buka QR e-ticket<ArrowUpRight size={16}/></span></div></Link>;})}</div>}<Link href="/bookings" className="text-link back ticket-back">Semua reservasi</Link>{booking&&<Link href="/my-tickets" className="text-link ticket-back">Semua tiket saya</Link>}</main>;}
+import { MyTicketsList } from '@/features/tickets/my-tickets-list';
+
+export const metadata = {
+  title: 'Tiket saya',
+  robots: { index: false, follow: false }
+};
+
+export default async function MyTickets({
+  searchParams,
+}: {
+  searchParams: Promise<{ booking?: string }>;
+}) {
+  const user = await requireSession('/my-tickets');
+  const { booking } = await searchParams;
+
+  let list;
+  try {
+    list = await tickets(user.id, booking);
+  } catch {
+    return (
+      <main id="main" className="container section empty-state">
+        <h1>Tiket gagal dimuat.</h1>
+        <p>Muat ulang atau hubungi penyelenggara.</p>
+        <Link className="button" href="/my-tickets">Coba lagi</Link>
+      </main>
+    );
+  }
+
+  return (
+    <main id="main" className="container section">
+      <div className="page-heading">
+        <h1>Tiket saya</h1>
+        <p>Tiket muncul setelah pembayaran berhasil. Tunjukkan kode QR e-ticket kepada petugas saat check-in.</p>
+      </div>
+
+      {list.length === 0 ? (
+        <div className="empty-state">
+          <TicketIcon size={40} />
+          <h2>Belum ada tiket</h2>
+          <p>Selesaikan pembayaran untuk mendapatkan tiket.</p>
+          <Link className="button" href="/bookings">Lihat reservasi</Link>
+        </div>
+      ) : (
+        <MyTicketsList tickets={list} />
+      )}
+
+      <div style={{ marginTop: 32, display: 'flex', gap: 20, alignItems: 'center' }}>
+        <Link href="/bookings" className="text-link back">Semua reservasi</Link>
+        {booking && (
+          <Link href="/my-tickets" className="text-link">Semua tiket saya</Link>
+        )}
+      </div>
+    </main>
+  );
+}

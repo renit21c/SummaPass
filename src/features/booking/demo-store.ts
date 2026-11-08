@@ -29,7 +29,11 @@ export class DemoBookingStore {
   const event=this.catalog.get(slug);if(!event||(!privateRead&&event.status!=='PUBLISHED'))throw new BookingError('NOT_FOUND','Event tidak ditemukan.',404);this.expire();
   const seats:Inventory['seats']=[];
   for(const [sectionIndex,section] of ['Front','Regular'].entries())for(const [rowIndex,row] of ['A','B','C'].entries())for(let number=1;number<=8;number++){
-   const id=`${section}-${row}${number}`;const sold=(events.some(e=>e.slug===slug)&&section==='Front'&&row==='A'&&number<=2)||[...this.bookings.values()].some(b=>b.slug===slug&&b.status==='CONFIRMED'&&b.items.some(i=>i.seatId===id));
+   const id=`${section}-${row}${number}`;
+   const activeIssued=[...this.issued.values()].filter(t=>t.slug===slug&&t.seatId===id);
+   const hasActiveTicket=activeIssued.length>0?activeIssued.some(t=>t.status==='ACTIVE'):false;
+   const hasUnrefundedBooking=[...this.bookings.values()].some(b=>b.slug===slug&&b.status==='CONFIRMED'&&b.items.some(i=>i.seatId===id)&&!activeIssued.some(t=>t.status==='REVOKED'));
+   const sold=(events.some(e=>e.slug===slug)&&section==='Front'&&row==='A'&&number<=2)||hasActiveTicket||(activeIssued.length===0&&hasUnrefundedBooking);
    const held=[...this.bookings.values()].some(b=>b.slug===slug&&b.status==='PENDING_PAYMENT'&&b.items.some(i=>i.seatId===id));
    seats.push({id,section,row,number,x:80+(number-1)*50,y:140+sectionIndex*235+rowIndex*54,status:sold?'SOLD':held?'RESERVED':'AVAILABLE'});
   }
@@ -64,6 +68,37 @@ export class DemoBookingStore {
  }
  ticketsFor(userId:string,bookingId?:string):Ticket[]{return [...this.issued.values()].filter(t=>t.userId===userId&&(!bookingId||t.bookingId===bookingId)).map(({userId:owner,tokenHash:hash,encryptedToken,...ticket})=>({...ticket,token:decryptToken(encryptedToken,this.encryptionKey)}));}
  ticket(userId:string,id:string):Ticket{const ticket=this.issued.get(id);if(!ticket||ticket.userId!==userId)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);return this.ticketsFor(userId,ticket.bookingId).find(t=>t.id===id)!;}
+ refundTicket(userId:string,id:string,reason:string){
+  const ticket=this.issued.get(id);
+  if(!ticket||ticket.userId!==userId)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);
+  if(ticket.status!=='ACTIVE')throw new BookingError('ALREADY_REVOKED','Tiket sudah tidak aktif atau sudah dibatalkan.',409);
+  if(ticket.checkedInAt)throw new BookingError('ALREADY_CHECKED_IN','Tiket yang sudah digunakan check-in tidak dapat dibatalkan.',409);
+  const event=this.catalog.get(ticket.slug);
+  if(event){
+   const start=Date.parse(`${event.date}T${event.time.replace(' WIB','').replace('.',':')}:00+07:00`);
+   if(this.clock()>=start)throw new BookingError('EVENT_STARTED','Pembatalan hanya dapat dilakukan sebelum acara dimulai.',409);
+  }
+  const cleanReason=reason?.trim()||'Pengunjung berhalangan hadir';
+  ticket.status='REVOKED';
+  ticket.cancellationReason=cleanReason;
+  ticket.cancelledAt=new Date(this.clock()).toISOString();
+  ticket.refundAmount=ticket.price;
+  ticket.refundStatus='REFUNDED';
+  const booking=this.bookings.get(ticket.bookingId);
+  if(booking){
+   const remainingActive=[...this.issued.values()].filter(t=>t.bookingId===booking.id&&t.status==='ACTIVE');
+   if(!remainingActive.length){
+    booking.status='CANCELLED';
+    booking.paymentStatus='CANCELLED';
+   }
+  }
+  return {
+   ticket:this.ticket(userId,ticket.id),
+   refundAmount:ticket.price,
+   refundedAt:ticket.cancelledAt,
+   reason:cleanReason
+  };
+ }
  organizerSnapshot(userId?:string):OrganizerSnapshot{this.expire();const assigned=[...this.catalog.values()].filter(e=>demoOrganizerEvents.includes(e.slug)||(!!userId&&e.ownerId===userId));return {events:assigned.map(e=>structuredClone(e)),bookings:[...this.bookings.values()].filter(b=>assigned.some(e=>e.slug===b.slug)).reverse().map(b=>structuredClone(b)),inventory:assigned.map(e=>this.inventory(e.slug,true)),attendance:assigned.map(e=>({slug:e.slug,checkedIn:[...this.issued.values()].filter(t=>t.slug===e.slug&&t.checkedInAt).length})),mode:'demo'};}
  publicEvents(){return [...this.catalog.values()].filter(e=>e.status==='PUBLISHED').map(e=>structuredClone(e));}
  restoreCatalog(items:ManagedEvent[]){this.catalog=new Map(items.map(e=>[e.slug,structuredClone(e)]));}

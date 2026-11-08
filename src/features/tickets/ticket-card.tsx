@@ -1,18 +1,28 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { CalendarDays, MapPin, Ticket as TicketIcon, Printer, Download, Mail, CheckCircle, Send, AlertCircle, RefreshCw } from 'lucide-react';
+import { CalendarDays, MapPin, Ticket as TicketIcon, Printer, Download, Mail, CheckCircle, Send, AlertCircle, RefreshCw, XCircle } from 'lucide-react';
 import type { Ticket } from './types';
 import { dateLabel, rupiah, type Event } from '@/features/events/data';
 
-export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) {
+export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; event: Event }) {
+  const [ticket, setTicket] = useState<Ticket>(initialTicket);
   const [downloading, setDownloading] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showResendModal, setShowResendModal] = useState(false);
-  const requestKey=useRef<string|null>(null);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundReason, setRefundReason] = useState('Berhalangan hadir karena keperluan mendadak');
+  const [customReason, setCustomReason] = useState('');
+  const [refunding, setRefunding] = useState(false);
+  const requestKey = useRef<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  useEffect(()=>{if(cooldown<=0)return;const timer=setTimeout(()=>setCooldown(cooldown-1),1000);return()=>clearTimeout(timer);},[cooldown]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   async function handleDownloadPdf() {
     setDownloading(true);
@@ -29,7 +39,7 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      setResendStatus({type:'error',message:'PDF belum dapat diunduh. Coba lagi.'});
+      setResendStatus({ type: 'error', message: 'PDF belum dapat diunduh. Coba lagi.' });
     } finally {
       setDownloading(false);
     }
@@ -45,7 +55,7 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
       const res = await fetch(`/api/tickets/${ticket.id}/resend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: requestKey.current??=crypto.randomUUID() })
+        body: JSON.stringify({ key: requestKey.current ??= crypto.randomUUID() })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Gagal mengirim ulang tiket.');
@@ -55,7 +65,6 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
         message: data.message ?? 'Permintaan kirim ulang masuk antrean.'
       });
       setShowResendModal(false);
-
       setCooldown(60);
     } catch (err) {
       setResendStatus({
@@ -67,6 +76,52 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
     }
   }
 
+  async function handleRefund(e: React.FormEvent) {
+    e.preventDefault();
+    if (refunding) return;
+    setRefunding(true);
+    setResendStatus(null);
+    const finalReason = refundReason === 'Lainnya' ? (customReason.trim() || 'Lainnya') : refundReason;
+
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: finalReason })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Gagal membatalkan tiket.');
+
+      if (data.ticket) {
+        setTicket(data.ticket);
+      } else {
+        setTicket(prev => ({
+          ...prev,
+          status: 'REVOKED',
+          cancellationReason: finalReason,
+          refundAmount: prev.price,
+          refundStatus: 'REFUNDED',
+          cancelledAt: new Date().toISOString()
+        }));
+      }
+
+      setResendStatus({
+        type: 'success',
+        message: `Tiket ${ticket.reference} berhasil dibatalkan. Pengembalian dana simulasi sebesar ${rupiah(data.refundAmount ?? ticket.price)} telah diproses dan kursi ${ticket.seatLabel} telah kembali tersedia di denah acara.`
+      });
+      setShowRefundModal(false);
+    } catch (err) {
+      setResendStatus({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Gagal membatalkan tiket.'
+      });
+    } finally {
+      setRefunding(false);
+    }
+  }
+
+  const isCancelled = ticket.status === 'REVOKED';
+
   return (
     <div className="ticket-view">
       <article className="ticket-paper" aria-label={`E-ticket ${event.title}, ${ticket.seatLabel}`}>
@@ -74,10 +129,27 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
           <TicketIcon size={32} />
           <h2>{event.title}</h2>
           <div className="ticket-status-row">
-            <span>{ticket.status === 'ACTIVE' ? 'Tiket aktif' : 'Tidak aktif'}</span>
-            <span>Pembayaran simulasi lunas</span>
+            <span style={isCancelled ? { background: '#fff0ed', color: '#d92d20', borderColor: '#d92d20' } : {}}>
+              {isCancelled ? 'Tiket dibatalkan (Refunded)' : 'Tiket aktif'}
+            </span>
+            <span>{isCancelled ? 'Dana simulasi dikembalikan' : 'Pembayaran simulasi lunas'}</span>
           </div>
-          <p className="ticket-fact">
+
+          {isCancelled && (
+            <div style={{ marginTop: 14, padding: '12px 16px', background: '#fff0ed', border: '1.5px solid #d92d20', borderRadius: 8 }}>
+              <strong style={{ display: 'block', color: '#d92d20', fontSize: 13, marginBottom: 4 }}>
+                Tiket Dibatalkan &amp; Di-refund
+              </strong>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--ink)' }}>
+                Alasan: {ticket.cancellationReason ?? 'Pengunjung berhalangan hadir'}
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
+                Pengembalian dana simulasi sebesar {rupiah(ticket.refundAmount ?? ticket.price)} telah diproses. Kursi {ticket.seatLabel} kembali tersedia di denah publik.
+              </p>
+            </div>
+          )}
+
+          <p className="ticket-fact" style={{ marginTop: isCancelled ? 14 : undefined }}>
             <CalendarDays size={17} />
             {dateLabel(event.date)} · {event.time}
           </p>
@@ -104,7 +176,7 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
         </div>
 
         <div className="ticket-qr-panel">
-          {ticket.status === 'ACTIVE' ? (
+          {!isCancelled ? (
             <div className="ticket-qr">
               <QRCodeSVG
                 value={ticket.token}
@@ -117,11 +189,21 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
               />
             </div>
           ) : (
-            <p>Tiket ini sudah tidak aktif.</p>
+            <div style={{ padding: '36px 16px', border: '2px dashed #d92d20', borderRadius: 12, background: '#fff8f6', maxWidth: 240, textAlign: 'center' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>⛔</div>
+              <strong style={{ display: 'block', fontSize: 13, color: '#d92d20', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Tiket Tidak Aktif
+              </strong>
+              <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0', lineHeight: 1.5 }}>
+                Tiket telah dibatalkan dan kursi {ticket.seatLabel} telah dilepas kembali ke denah acara.
+              </p>
+            </div>
           )}
           <p className="ticket-reference">{ticket.reference}</p>
           <div className="ticket-checkin-note">
-            {ticket.checkedInAt
+            {isCancelled
+              ? 'Status: Dibatalkan & Refunded (QR tidak berlaku di gerbang)'
+              : ticket.checkedInAt
               ? `Sudah masuk: ${new Date(ticket.checkedInAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB`
               : 'Belum check-in. Tunjukkan QR ini kepada petugas pintu masuk.'}
           </div>
@@ -152,7 +234,6 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
 
       {/* Actions */}
       <div className="ticket-actions no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}>
-
         <button
           className="button button-light"
           type="button"
@@ -161,12 +242,124 @@ export function TicketCard({ ticket, event }: { ticket: Ticket; event: Event }) 
           <Printer size={18} /> Cetak E-Ticket
         </button>
 
+        {!isCancelled && !ticket.checkedInAt && (
+          <button
+            className="button button-light"
+            style={{ borderColor: 'var(--ink)', color: '#d92d20' }}
+            type="button"
+            onClick={() => setShowRefundModal(true)}
+          >
+            <XCircle size={18} /> Batalkan &amp; Refund Tiket
+          </button>
+        )}
+
         <p style={{ margin: 0, fontSize: 11, color: 'var(--muted)' }}>
           Unduh PDF, cetak tiket, atau kirim PDF melalui email akun pemesan.
         </p>
       </div>
 
-      <div className="ticket-actions no-print"><button className="button button-light" type="button" disabled={downloading} onClick={()=>void handleDownloadPdf()}><Download size={18}/>{downloading?'Menyiapkan PDF...':'Unduh PDF'}</button><button className="button button-light" type="button" disabled={resending||cooldown>0} onClick={()=>{requestKey.current=crypto.randomUUID();setShowResendModal(true);}}><Mail size={18}/>{cooldown>0?`Tunggu ${cooldown} detik`:'Email e-ticket PDF'}</button></div>
+      <div className="ticket-actions no-print">
+        <button className="button button-light" type="button" disabled={downloading} onClick={() => void handleDownloadPdf()}>
+          <Download size={18} />
+          {downloading ? 'Menyiapkan PDF...' : 'Unduh PDF'}
+        </button>
+        {!isCancelled && (
+          <button className="button button-light" type="button" disabled={resending || cooldown > 0} onClick={() => { requestKey.current = crypto.randomUUID(); setShowResendModal(true); }}>
+            <Mail size={18} />
+            {cooldown > 0 ? `Tunggu ${cooldown} detik` : 'Email e-ticket PDF'}
+          </button>
+        )}
+      </div>
+
+      {/* Refund Ticket Dialog */}
+      {showRefundModal && (
+        <div
+          role="dialog"
+          aria-labelledby="refund-modal-title"
+          style={{
+            maxWidth: 980,
+            margin: '20px auto 0',
+            padding: 24,
+            border: '2px solid var(--ink)',
+            borderRadius: 12,
+            background: 'var(--cream)',
+            boxShadow: '6px 6px 0 var(--ink)'
+          }}
+        >
+          <h3 id="refund-modal-title" style={{ fontSize: 20, margin: '0 0 8px', fontWeight: 800, color: '#d92d20' }}>
+            Batalkan Tiket &amp; Pengembalian Dana
+          </h3>
+          <p style={{ fontSize: 13, margin: '0 0 16px', lineHeight: 1.6 }}>
+            Pembatalan tiket akan menonaktifkan kode QR e-ticket ini secara permanen. Kursi <strong>{ticket.seatLabel} ({ticket.categoryName})</strong> akan dilepas kembali ke denah acara untuk pengunjung lain.
+          </p>
+
+          <div style={{ background: 'var(--surface)', border: '1.5px solid var(--ink)', borderRadius: 8, padding: '14px 18px', marginBottom: 18, fontSize: 13 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span>Harga Pembelian Tiket</span>
+              <strong>{rupiah(ticket.price)}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span>Biaya Layanan Pembatalan</span>
+              <strong style={{ color: '#0d7d4d' }}>Rp0 (Gratis)</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--ink)', paddingTop: 8, marginTop: 8 }}>
+              <span>Estimasi Dana Dikembalikan</span>
+              <strong style={{ color: 'var(--orange)', fontSize: 15 }}>{rupiah(ticket.price)}</strong>
+            </div>
+          </div>
+
+          <form onSubmit={handleRefund}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+              Alasan Pembatalan:
+              <select
+                value={refundReason}
+                onChange={e => setRefundReason(e.target.value)}
+                style={{ display: 'block', width: '100%', padding: '10px 12px', marginTop: 4, borderRadius: 8, border: '1.5px solid var(--ink)', background: '#fff' }}
+              >
+                <option value="Berhalangan hadir karena keperluan mendadak">Berhalangan hadir karena keperluan mendadak</option>
+                <option value="Perubahan jadwal acara atau rencana perjalanan">Perubahan jadwal acara atau rencana perjalanan</option>
+                <option value="Salah memilih kursi atau kategori tiket">Salah memilih kursi atau kategori tiket</option>
+                <option value="Lainnya">Alasan Lainnya</option>
+              </select>
+            </label>
+
+            {refundReason === 'Lainnya' && (
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, margin: '12px 0' }}>
+                Tuliskan Alasan:
+                <textarea
+                  required
+                  minLength={3}
+                  maxLength={500}
+                  value={customReason}
+                  onChange={e => setCustomReason(e.target.value)}
+                  placeholder="Ceritakan alasan pembatalan tiket..."
+                  style={{ display: 'block', width: '100%', padding: '10px 12px', marginTop: 4, borderRadius: 8, border: '1.5px solid var(--ink)', minHeight: 70 }}
+                />
+              </label>
+            )}
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginTop: 18 }}>
+              <button
+                className="button"
+                style={{ background: '#d92d20', color: '#fff', borderColor: 'var(--ink)' }}
+                type="submit"
+                disabled={refunding}
+              >
+                {refunding ? 'Memproses Pengembalian...' : 'Konfirmasi Batalkan & Refund'}
+              </button>
+              <button
+                className="button button-light"
+                type="button"
+                disabled={refunding}
+                onClick={() => setShowRefundModal(false)}
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Resend Ticket Dialog */}
       {showResendModal && (
         <div
