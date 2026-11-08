@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authMode, safeReturnPath } from '@/lib/auth/config';
 import { createCustomDemoSession } from '@/lib/auth/session';
-import { sameOrigin, requestOrigin } from '@/lib/auth/request';
+import { emailRedirectOrigin, sameOrigin, requestOrigin } from '@/lib/auth/request';
 import { supabaseServer } from '@/lib/supabase/server';
 
 const registerSchema = z.object({
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     email,
     password,
     options: {
-      emailRedirectTo: `${requestOrigin(request)}/auth/callback?next=${encodeURIComponent('/verify-email?verified=1')}`,
+      emailRedirectTo: `${emailRedirectOrigin(request)}/auth/callback?next=${encodeURIComponent('/verify-email?verified=1')}`,
       data: {
         display_name: name,
         phone

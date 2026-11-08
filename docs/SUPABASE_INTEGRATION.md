@@ -14,6 +14,12 @@ Implementasi pada branch feature/supabase-integration. Mode demo tetap tersedia.
 8. Buat kunci tiket sekali dengan node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))". Simpan kunci 64 karakter hex di .env.local dan secret manager. Jangan menggantinya selama tiket dengan versi v1 masih digunakan; backup kunci terpisah dari database. Service-role dan kunci enkripsi tidak boleh memakai prefix NEXT_PUBLIC.
 9. Jalankan npm run supabase:check. Perintah ini hanya membaca metadata dan menguji penolakan RPC anonim. Setelah lulus, mulai aplikasi dan uji alur login sampai check-in.
 
+## URL verifikasi email production
+
+Di Supabase Dashboard, buka **Authentication > URL Configuration**, lalu isi **Site URL** dengan `https://summapass.vercel.app`. Tambahkan juga `https://summapass.vercel.app/auth/callback` pada **Redirect URLs**. Untuk tetap dapat menguji lokal, tambahkan `http://127.0.0.1:3000/auth/callback` secara terpisah.
+
+Di Vercel, set `SUMMAPASS_APP_URL=https://summapass.vercel.app` tanpa tanda kutip. Setelah mengganti environment variable, lakukan redeploy production. Link email yang sudah terlanjur dibuat dengan `localhost` tidak dapat diubah, jadi kirim ulang verifikasi setelah konfigurasi ini selesai.
+
 Contoh assignment di SQL Editor, ganti kedua UUID dengan akun dan event development yang benar:
 
 ```sql
