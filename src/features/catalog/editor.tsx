@@ -66,7 +66,7 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
    </fieldset>
   </form>
   {message&&<p className={`editor-message${failed?' editor-message-error':''}`} role={failed?'alert':'status'}>{failed?<AlertCircle size={20} aria-hidden="true"/>:<CheckCircle2 size={20} aria-hidden="true"/>}{message}</p>}
-  {saved?.id&&<><StaffManager eventId={saved.id} mode={mode}/>{mode==='supabase'&&<EventOperations eventId={saved.id} cancelledAt={saved.cancelledAt}/>}</>}
+  {saved?.id&&<>{mode==='supabase'&&<section className="manage-card"><h2>Pengelolaan event</h2><Link className="button" href={'/organizer/events/'+saved.id+'/manage'}>Denah, peserta, laporan, dan pengumuman</Link></section>}<StaffManager eventId={saved.id} mode={mode}/>{mode==='supabase'&&<EventOperations eventId={saved.id} cancelledAt={saved.cancelledAt}/>}</>}
   {saved&&!saved.cancelledAt&&saved.status!=='ARCHIVED'&&<section className="editor-actions"><h2>Publikasi</h2><p>Simpan perubahan sebelum publikasi.</p><button className="button" disabled={busy} onClick={()=>void action(saved.status==='PUBLISHED'?'unpublish':'publish')}>{saved.status==='PUBLISHED'?'Sembunyikan event':'Publikasikan event'}</button>{saved.status==='PUBLISHED'&&<Link className="button button-light" href={`/events/${saved.slug}`}>Lihat event</Link>}<button className="text-link" disabled={busy} onClick={()=>void action('archive')}>Arsipkan setelah acara selesai</button></section>}
  </main>;
 }

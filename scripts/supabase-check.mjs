@@ -32,6 +32,19 @@ try {
     if(denied.error?.code!=='42501')throw new Error('RPC rate limit harus menolak akses anonim. Periksa migrasi 016.');
     console.log('OK: RPC rate limit menolak akses anonim');
   }
+  if(process.argv.includes('--organizer-tools')) {
+    await requireResult('Versi data peserta',admin.from('attendees').select('id,revision,email,notes').limit(1));
+    const id='00000000-0000-4000-8000-000000000000';
+    for(const [name,args] of [
+      ['organizer_attendees',{p_event:id}],
+      ['organizer_announcements',{p_event:id}],
+      ['organizer_booking_period',{p_from:null,p_to:null}],
+      ['update_event_attendees',{p_event:id,p_rows:[],p_reason:'Metadata check'}],
+      ['duplicate_organizer_event',{p_event:id,p_key:id,p_start:'2035-01-01T00:00:00Z'}],
+      ['send_event_announcement',{p_event:id,p_key:id,p_title:'Metadata',p_message:'Metadata check only'}]
+    ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('RPC organizer harus menolak akses anonim: '+name+'. Periksa migrasi 017.');}
+    console.log('OK: RPC organizer tools menolak akses anonim');
+  }
   if(process.argv.includes('--seating')) {
     await requireResult('Versi dan ukuran denah', admin.from('events').select('id,seating_version,seating_managed,seating_width,seating_height').limit(1));
     await requireResult('Section per event', admin.from('venue_sections').select('id,event_id').limit(1));

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowUpRight, Ticket } from 'lucide-react';
 import '@fontsource-variable/plus-jakarta-sans';
 import './globals.css';
+import '@/features/organizer/workspace.css';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { getSession } from '@/lib/auth/session';
 import { MobileNavigation } from '@/components/mobile-navigation';
