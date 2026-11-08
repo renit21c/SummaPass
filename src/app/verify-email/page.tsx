@@ -49,7 +49,7 @@ export default async function VerifyEmail({
         {params.error && (
           <div className="form-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <AlertCircle size={20} />
-            <span>{params.error === 'invalid_email' ? 'Format email tidak valid.' : params.error}</span>
+            <span>{params.error === 'invalid_email' ? 'Format email tidak valid.' : params.error === 'link_invalid' ? 'Tautan verifikasi tidak valid atau sudah kedaluwarsa. Kirim ulang email verifikasi.' : params.error}</span>
           </div>
         )}
 

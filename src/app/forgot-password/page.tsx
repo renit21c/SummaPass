@@ -34,7 +34,7 @@ export default async function ForgotPassword({
               ? 'Format email tidak valid.'
               : params.error === 'email_not_registered'
                 ? 'Email tidak terdaftar'
-                : params.error}
+                : params.error === 'link_invalid' ? 'Tautan reset tidak valid atau sudah kedaluwarsa. Minta tautan baru.' : params.error}
           </div>
         )}
 

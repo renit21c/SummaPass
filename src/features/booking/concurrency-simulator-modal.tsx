@@ -211,7 +211,7 @@ export function ConcurrencySimulatorModal({
                 <p>
                   Sistem akan menembakkan dua request reservasi serentak (<code>Promise.all</code>) untuk kursi ini:
                   <br />
-                  👤 <strong>Pembeli A (Budi Prasetyo)</strong> vs 👤 <strong>Pembeli B (Siti Rahma)</strong>.
+                  <strong>Pembeli A (Budi Prasetyo)</strong> dan <strong>Pembeli B (Siti Rahma)</strong>.
                 </p>
               </div>
 
@@ -249,7 +249,7 @@ export function ConcurrencySimulatorModal({
                 ) : (
                   <>
                     <Zap size={18} />
-                    <span>🚀 Mulai Simulasi War Tiket (Simultaneous Request)</span>
+                    <span>Mulai Simulasi War Tiket (Simultaneous Request)</span>
                   </>
                 )}
               </button>
@@ -375,7 +375,7 @@ export function ConcurrencySimulatorModal({
               {/* Action Buttons */}
               <div className="concurrency-result-actions">
                 <button type="button" className="concurrency-secondary-btn" onClick={handleReset}>
-                  🔄 Uji Kursi Lainnya
+                  Uji Kursi Lainnya
                 </button>
                 <button type="button" className="concurrency-primary-btn" onClick={onClose}>
                   Tutup & Kembali ke Denah Venue

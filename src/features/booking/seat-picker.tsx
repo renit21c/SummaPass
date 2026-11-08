@@ -282,7 +282,7 @@ export function SeatPicker({
                 title="Uji ketahanan race condition perebutan kursi serentak"
               >
                 <Zap size={14} />
-                <span>⚡ Simulasi War Tiket</span>
+                <span>Simulasi War Tiket</span>
               </button>
               <div className="view-switch">
                 <button className={view === 'map' ? 'active' : ''} onClick={() => setView('map')} aria-pressed={view === 'map'}>Peta</button>
