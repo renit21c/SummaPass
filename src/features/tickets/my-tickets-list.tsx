@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Ticket as TicketIcon, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowUpRight, Ticket as TicketIcon, CheckCircle2, XCircle, UserCheck } from 'lucide-react';
 import type { Ticket } from './types';
 import { events, dateLabel } from '@/features/events/data';
 
@@ -97,6 +97,11 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
                       <div className="ticket-badge-revoked" style={{ margin: 0 }}>
                         <XCircle size={14} aria-hidden="true" />
                         <span>Dibatalkan / Refunded</span>
+                      </div>
+                    ) : t.previousAttendeeName ? (
+                      <div className="ticket-badge-transferred" style={{ margin: 0 }} title={`Dialihkan dari ${t.previousAttendeeName}`}>
+                        <UserCheck size={14} aria-hidden="true" />
+                        <span>Dialihkan ke {t.attendeeName}</span>
                       </div>
                     ) : (
                       <div className="ticket-badge-active" style={{ margin: 0 }}>

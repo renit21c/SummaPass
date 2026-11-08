@@ -282,11 +282,43 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
           <TicketIcon size={32} />
           <h2>{event.title}</h2>
           <div className="ticket-status-row">
-            <span style={isCancelled ? { background: '#fff0ed', color: '#d92d20', borderColor: '#d92d20' } : {}}>
-              {isCancelled ? 'Tiket dibatalkan (Refunded)' : 'Tiket aktif'}
+            <span
+              style={
+                isCancelled
+                  ? { background: '#fff0ed', color: '#d92d20', borderColor: '#d92d20' }
+                  : ticket.previousAttendeeName
+                  ? { background: '#f3e8ff', color: 'var(--purple)', borderColor: 'var(--purple)' }
+                  : {}
+              }
+            >
+              {isCancelled
+                ? 'Tiket dibatalkan (Refunded)'
+                : ticket.previousAttendeeName
+                ? `Dialihkan ke ${ticket.attendeeName}`
+                : 'Tiket aktif'}
             </span>
-            <span>{isCancelled ? 'Dana simulasi dikembalikan' : 'Pembayaran simulasi lunas'}</span>
+            <span>
+              {isCancelled
+                ? 'Dana simulasi dikembalikan'
+                : ticket.previousAttendeeName
+                ? 'E-ticket telah diperbarui'
+                : 'Pembayaran simulasi lunas'}
+            </span>
           </div>
+
+          {!isCancelled && ticket.previousAttendeeName && (
+            <div style={{ marginTop: 14, padding: '12px 16px', background: '#f3e8ff', border: '1.5px solid var(--purple)', borderRadius: 8 }}>
+              <strong style={{ display: 'block', color: 'var(--purple)', fontSize: 13, marginBottom: 4 }}>
+                Tiket Telah Dialihkan
+              </strong>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--ink)' }}>
+                Pemegang tiket telah diubah dari <strong>{ticket.previousAttendeeName}</strong> ke <strong>{ticket.attendeeName}</strong>.
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
+                QR code lama telah dirotasi dan dinonaktifkan demi keamanan. Silakan bagikan e-ticket terbaru ini ke {ticket.attendeeName}.
+              </p>
+            </div>
+          )}
 
           {isCancelled && (
             <div style={{ marginTop: 14, padding: '12px 16px', background: '#fff0ed', border: '1.5px solid #d92d20', borderRadius: 8 }}>
