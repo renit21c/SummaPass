@@ -2,7 +2,7 @@ import { loadCatalog,saveCatalog } from '../catalog/persistence';
 import { loadCheckIns,saveCheckIns,loadCheckInAudits,saveCheckInAudits } from '../check-in/persistence';
 import { loadStaffAssignments,saveStaffAssignments } from '../organizer/staff-persistence';
 import type { EventInput } from '../catalog/core';
-import { confirmSupabasePayment,supabaseTickets } from '../tickets/supabase';
+import { confirmSupabasePayment,supabaseTickets,supabaseRefundTicket } from '../tickets/supabase';
 import type { Ticket } from '../tickets/types';
 import 'server-only';
 import { DemoBookingStore } from './demo-store';
@@ -21,6 +21,7 @@ export async function cancel(userId:string,id:string):Promise<Booking>{return au
 export async function pay(userId:string,id:string,outcome:'success'|'failure'):Promise<Booking>{if(authMode()==='demo')return demoStore().payment(userId,id,outcome);const current=await booking(userId,id);await confirmSupabasePayment(userId,current,outcome);return booking(userId,id);}
 export async function tickets(userId:string,bookingId?:string):Promise<Ticket[]>{const result=authMode()==='demo'?demoStore().ticketsFor(userId,bookingId):await supabaseTickets(userId);return bookingId?result.filter(t=>t.bookingId===bookingId):result;}
 export async function ticket(userId:string,id:string):Promise<Ticket>{if(authMode()==='demo')return demoStore().ticket(userId,id);const result=(await supabaseTickets(userId,id))[0];if(!result)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);return result;}
+export async function refundTicket(userId:string,id:string,reason:string){if(authMode()==='demo')return demoStore().refundTicket(userId,id,reason);return supabaseRefundTicket(userId,id,reason);}
 export const demoOrganizerSnapshot=(userId?:string)=>demoStore().organizerSnapshot(userId);
 
 export const demoPublicEvents=()=>demoStore().publicEvents();

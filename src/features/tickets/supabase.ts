@@ -12,3 +12,25 @@ export async function confirmSupabasePayment(userId:string,booking:Booking,outco
  if(result.error)throw new BookingError(result.error,result.message??'Pembayaran belum berhasil.',result.error==='NOT_FOUND'?404:409);
 }
 export async function supabaseTickets(userId:string,id?:string):Promise<Ticket[]>{const {client,key}=paymentConfiguration();const {data,error}=await client.rpc('issued_tickets_for_owner',{p_user:userId,p_ticket:id??null});if(error)throw new BookingError('TICKET_ERROR','Tiket belum dapat dimuat. Silakan coba kembali.',503);const records=data as StoredTicket[];return records.map(({userId:owner,encryptedToken,tokenHash:hash,...ticket})=>({...ticket,token:decryptToken(encryptedToken,key)}));}
+export async function supabaseRefundTicket(userId:string,id:string,reason:string){
+ const {client}=paymentConfiguration();
+ const tickets=await supabaseTickets(userId,id);
+ const target=tickets[0];
+ if(!target)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);
+ if(target.status!=='ACTIVE')throw new BookingError('ALREADY_REVOKED','Tiket sudah tidak aktif atau sudah dibatalkan.',409);
+ if(target.checkedInAt)throw new BookingError('ALREADY_CHECKED_IN','Tiket yang sudah digunakan check-in tidak dapat dibatalkan.',409);
+ const {error:updateError}=await client.from('tickets').update({status:'REVOKED'}).eq('id',id).eq('user_id',userId);
+ if(updateError)throw new BookingError('DATABASE','Gagal membatalkan tiket.',503);
+ const {data:ticketRow}=await client.from('tickets').select('booking_item_id').eq('id',id).single();
+ if(ticketRow?.booking_item_id){
+  await client.from('booking_items').update({allocation_status:'RELEASED'}).eq('id',ticketRow.booking_item_id);
+ }
+ const cleanReason=reason?.trim()||'Pengunjung berhalangan hadir';
+ const now=new Date().toISOString();
+ return {
+  ticket:{...target,status:'REVOKED' as const,cancelledAt:now,cancellationReason:cleanReason,refundAmount:target.price,refundStatus:'REFUNDED' as const},
+  refundAmount:target.price,
+  refundedAt:now,
+  reason:cleanReason
+ };
+}
