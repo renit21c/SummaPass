@@ -6,6 +6,6 @@ const ticketFonts=[
 const config:NextConfig={
  turbopack:{root:process.cwd()},
  serverExternalPackages:['pdfkit'],
- outputFileTracingIncludes:{'/api/tickets/*/pdf':ticketFonts,'/api/internal/notifications/run':ticketFonts}
+ outputFileTracingIncludes:{'/api/tickets/*/pdf':ticketFonts,'/api/internal/notifications/run':ticketFonts,'/api/schedules/notifications':ticketFonts,'/api/bookings/*/payment':ticketFonts,'/api/organizer/events/*/tools':ticketFonts}
 };
 export default config;

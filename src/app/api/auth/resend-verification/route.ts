@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authMode } from '@/lib/auth/config';
-import { sameOrigin, requestOrigin } from '@/lib/auth/request';
+import { emailRedirectOrigin, sameOrigin, requestOrigin } from '@/lib/auth/request';
 import { supabaseServer } from '@/lib/supabase/server';
 
 const schema = z.object({
@@ -30,7 +30,10 @@ export async function POST(request: NextRequest) {
     const client = await supabaseServer();
     const { error } = await client.auth.resend({
       type: 'signup',
-      email: parsed.data.email
+      email: parsed.data.email,
+      options: {
+        emailRedirectTo: `${emailRedirectOrigin(request)}/auth/callback?next=${encodeURIComponent('/verify-email?verified=1')}`
+      }
     });
     if (error) {
       return NextResponse.redirect(new URL(`/verify-email?email=${encodeURIComponent(parsed.data.email)}&error=${encodeURIComponent(error.message)}`, requestOrigin(request)), 303);

@@ -110,10 +110,8 @@ test('duplicateEventInput preserves future schedule when event is already > 24 h
 
 test('duplicateEventInput clamps quotas and falls back gracefully for invalid values', () => {
   const source = baseManaged({
-    // @ts-expect-error test invalid category
-    category: 'InvalidCategory',
-    // @ts-expect-error test invalid theme
-    theme: 'neon',
+    category: 'InvalidCategory' as unknown as ManagedEvent['category'],
+    theme: 'neon' as unknown as ManagedEvent['theme'],
     frontQuota: 100, // exceeds max 24
     regularQuota: 0, // below min 1
     price: -500, // below 0

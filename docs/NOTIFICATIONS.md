@@ -46,7 +46,7 @@ State email: PENDING -> PROCESSING -> SENT / RETRY / FAILED / SKIPPED. Lease yan
 | GET/PUT | `/api/notifications/preferences` | `{bookingReminders,eventReminders,emailReminders}`; PUT mengirim tiga boolean |
 | POST | `/api/tickets/{id}/resend` | Body `{key:"uuid"}`; HTTP202 `{queued:true,deliveryId,message}` |
 | GET | `/api/tickets/{id}/deliveries` | Array id/status/attempts/createdAt/sentAt/errorCode. Hanya tiket pemilik; tanpa payload penerima. |
-| POST | `/api/internal/notifications/run` | Scheduler + worker, header Authorization Bearer CRON_SECRET; tidak memakai sesi browser |
+| GET / POST | `/api/internal/notifications/run` | Scheduler + worker, header Authorization Bearer CRON_SECRET; tidak memakai sesi browser |
 
 API akun memerlukan login dan mutasi memakai Origin yang sama. Body maksimal4KB termasuk streaming. UUID dan payload divalidasi. HTTP401 sesi tidak ada,403Origin salah,404objek bukan milik pengguna/tidak ditemukan,409konflik/mode demo email tidak didukung,429rate limit,503database/configuration gagal. Retry permintaan resend memakai key UUID yang sama; jangan mengganti key saat hasil request belum diketahui.
 
@@ -58,11 +58,25 @@ Hook UI yang sudah ada membaca100notifikasi terbaru dan polling30detik, juga ref
 2. Jalankan **seluruh** isi `202611060011_notifications.sql` sekali melalui Supabase SQL Editor. File berisi BEGIN/COMMIT. Migrasi ini tidak memanggil provider email atau membuat job dari semua pembayaran historis. Scheduler tetap dapat menemukan event mendatang yang memenuhi syarat.
 3. Jalankan `node scripts/supabase-check.mjs --notifications`. Perintah ini hanya membaca metadata dan memastikan RPC anonim ditolak; tidak menjadwalkan atau mengirim email.
 4. Set `SUMMAPASS_AUTH_MODE=supabase` dengan konfigurasi Supabase yang sudah dipakai tahap sebelumnya.
-5. Buat nilai acak minimal32karakter untuk `SUMMAPASS_CRON_SECRET`, simpan di `.env.local` dan secret deployment. Jangan memakai service-role key sebagai cron secret.
+5. Buat nilai acak minimal 32 karakter untuk `SUMMAPASS_CRON_SECRET`, simpan di `.env.local` dan secret deployment. Jangan memakai service-role key sebagai cron secret.
 6. Set `SUMMAPASS_APP_URL` ke origin aplikasi, contoh `http://127.0.0.1:3000` saat lokal dan HTTPS saat deployed. Tidak ada path, username/password atau query.
 7. Biarkan `SUMMAPASS_EMAIL_ENABLED=false` untuk menguji in-app dan scheduler tanpa pengiriman nyata. Panggil POST `/api/internal/notifications/run` menggunakan Bearer secret. Walaupun email disabled, pengingat in-app tetap dibuat; email yang dijadwalkan tetap PENDING dan attempts tidak bertambah.
-8. Untuk mengaktifkan email, siapkan akun Resend, sender/domain terverifikasi, `RESEND_API_KEY` dan `SUMMAPASS_EMAIL_FROM`, lalu set `SUMMAPASS_EMAIL_ENABLED=true`. Gunakan akun dan alamat uji yang kamu kendalikan untuk uji staging pertama. Restart aplikasi setelah mengubah env.
-9. Konfigurasikan scheduler eksternal tiap menit untuk memanggil endpoint POST beserta Authorization. Repo tidak otomatis mengaktifkan cron hosting atau mengirim email saat `npm run build`.
+
+## Vercel Schedules
+
+`vercel.json` mendaftarkan `notifications-worker` setiap 15 menit dengan jitter 15 menit, sesuai paket Hobby. Target privat `api/schedules/notifications` memakai `handleSchedule` dari `@vercel/schedules` dan trigger `schedule/v1beta`. Konfigurasi `crons` lama sudah dihapus supaya tidak menjalankan dua scheduler.
+
+Target privat tidak membutuhkan `CRON_SECRET`. Endpoint `/api/internal/notifications/run` tetap dilindungi secret untuk worker lokal atau pemanggilan manual. Jangan arahkan rewrite ke function privat.
+
+Tambahkan juga seluruh variabel server yang dibutuhkan worker: `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `SUMMAPASS_EMAIL_FROM`, `SUMMAPASS_EMAIL_ENABLED=true`, dan `SUMMAPASS_APP_URL` yang mengarah ke domain production. Jangan memasukkan secret dengan prefiks `NEXT_PUBLIC_`.
+
+Deploy ke project `renisdue/summapass`. Schedules harus tersedia untuk tim tersebut selama beta. Jadwal baru aktif setelah deployment menjadi production; Preview awalnya tidak aktif. Di dashboard Schedules, buka `notifications-worker` lalu lihat Next Run dan Execution History. Tombol Run Schedule mengirim email dari antrean nyata, jadi gunakan setelah konfigurasi pengirim benar.
+
+Worker memproses maksimal 5 job per putaran. Jadwal Hobby cocok untuk demo volume kecil; antrean lebih besar menambah waktu tunggu. Pengingat pembayaran dengan jendela dua menit tidak dijamin sempat terkirim dengan cadence ini. Untuk pengiriman cepat gunakan cadence lebih sering pada paket yang mendukung atau worker terpisah.
+
+Setelah API pembayaran mengonfirmasi booking, `after()` Next.js langsung memicu satu putaran worker di server tanpa menunda respons pembayaran. Kegagalan email tidak membatalkan pembayaran; antrean yang tersisa atau retry tetap diproses Schedules. Pada antrean besar, satu putaran belum tentu mencapai semua tiket baru. File font PDF wajib dibundel untuk route pembayaran dan function Schedules melalui `outputFileTracingIncludes`.
+
+Verifikasi CLI: `vercel schedules list`, `vercel schedules inspect notifications-worker`, dan `vercel schedules executions list notifications-worker`. Referensi: https://vercel.com/docs/schedules/quickstart.
 
 Contoh PowerShell setelah secret dimuat ke environment:
 

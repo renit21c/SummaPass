@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { authMode } from '@/lib/auth/config';
 import { hasDemoSession } from '@/lib/auth/session';
-import { sameOrigin, requestOrigin } from '@/lib/auth/request';
+import { emailRedirectOrigin, sameOrigin, requestOrigin } from '@/lib/auth/request';
 import { supabaseServer } from '@/lib/supabase/server';
 
 const schema = z.object({
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { error } = await client.auth.resetPasswordForEmail(email, {
-    redirectTo: `${requestOrigin(request)}/auth/callback?next=${encodeURIComponent('/reset-password')}`
+    redirectTo: `${emailRedirectOrigin(request)}/auth/callback?next=${encodeURIComponent('/reset-password')}`
   });
 
   if (error) {
