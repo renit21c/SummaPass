@@ -4,9 +4,12 @@ import { authMode, safeReturnPath } from '@/lib/auth/config';
 import { createDemoSession, loginDestination } from '@/lib/auth/session';
 import { sameOrigin, requestOrigin } from '@/lib/auth/request';
 import { supabaseServer } from '@/lib/supabase/server';
+import { requestLimit } from '@/lib/rate-limit/server';
 const credentials = z.object({ email: z.string().email().max(254), password: z.string().min(1).max(128) });
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return NextResponse.json({ error: 'Permintaan tidak diizinkan.' }, { status: 403 });
+  const networkLimit = await requestLimit(request, 'loginNetwork');
+  if (networkLimit) return networkLimit;
   const form = await request.formData();
   const next = safeReturnPath(form.get('next'));
   if (authMode() === 'demo') {
@@ -16,6 +19,8 @@ export async function POST(request: NextRequest) {
   }
   const parsed = credentials.safeParse({ email: form.get('email'), password: form.get('password') });
   if (!parsed.success) return NextResponse.redirect(new URL(`/login?error=invalid&next=${encodeURIComponent(next)}`, requestOrigin(request)), 303);
+  const accountLimit = await requestLimit(request, 'loginAccount', parsed.data.email.trim().toLowerCase());
+  if (accountLimit) return accountLimit;
   const client = await supabaseServer();
   const { data, error } = await client.auth.signInWithPassword(parsed.data);
   if (error) return NextResponse.redirect(new URL(`/login?error=credentials&next=${encodeURIComponent(next)}`, requestOrigin(request)), 303);

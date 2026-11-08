@@ -14,3 +14,11 @@ QA: 17 unit/database tests pass. Isolated HTTP flow passes attendee/organizer bo
 
 
 Update 4 November 2026: adapter katalog/editor/Storage Supabase tersedia melalui migrasi006 dan007. Layanan remote belum diuji. Lihat SUPABASE_INTEGRATION.md untuk status terkini dan setup.
+
+## Validasi form organizer, 8 November 2026
+
+Form tambah/edit menampilkan batas karakter, penghitung deskripsi/ketentuan, harga, kuota dan aturan tanggal WIB. Validasi memakai eventInput yang sama dengan API; pesan muncul di field setelah blur dan diperbarui saat dikoreksi. Submit invalid tidak mengirim data, menampilkan ringkasan bertaut dan memfokuskan field pertama. Harga kosong tidak dianggap gratis. Denah bawaan tetap 24 kursi per kategori; batas tiket terjual/hold diperiksa server saat simpan. Form denah custom tetap memakai konfigurasi terpisah.
+
+Cover diperiksa di browser untuk tipe, ukuran, keterbacaan dan dimensi, dengan penjagaan hasil async saat file diganti. Server tetap memvalidasi file sebenarnya dan animasi. Batas: JPG/PNG/WebP 5 MB, minimal 400 x 250, maksimal 24 MP. Tidak menambah syarat tanggal masa depan karena backend juga mengizinkan pengelolaan acara historis.
+
+Verifikasi: 75 tes lulus, build produksi lulus. Browser pada demo terisolasi port 3002 memeriksa nama/deskripsi pendek, kuota 30, tanggal selesai sebelum mulai, penjualan lewat waktu mulai, fokus error, koreksi error dan penyimpanan draf. Layout dicek desktop 1280 dan ponsel 390. Console tidak memiliki error/warning. Tidak mengubah data Supabase atau mengirim email. Screenshot QA tersimpan lokal di .data/organizer-validation-preview.jpg. Tidak memerlukan migrasi baru.

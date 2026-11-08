@@ -26,6 +26,12 @@ try {
   if (bucket.public || bucket.file_size_limit !== 5242880 || !bucket.allowed_mime_types?.includes('image/webp')) throw new Error('Bucket cover harus privat dan dibatasi WebP 5 MB.');
   const denied = await anonymous.rpc('manage_event', { p_action: 'create', p_id: null, p_data: {} });
   if (!denied.error || denied.error.code !== '42501') throw new Error('RPC pengelolaan harus menolak akses anonim atau migrasi belum lengkap.');
+  if(process.argv.includes('--rate-limits')) {
+    await requireResult('Penghitung pembatasan request', admin.from('request_limit_buckets').select('reset_at').limit(1));
+    const denied=await anonymous.rpc('consume_request_limit',{p_key:'0'.repeat(64),p_limit:1,p_window:60});
+    if(denied.error?.code!=='42501')throw new Error('RPC rate limit harus menolak akses anonim. Periksa migrasi 016.');
+    console.log('OK: RPC rate limit menolak akses anonim');
+  }
   if(process.argv.includes('--seating')) {
     await requireResult('Versi dan ukuran denah', admin.from('events').select('id,seating_version,seating_managed,seating_width,seating_height').limit(1));
     await requireResult('Section per event', admin.from('venue_sections').select('id,event_id').limit(1));

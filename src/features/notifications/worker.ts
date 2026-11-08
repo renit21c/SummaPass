@@ -49,7 +49,7 @@ export async function runNotifications(){
    if(existing&&existing.to[0].toLowerCase()!==recipient.toLowerCase()){await finish('SKIPPED','RECIPIENT_CHANGED');continue;}
    let prepared=context.payload;
    if(!prepared){
-    const candidate=renderEmail({from,to:recipient,origin,title:context.title,message:context.message,link:context.link});
+    const candidate=renderEmail({from,to:recipient,origin,title:context.title,message:context.message,link:context.link,ticketPdf:context.kind==='TICKET_READY'||context.kind==='TICKET_RESEND'});
     let ticketIds:string[]=[];
     if(context.kind==='TICKET_READY'||context.kind==='TICKET_RESEND'){
      if(!context.userId||!context.bookingId)throw Error('ATTACHMENT_SCOPE_REQUIRED');
@@ -57,8 +57,6 @@ export async function runNotifications(){
      if(!Array.isArray(rows))throw Error('ATTACHMENT_FETCH_FAILED');
      const bundle=await ticketPdfAttachment(rows as StoredTicket[],{userId:context.userId,bookingId:context.bookingId,ticketId:context.ticketId},ticketKey);
      candidate.attachments=[bundle.attachment];ticketIds=bundle.ticketIds;
-     candidate.text+='\n\nPDF e-ticket terlampir. Cetak pada kertas A4 dengan skala 100%.';
-     candidate.html=candidate.html.replace('</h1>','</h1><p style="padding:14px;background:#ffe044;border:1px solid #252525;border-radius:8px">PDF e-ticket terlampir dan siap dicetak pada kertas A4, skala 100%.</p>');
     }
     const sealed=sealEmail(emailPayload.parse(candidate),ticketIds,ticketKey);
     prepared=storedEmailPayload.parse(await rpc('prepare_notification_email',{...args,p_payload:sealed}));
