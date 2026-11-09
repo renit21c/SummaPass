@@ -32,3 +32,4 @@ export function verifyMidtransSignature(
   const calculated = crypto.createHash('sha512').update(raw).digest('hex');
   return calculated.toLowerCase() === signatureKey.toLowerCase();
 }
+

@@ -297,7 +297,7 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
 
         {paid && (
           <div className="payment-ticket-link">
-            <Link className="button" href={`/my-tickets?booking=${data.id}`}>
+            <Link className="button" href="/my-tickets">
               Lihat tiket
               <ArrowUpRight size={18} />
             </Link>
