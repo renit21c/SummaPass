@@ -7,6 +7,7 @@ import '@/features/organizer/workspace.css';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { getSession } from '@/lib/auth/session';
 import { MobileNavigation } from '@/components/mobile-navigation';
+import { Subo } from '@/features/subo/subo';
 
 export const metadata: Metadata = {
   title: { default: 'SummaPass | Tiket event', template: '%s | SummaPass' },
@@ -40,6 +41,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </header>
         <div className="demo-strip">Demo SummaPass. Event dan harga fiktif.</div>
         {children}
+        <Subo />
         <footer>
           <div className="container footer-top">
             <Link className="wordmark" href="/">Summa<span>Pass</span></Link>
