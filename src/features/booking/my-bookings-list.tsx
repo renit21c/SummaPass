@@ -129,17 +129,14 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
                   padding: '20px 22px',
                   border: '2px solid var(--ink)',
                   borderRadius: 14,
-                  background: isConfirmed ? '#ffffff' : isPending ? '#fffdf7' : '#fcfbf9',
-                  boxShadow: isConfirmed
-                    ? '4px 5px 0 var(--ink)'
-                    : isPending
-                    ? '4px 5px 0 var(--yellow)'
-                    : '2px 3px 0 #cbd5e1',
-                  opacity: isCancelled || isExpired || isFailed ? 0.85 : 1,
+                  background: isConfirmed ? '#ffffff' : isPending ? '#fffdf7' : '#faf9f8',
+                  boxShadow: '4px 5px 0 var(--ink)',
+                  opacity: isCancelled || isExpired || isFailed ? 0.9 : 1,
                   textDecoration: 'none',
                   color: 'inherit',
                   transition: 'transform 0.15s, box-shadow 0.15s',
-                  minHeight: 200
+                  minHeight: 200,
+                  overflow: 'hidden'
                 }}
               >
                 {/* Header: Reference and Status Badge */}
@@ -149,8 +146,9 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 12
+                      gap: 10,
+                      marginBottom: 12,
+                      minWidth: 0
                     }}
                   >
                     <span
@@ -158,8 +156,14 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
                         fontSize: 12,
                         fontWeight: 800,
                         color: 'var(--muted)',
-                        letterSpacing: '0.5px'
+                        letterSpacing: '0.5px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        minWidth: 0,
+                        maxWidth: '55%'
                       }}
+                      title={b.reference}
                     >
                       {b.reference}
                     </span>
@@ -177,7 +181,9 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
                           border: '1.5px solid #d92d20',
                           color: '#d92d20',
                           fontSize: 11,
-                          fontWeight: 800
+                          fontWeight: 800,
+                          flexShrink: 0,
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         <AlertTriangle size={13} />
@@ -195,7 +201,9 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
                           border: '1.5px solid #12b76a',
                           color: '#027a48',
                           fontSize: 11,
-                          fontWeight: 800
+                          fontWeight: 800,
+                          flexShrink: 0,
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         <CheckCircle2 size={13} />
@@ -213,7 +221,9 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
                           border: '1.5px solid #f79009',
                           color: '#b54708',
                           fontSize: 11,
-                          fontWeight: 800
+                          fontWeight: 800,
+                          flexShrink: 0,
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         <Clock size={13} />
@@ -231,7 +241,9 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
                           border: '1.5px solid #d92d20',
                           color: '#d92d20',
                           fontSize: 11,
-                          fontWeight: 800
+                          fontWeight: 800,
+                          flexShrink: 0,
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         <XCircle size={13} />
@@ -328,3 +340,4 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
     </div>
   );
 }
+
