@@ -23,6 +23,7 @@ import {
 import { outcomeLabels, filterCheckInsByPeriod, type CheckInResult, type StaffReport, type CheckInPeriod } from './core';
 
 export function CheckInScanner({ events }: { events: { slug: string; title: string }[] }) {
+  const [eventOptions, setEventOptions] = useState(events);
   const [slug, setSlug] = useState(events[0]?.slug ?? '');
   const [credential, setCredential] = useState('');
   const [result, setResult] = useState<CheckInResult | null>(null);
@@ -56,6 +57,25 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
   const stream = useRef<MediaStream | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generation = useRef(0);
+
+  async function refreshEvents() {
+    try {
+      const response = await fetch('/api/staff/events', { cache: 'no-store' });
+      if (!response.ok) return;
+      const updated = await response.json() as { slug: string; title: string }[];
+      setEventOptions(updated);
+      setSlug(current => updated.some(event => event.slug === current) ? current : (updated[0]?.slug ?? ''));
+    } catch {
+      // Keep the last known assignment list when the network is unavailable.
+    }
+  }
+
+  useEffect(() => {
+    void refreshEvents();
+    const onFocus = () => void refreshEvents();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   function stop() {
     generation.current++;
@@ -349,7 +369,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
         <ScanLine size={40} />
         <h1>Check-in petugas</h1>
       </div>
-      {!events.length ? (
+      {!eventOptions.length ? (
         <p>Belum ada event yang ditugaskan. Hubungi organizer.</p>
       ) : (
         <>
@@ -366,7 +386,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                 setError('');
               }}
             >
-              {events.map(e => (
+              {eventOptions.map(e => (
                 <option value={e.slug} key={e.slug}>
                   {e.title}
                 </option>

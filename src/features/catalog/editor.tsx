@@ -66,10 +66,12 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
    router.push(`/organizer/events/${newId}/edit`);
   }catch(e){setFailed(true);setMessage(e instanceof Error?e.message:'Gagal menduplikasi event.');setDuplicating(false);}
  }
- async function removeDraft() {
-  if(!saved||saved.status!=='DRAFT'||!confirm(`Hapus draf "${saved.title}"? Tindakan ini tidak dapat dibatalkan.`))return;
+ async function removeEvent() {
+  if(!saved)return;
+  const confirmation=prompt(`Hapus "${saved.title}" beserta seluruh sales, tiket, peserta, dan riwayat check-in?\n\nKetik nama event persis untuk melanjutkan:`);
+  if(confirmation===null)return;
   setBusy(true);setMessage('');setFailed(false);
-  try{const response=await fetch(`/api/organizer/events/${saved.id}`,{method:'DELETE'});const data=await response.json();if(!response.ok)throw Error(data.error||'Gagal menghapus event.');router.push('/organizer');router.refresh();}
+  try{const response=await fetch(`/api/organizer/events/${saved.id}`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirmation})});const data=await response.json();if(!response.ok)throw Error(data.error||'Gagal menghapus event.');router.push('/organizer');router.refresh();}
   catch(error){setFailed(true);setMessage(error instanceof Error?error.message:'Gagal menghapus event.');setBusy(false);}
  }
  return <main id="main" className="container section event-editor"><Link className="text-link" href="/organizer">Kembali ke organizer</Link><h1>{initial?'Edit event':'Tambah event'}</h1><p>{saved?.cancelledAt?'Status: Dibatalkan':saved?`Status: ${{DRAFT:'Draf',PUBLISHED:'Dipublikasikan',UNPUBLISHED:'Disembunyikan',ARCHIVED:'Diarsipkan'}[saved.status]}`:'Isi detail dan simpan sebagai draf.'}</p>
@@ -87,6 +89,6 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
   {saved?.id&&<>{mode==='supabase'&&<section className="manage-card"><h2>Pengelolaan event</h2><Link className="button" href={'/organizer/events/'+saved.id+'/manage'}>Denah, peserta, laporan, dan pengumuman</Link></section>}<StaffManager eventId={saved.id} mode={mode}/>{mode==='supabase'&&<EventOperations eventId={saved.id} cancelledAt={saved.cancelledAt}/>}</>}
   {saved&&!saved.cancelledAt&&saved.status!=='ARCHIVED'&&<section className="editor-actions"><h2>Publikasi</h2><p>Simpan perubahan sebelum publikasi.</p><button className="button" disabled={busy} onClick={()=>void action(saved.status==='PUBLISHED'?'unpublish':'publish')}>{saved.status==='PUBLISHED'?'Sembunyikan event':'Publikasikan event'}</button>{saved.status==='PUBLISHED'&&<Link className="button button-light" href={`/events/${saved.slug}`}>Lihat event</Link>}<button className="text-link" disabled={busy} onClick={()=>void action('archive')}>Arsipkan setelah acara selesai</button></section>}
  {saved?.id&&<section className="editor-actions"><h2>Duplikasi</h2><p>Buat draf baru dengan menyalin detail, kuota, dan harga dari event ini.</p><button type="button" className="button button-light" disabled={busy||duplicating} onClick={()=>void duplicate()}><Copy size={16} aria-hidden="true"/>{duplicating?'Menduplikasi...':'Duplikat event ini'}</button></section>}
- {saved?.status==='DRAFT'&&<section className="editor-actions"><h2>Hapus draf</h2><p>Hanya draf tanpa pesanan dan undangan petugas yang bisa dihapus.</p><button type="button" className="button button-light" disabled={busy} onClick={()=>void removeDraft()}>{busy?'Menghapus...':'Hapus event'}</button></section>}
+ {saved&&<section className="editor-actions"><h2>Hapus event demo</h2><p>Event, sales, tiket, peserta, notifikasi, dan riwayat check-in akan dihapus permanen. Ketik nama event untuk mengonfirmasi.</p><button type="button" className="button button-light" disabled={busy} onClick={()=>void removeEvent()}>{busy?'Menghapus...':'Hapus event permanen'}</button></section>}
  </main>;
 }

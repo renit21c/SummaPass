@@ -144,7 +144,21 @@ export class DemoBookingStore {
  duplicateEvent(userId:string,id:string){const source=this.assignedEvent(userId,id);const input=duplicateEventInput(source,this.clock());return this.createEvent(userId,input);}
  updateEvent(userId:string,id:string,raw:EventInput){const old=this.assignedEvent(userId,id),input=eventInput.parse(raw);if(old.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event arsip tidak dapat diedit.');this.expire();const live=[...this.bookings.values()].filter(b=>b.slug===old.slug&&(b.status==='CONFIRMED'||b.status==='PENDING_PAYMENT'));if(live.length&&(Date.parse(input.startsAt)!==Date.parse(old.startsAt)||Date.parse(input.endsAt)!==Date.parse(old.endsAt)||input.area!==old.area))throw new BookingError('EVENT_LOCKED','Jadwal dan lokasi tidak dapat diubah saat ada tiket terjual atau hold aktif.');const inv=this.inventory(old.slug,true);for(const [section,quota] of [['Front',input.frontQuota],['Regular',input.regularQuota]] as const)if(quota<inv.seats.filter(s=>s.section===section&&s.status!=='AVAILABLE').length)throw new BookingError('QUOTA','Kuota tidak boleh di bawah jumlah kursi terjual dan hold aktif.');const e:ManagedEvent={...old,...input,...dateParts(input.startsAt),headline:input.title.toUpperCase()};this.catalog.set(e.slug,e);return structuredClone(e);}
  eventStatus(userId:string,id:string,action:'publish'|'unpublish'|'archive'){const e=this.assignedEvent(userId,id);this.expire();if(e.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event sudah diarsipkan.');if(action==='publish'&&Date.parse(e.startsAt)<=this.clock())throw new BookingError('DATE','Acara yang sudah dimulai tidak dapat dipublikasikan.');if(action==='archive'&&(Date.parse(e.endsAt)>this.clock()||[...this.bookings.values()].some(b=>b.slug===e.slug&&b.status==='PENDING_PAYMENT')))throw new BookingError('ACTIVE','Arsip hanya setelah acara selesai dan tidak ada hold aktif.');e.status=action==='publish'?'PUBLISHED':action==='unpublish'?'UNPUBLISHED':'ARCHIVED';this.catalog.set(e.slug,e);return structuredClone(e);}
- deleteEvent(userId:string,id:string){const e=this.assignedEvent(userId,id);if(e.status!=='DRAFT'||[...this.bookings.values()].some(b=>b.slug===e.slug)||this.staffAssignments.some(s=>s.eventId===id))throw new BookingError('HAS_HISTORY','Hanya draf tanpa pesanan dan petugas yang dapat dihapus.',409);this.catalog.delete(e.slug);return {deleted:true,id};}
+ deleteEvent(userId:string,id:string,confirmation:string){
+  const e=this.assignedEvent(userId,id);
+  if(confirmation!==e.title)throw new BookingError('INPUT','Ketik nama event persis untuk mengonfirmasi penghapusan.',400);
+  const bookingIds=new Set([...this.bookings.values()].filter(b=>b.slug===e.slug).map(b=>b.id));
+  const ticketIds=new Set([...this.issued.values()].filter(t=>t.slug===e.slug).map(t=>t.id));
+  const removed={bookings:bookingIds.size,tickets:ticketIds.size,checkIns:this.checkIns.filter(c=>c.slug===e.slug).length};
+  for(const [key,booking] of this.bookings)if(booking.slug===e.slug)this.bookings.delete(key);
+  for(const [key,ticket] of this.issued)if(ticket.slug===e.slug)this.issued.delete(key);
+  for(const [key,bookingId] of this.keys)if(bookingIds.has(bookingId))this.keys.delete(key);
+  this.checkIns=this.checkIns.filter(c=>c.slug!==e.slug&&!ticketIds.has(c.ticketId));
+  this.checkInAudits=this.checkInAudits.filter(a=>a.slug!==e.slug&&!ticketIds.has(a.ticketId));
+  this.staffAssignments=this.staffAssignments.filter(s=>s.eventId!==id&&s.slug!==e.slug);
+  this.catalog.delete(e.slug);
+  return {deleted:true,id,slug:e.slug,title:e.title,coverUrl:e.coverUrl,removed};
+ }
  eventCover(userId:string,id:string,url:string){const e=this.assignedEvent(userId,id);if(e.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event arsip tidak dapat diedit.');if(!url.startsWith(`/api/covers/${id}_`)||!/^\/api\/covers\/[a-f0-9-]{36}_[a-f0-9-]{36}\.webp$/.test(url))throw new BookingError('COVER','Cover tidak valid.',400);e.coverUrl=url;this.catalog.set(e.slug,e);return structuredClone(e);}
  getStaffAssignments(){return structuredClone(this.staffAssignments);}
  eventStaff(userId:string,eventId:string):StaffAssignment[]{
@@ -181,7 +195,7 @@ export class DemoBookingStore {
   return this.staffAssignments.some(s=>(s.eventId===e.id||s.slug===e.slug)&&(s.userId===staffId||(!staffId&&s.role==='STAFF')));
  }
  staffEvents(staffId?:string){
-  return [...this.catalog.values()].filter(e=>this.isStaffAssigned(staffId??'staff-demo',e.slug)).map(e=>({slug:e.slug,title:e.title}));
+  return [...this.catalog.values()].filter(e=>this.isStaffAssigned(staffId??'staff-demo',e.slug)&&['PUBLISHED','UNPUBLISHED'].includes(e.status)&&!e.cancelledAt).map(e=>({slug:e.slug,title:e.title}));
  }
  checkIn(staffId:string,slug:string,credential:string,confirm:boolean):CheckInResult{
   if(!this.isStaffAssigned(staffId,slug))throw new BookingError('FORBIDDEN','Event tidak ditugaskan kepada petugas.',403);
