@@ -54,6 +54,7 @@ export class DemoBookingStore {
   this.bookings.set(id,booking);this.keys.set(key,id);return structuredClone(booking);
  }
  get(userId:string,id:string){this.expire();const b=this.bookings.get(id);if(!b||b.userId!==userId)throw new BookingError('NOT_FOUND','Reservasi tidak ditemukan.',404);return structuredClone(b);}
+ findByReference(ref:string){this.expire();const b=[...this.bookings.values()].find(x=>x.reference===ref);return b?structuredClone(b):undefined;}
  list(userId:string){this.expire();return [...this.bookings.values()].filter(b=>b.userId===userId).reverse().map(b=>structuredClone(b));}
  cancel(userId:string,id:string){const b=this.get(userId,id);if(b.status==='PENDING_PAYMENT'){this.bookings.get(id)!.status='CANCELLED';this.bookings.get(id)!.paymentStatus='CANCELLED';}return this.get(userId,id);}
  payment(userId:string,id:string,outcome:'success'|'failure'){

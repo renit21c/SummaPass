@@ -3,6 +3,7 @@ import { loadCheckIns,saveCheckIns,loadCheckInAudits,saveCheckInAudits } from '.
 import { loadStaffAssignments,saveStaffAssignments } from '../organizer/staff-persistence';
 import type { EventInput } from '../catalog/core';
 import { confirmSupabasePayment,supabaseTickets,supabaseRefundTicket,supabaseTransferTicket } from '../tickets/supabase';
+import { paymentConfiguration } from '../tickets/admin';
 import type { Ticket } from '../tickets/types';
 import 'server-only';
 import { DemoBookingStore } from './demo-store';
@@ -19,6 +20,19 @@ export async function bookings(userId:string):Promise<Booking[]>{return authMode
 export async function cancel(userId:string,id:string):Promise<Booking>{return authMode()==='demo'?demoStore().cancel(userId,id):rpc('cancel_booking',{p_id:id});}
 
 export async function pay(userId:string,id:string,outcome:'success'|'failure'):Promise<Booking>{if(authMode()==='demo')return demoStore().payment(userId,id,outcome);const current=await booking(userId,id);await confirmSupabasePayment(userId,current,outcome);return booking(userId,id);}
+export async function payByReference(reference:string,outcome:'success'|'failure'):Promise<boolean>{
+ if(authMode()==='demo'){
+  const b=demoStore().findByReference(reference);
+  if(!b||b.status!=='PENDING_PAYMENT')return false;
+  demoStore().payment(b.userId,b.id,outcome);
+  return true;
+ }
+ const {client}=paymentConfiguration();
+ const {data:bookingRow}=await client.from('bookings').select('id,user_id,status').eq('reference',reference).single();
+ if(!bookingRow||bookingRow.status!=='PENDING_PAYMENT')return false;
+ await pay(bookingRow.user_id,bookingRow.id,outcome);
+ return true;
+}
 export async function tickets(userId:string,bookingId?:string):Promise<Ticket[]>{const result=authMode()==='demo'?demoStore().ticketsFor(userId,bookingId):await supabaseTickets(userId);return bookingId?result.filter(t=>t.bookingId===bookingId):result;}
 export async function ticket(userId:string,id:string):Promise<Ticket>{if(authMode()==='demo')return demoStore().ticket(userId,id);const result=(await supabaseTickets(userId,id))[0];if(!result)throw new BookingError('NOT_FOUND','Tiket tidak ditemukan.',404);return result;}
 export async function refundTicket(userId:string,id:string,reason:string){if(authMode()==='demo')return demoStore().refundTicket(userId,id,reason);return supabaseRefundTicket(userId,id,reason);}
