@@ -34,7 +34,11 @@ export function demoDuplicateEvent(userId:string,id:string){return persistMutati
 export function demoEditEvent(userId:string,id:string,input:EventInput){return persistMutation(()=>demoStore().updateEvent(userId,id,input));}
 export function demoEventStatus(userId:string,id:string,action:'publish'|'unpublish'|'archive'){return persistMutation(()=>demoStore().eventStatus(userId,id,action));}
 export function demoEventCover(userId:string,id:string,url:string){return persistMutation(()=>demoStore().eventCover(userId,id,url));}
-export function demoDeleteEvent(userId:string,id:string){return persistMutation(()=>demoStore().deleteEvent(userId,id));}
+export function demoDeleteEvent(userId:string,id:string,confirmation:string){
+ const result=persistMutation(()=>demoStore().deleteEvent(userId,id,confirmation));
+ try{saveCheckIns(demoStore().getCheckIns());saveCheckInAudits(demoStore().getAllCheckInAudits());saveStaffAssignments(demoStore().getStaffAssignments());}catch{}
+ return result;
+}
 
 export const demoStaffEvents=(staffId?:string)=>demoStore().staffEvents(staffId);
 export const demoCheckIn=(staffId:string,slug:string,credential:string,confirm:boolean)=>{

@@ -38,6 +38,7 @@ test('organizer can view, assign, and unassign staff per event in demo mode', ()
     category: 'Musik' as const,
     theme: 'play' as const,
   });
+  store.eventStatus('org-custom',customEvent.id,'publish');
 
   // Petugas Pintu Barat is not yet assigned to custom event
   assert.equal(store.staffEvents(newStaff.userId).some(e => e.slug === customEvent.slug), false);
