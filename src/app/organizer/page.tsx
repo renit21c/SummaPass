@@ -39,9 +39,9 @@ export default async function Organizer({
   try {
     const data = await organizerReportSnapshot(range.data);
     return (
-      <main id="main" className="organizer-container">
+      <main id="main" className="organizer-page">
         <ReportPeriod range={range.data} />
-        <OrganizerDashboard data={data} range={range.data} />
+        <div className="organizer-container"><OrganizerDashboard data={data} range={range.data} /></div>
       </main>
     );
   } catch {

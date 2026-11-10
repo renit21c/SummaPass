@@ -5,26 +5,23 @@ export function ReportPeriod({
   range: { from?: string; to?: string };
 }) {
   return (
-    <section className="manage-card" style={{ margin: "24px" }}>
-      <form action="/organizer" className="manage-actions">
+    <section className="organizer-period-bar" aria-label="Filter periode laporan">
+      <form action="/organizer" className="organizer-period-form">
+        <strong>Periode laporan</strong>
         <label>
-          Dari tanggal pemesanan (WIB)
+          Dari
           <input type="date" name="from" defaultValue={range.from} />
         </label>
         <label>
-          Sampai tanggal (WIB)
+          Sampai
           <input type="date" name="to" defaultValue={range.to} />
         </label>
-        <button className="button">Terapkan periode</button>
+        <button className="button button-small" type="submit">Terapkan</button>
         <Link className="text-link" href="/organizer">
           Semua tanggal
         </Link>
       </form>
-      <p className="manage-hint">
-        Periode memfilter pemesanan, pendapatan, dan tiket terjual. Ketersediaan
-        kursi dan kehadiran di ringkasan tetap menampilkan kondisi terkini.
-        Laporan kehadiran per periode tersedia di pengelolaan event.
-      </p>
+      <p>Tanggal pemesanan dalam WIB. Kursi tersedia dan kehadiran ringkasan tetap mengikuti kondisi terkini.</p>
     </section>
   );
 }

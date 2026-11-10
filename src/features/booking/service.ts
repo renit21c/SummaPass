@@ -73,6 +73,7 @@ export const demoRevertCheckIn=(staffId:string,slug:string,ticketId:string,reaso
 };
 export const demoCheckInAudits=(staffId:string,slug:string)=>demoStore().getCheckInAudits(staffId,slug);
 export const demoEventStaff=(userId:string,eventId:string)=>demoStore().eventStaff(userId,eventId);
+export function demoEventCheckIns(userId:string,eventId:string){const event=demoStore().assignedEvent(userId,eventId);return demoStore().getCheckIns().filter(record=>record.slug===event.slug);}
 export const demoAssignStaff=(userId:string,eventId:string,name:string,targetUserId?:string)=>{
  const result=demoStore().assignStaff(userId,eventId,name,targetUserId);
  try{saveStaffAssignments(demoStore().getStaffAssignments());}catch{}
