@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import {
   Download,
+  Pencil,
   RefreshCw,
   LayoutDashboard,
   CalendarDays,
@@ -333,10 +334,10 @@ export function OrganizerDashboard({
                   )}
                   <div className="organizer-event-actions action-group">
                   <Link
-                    className="button"
+                    data-icon-action="" aria-label={`Edit event ${e.title}`} title="Edit event" className="button"
                     href={`/organizer/events/${e.id}/edit`}
                   >
-                    Kelola event
+                    <Pencil size={20} aria-hidden="true"/>
                   </Link>
                   <button
                     type="button"
@@ -404,10 +405,7 @@ export function OrganizerDashboard({
                   <option value="amount">Total terbesar</option>
                 </select>
               </label>
-              <a className="button" href={`/api/organizer/export?${params}`}>
-                <Download size={17} />
-                CSV
-              </a>
+              <a data-icon-action="" aria-label="Unduh CSV transaksi" title="Unduh CSV transaksi" className="button" href={`/api/organizer/export?${params}`}><Download size={20} aria-hidden="true" /></a>
             </div>
             <p className="organizer-row-count">
               {rows.length} booking. CSV mencakup semua hasil filter.

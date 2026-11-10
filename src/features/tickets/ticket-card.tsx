@@ -1,7 +1,8 @@
 'use client';
+import { CopyReference } from '@/components/copy-reference';
 import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { CalendarDays, MapPin, Ticket as TicketIcon, Printer, Download, Mail, CheckCircle, Send, AlertCircle, RefreshCw, XCircle, UserCheck, MessageCircle } from 'lucide-react';
+import { CalendarDays, MapPin, Ticket as TicketIcon, Printer, Download, LoaderCircle, Mail, CheckCircle, Send, AlertCircle, RefreshCw, XCircle, UserCheck, MessageCircle } from 'lucide-react';
 import type { Ticket } from './types';
 import { dateLabel, rupiah, type Event } from '@/features/events/data';
 
@@ -440,7 +441,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
               </p>
             </div>
           )}
-          <p className="ticket-reference">{ticket.reference}</p>
+          <div className="ticket-reference reference-with-copy"><span>{ticket.reference}</span><span className="no-print"><CopyReference value={ticket.reference} label="Salin nomor tiket"/></span></div>
           <div className="ticket-checkin-note">
             {isCancelled
               ? 'Status: Dibatalkan & Refunded (QR tidak berlaku di gerbang)'
@@ -524,10 +525,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
       </div>
 
       <div className="ticket-actions no-print">
-        <button className="button button-light" type="button" disabled={downloading} onClick={() => void handleDownloadPdf()}>
-          <Download size={18} />
-          {downloading ? 'Menyiapkan PDF...' : 'Unduh PDF'}
-        </button>
+        <button data-icon-action="" aria-label={downloading?'Menyiapkan PDF tiket':'Unduh PDF tiket'} title={downloading?'Menyiapkan PDF tiket':'Unduh PDF tiket'} aria-busy={downloading} className="button button-light" type="button" disabled={downloading} onClick={() => void handleDownloadPdf()}>{downloading?<LoaderCircle size={20} className="spin" aria-hidden="true"/>:<Download size={20} aria-hidden="true"/>}</button>
         {!isCancelled && (
           <button className="button button-light" type="button" disabled={resending || cooldown > 0} onClick={() => { requestKey.current = crypto.randomUUID(); setShowResendModal(true); }}>
             <Mail size={18} />
@@ -712,7 +710,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 type="submit"
                 disabled={transferring}
               >
-                {transferring ? 'Memproses Pengalihan...' : '✓ Konfirmasi Transfer Tiket'}
+                {transferring ? 'Memproses Pengalihan...' : 'Konfirmasi Transfer Tiket'}
               </button>
               <button
                 className="button button-light"

@@ -10,30 +10,22 @@ export function FavoritesSection({ catalog }: { catalog: Event[] }) {
   const favoriteEvents = allEvents.filter(e => favorites.includes(e.slug));
 
   return (
-    <section className="account-card" style={{ background: 'var(--yellow)', gridColumn: 'span 2' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Heart size={30} fill="var(--ink)" style={{ color: 'var(--ink)' }} />
-          <div>
-            <h2 style={{ margin: 0, fontSize: 24 }}>Event Favorit Saya</h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink)' }}>
-              Daftar acara yang Anda tandai untuk ditonton atau dibeli nanti ({favoriteEvents.length} event).
-            </p>
-          </div>
+    <section className="profile-favorites" aria-labelledby="profile-favorites-title">
+      <div className="profile-favorites-heading">
+        <div>
+          <Heart size={22} aria-hidden="true"/>
+          <h2 id="profile-favorites-title">Event favorit</h2>
+          <span className="profile-favorites-count">{favoriteEvents.length}</span>
         </div>
         <Link href="/events" className="button button-small button-dark">
-          Jelajahi Event
+          Cari event
           <ArrowUpRight size={16} />
         </Link>
       </div>
 
       {favoriteEvents.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '32px 16px', background: 'var(--cream)', borderRadius: 10, border: '1.5px dashed var(--ink)' }}>
-          <Heart size={36} style={{ color: 'var(--muted)', margin: '0 auto 12px' }} />
-          <p style={{ fontSize: 14, fontWeight: 700, margin: '0 0 6px' }}>Belum ada event favorit tersimpan</p>
-          <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 16px' }}>
-            Klik ikon hati pada daftar event atau halaman detail acara untuk menyimpannya di sini.
-          </p>
+        <div className="profile-favorites-empty">
+          <p>Belum ada favorit. Klik ikon hati pada event untuk menyimpannya di sini.</p>
           <Link href="/events" className="button button-small">
             Cari Event Sekarang
           </Link>
@@ -62,7 +54,7 @@ export function FavoritesSection({ catalog }: { catalog: Event[] }) {
                   <button
                     type="button"
                     onClick={() => toggle(event.slug)}
-                    aria-label={`Hapus ${event.title} dari favorit`}
+                    data-icon-action="" title={`Hapus ${event.title} dari favorit`} aria-label={`Hapus ${event.title} dari favorit`}
                     style={{ background: 'none', border: 0, padding: 4, cursor: 'pointer', color: 'var(--danger)' }}
                   >
                     <Heart size={18} fill="currentColor" />

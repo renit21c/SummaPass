@@ -564,15 +564,12 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
           <section className="staff-report-section" aria-labelledby="report-heading">
             <div className="staff-report-header">
               <h2 id="report-heading">Laporan & Riwayat Check-in</h2>
-              <button
+              <button data-icon-action="" aria-label="Perbarui riwayat check-in" title="Perbarui riwayat check-in"
                 className="button button-outline"
                 style={{ fontSize: '13px', padding: '10px 16px' }}
                 disabled={loadingHistory}
                 onClick={() => void fetchReport(slug)}
-              >
-                <RefreshCw size={16} />
-                {loadingHistory ? 'Memuat data...' : 'Perbarui data'}
-              </button>
+              ><RefreshCw size={20} aria-hidden="true" /></button>
             </div>
 
             <div className="staff-kpis">
@@ -672,16 +669,13 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                       <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
                         Riwayat Masuk ({filteredHistory.length})
                       </h3>
-                      <a
+                      <a data-icon-action="" aria-label="Unduh file CSV riwayat kehadiran"
                         className="button button-light"
                         href={`/api/staff/export?slug=${encodeURIComponent(slug)}&period=${period}&staff=${staffScope}${historySearch.trim() ? `&q=${encodeURIComponent(historySearch.trim())}` : ''}`}
                         download={`summapass-kehadiran-${slug}.csv`}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '13px' }}
                         title="Unduh file CSV riwayat kehadiran"
-                      >
-                        <Download size={15} />
-                        Ekspor CSV
-                      </a>
+                      ><Download size={20} aria-hidden="true" /></a>
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -836,16 +830,13 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                       Log Audit Koreksi ({report?.audits?.length ?? 0})
                     </h3>
                     {!!report?.audits?.length && (
-                      <a
+                      <a data-icon-action="" aria-label="Unduh file CSV riwayat log audit"
                         className="button button-light"
                         href={`/api/staff/export?slug=${encodeURIComponent(slug)}&type=audits`}
                         download={`summapass-audit-koreksi-${slug}.csv`}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '13px' }}
                         title="Unduh file CSV riwayat log audit"
-                      >
-                        <Download size={15} />
-                        Ekspor Log Audit
-                      </a>
+                      ><Download size={20} aria-hidden="true" /></a>
                     )}
                   </div>
 

@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { AuthForm, AuthField } from '@/components/auth-form';
+import { PasswordInput } from '@/components/password-input';
 import { Lock, ArrowUpRight, CheckCircle } from 'lucide-react';
 
 export const metadata = { title: 'Reset Kata Sandi' };
@@ -47,24 +49,22 @@ export default async function ResetPassword({
               </div>
             )}
 
-            <form action="/api/auth/reset-password" method="post" className="auth-form">
+            <AuthForm action="/api/auth/reset-password">
               {params.token && <input type="hidden" name="token" value={params.token} />}
 
-              <label>
-                Kata Sandi Baru
-                <input name="password" type="password" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Minimal 6 karakter" />
-              </label>
+              <AuthField label="Kata Sandi Baru">
+<PasswordInput name="password" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Minimal 6 karakter" />
+              </AuthField>
 
-              <label>
-                Konfirmasi Kata Sandi Baru
-                <input name="confirmPassword" type="password" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Ulangi kata sandi baru" />
-              </label>
+              <AuthField label="Konfirmasi Kata Sandi Baru">
+<PasswordInput name="confirmPassword" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Ulangi kata sandi baru" />
+              </AuthField>
 
               <button className="button" type="submit">
                 Simpan Kata Sandi Baru
                 <ArrowUpRight size={18} />
               </button>
-            </form>
+            </AuthForm>
 
             <p className="auth-note">
               Batal reset? <Link className="text-link" href="/login">Kembali ke login</Link>

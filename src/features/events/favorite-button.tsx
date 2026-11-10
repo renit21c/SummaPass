@@ -7,7 +7,7 @@ export function FavoriteButton({ slug, title }: { slug: string; title: string })
   const favorited = isFavorite(slug);
 
   return (
-    <button
+    <button data-icon-action="" title={favorited ? "Hapus dari favorit" : "Simpan ke favorit"}
       type="button"
       onClick={() => toggle(slug)}
       aria-label={favorited ? `Hapus ${title} dari favorit` : `Tambahkan ${title} ke favorit`}
@@ -23,10 +23,7 @@ export function FavoriteButton({ slug, title }: { slug: string; title: string })
         boxShadow: favorited ? '2px 2px 0 var(--ink)' : 'none',
         cursor: 'pointer'
       }}
-    >
-      <Heart size={18} fill={favorited ? 'currentColor' : 'none'} />
-      <span>{favorited ? 'Tersimpan di Favorit' : 'Simpan ke Favorit'}</span>
-    </button>
+    ><Heart size={20} fill={favorited ? 'currentColor' : 'none'} aria-hidden="true" /></button>
   );
 }
 

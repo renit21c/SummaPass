@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { AuthForm, AuthField } from '@/components/auth-form';
+import { PasswordInput } from '@/components/password-input';
 import { redirect } from 'next/navigation';
 import { ArrowUpRight, UserPlus } from 'lucide-react';
 import { authMode, safeReturnPath } from '@/lib/auth/config';
@@ -34,39 +36,34 @@ export default async function Register({ searchParams }: { searchParams: Promise
           </div>
         )}
 
-        <form action="/api/auth/register" method="post" className="auth-form">
+        <AuthForm action="/api/auth/register">
           <input type="hidden" name="next" value={next} />
           
-          <label>
-            Nama Lengkap
-            <input name="name" type="text" autoComplete="name" required maxLength={100} placeholder="Nama sesuai KTP/ID" />
-          </label>
+          <AuthField label="Nama Lengkap">
+<input name="name" type="text" autoComplete="name" required maxLength={100} placeholder="Nama sesuai KTP/ID" />
+          </AuthField>
 
-          <label>
-            Email
-            <input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="nama@email.com" />
-          </label>
+          <AuthField label="Email">
+<input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="nama@email.com" />
+          </AuthField>
 
-          <label>
-            Nomor Telepon / WhatsApp
-            <input name="phone" type="tel" autoComplete="tel" maxLength={30} placeholder="08xxxxxxxxxx (opsional)" />
-          </label>
+          <AuthField label="Nomor Telepon / WhatsApp">
+<input name="phone" type="tel" autoComplete="tel" maxLength={30} placeholder="08xxxxxxxxxx (opsional)" />
+          </AuthField>
 
-          <label>
-            Kata Sandi
-            <input name="password" type="password" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Minimal 6 karakter" />
-          </label>
+          <AuthField label="Kata Sandi">
+<PasswordInput name="password" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Minimal 6 karakter" />
+          </AuthField>
 
-          <label>
-            Konfirmasi Kata Sandi
-            <input name="confirmPassword" type="password" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Ulangi kata sandi" />
-          </label>
+          <AuthField label="Konfirmasi Kata Sandi">
+<PasswordInput name="confirmPassword" autoComplete="new-password" required minLength={6} maxLength={128} placeholder="Ulangi kata sandi" />
+          </AuthField>
 
           <button className="button" type="submit">
             Daftar Sekarang
             <ArrowUpRight size={18} />
           </button>
-        </form>
+        </AuthForm>
 
         <p className="auth-note">
           Sudah punya akun? <Link className="text-link" href={`/login?next=${encodeURIComponent(next)}`}>Masuk di sini</Link>

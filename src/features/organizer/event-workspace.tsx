@@ -292,20 +292,14 @@ export function EventWorkspace({
               <div className="manage-actions">
                 {range.success && (
                   <>
-                    <a
+                    <a data-icon-action="" aria-label="Unduh CSV peserta" title="Unduh CSV peserta"
                       className="button button-light"
                       href={exportUrl("attendees")}
-                    >
-                      <Download size={16} />
-                      CSV peserta
-                    </a>
-                    <a
+                    ><Download size={20} aria-hidden="true" /></a>
+                    <a data-icon-action="" aria-label="Unduh CSV kehadiran" title="Unduh CSV kehadiran"
                       className="button button-light"
                       href={exportUrl("attendance")}
-                    >
-                      <Download size={16} />
-                      CSV kehadiran
-                    </a>
+                    ><Download size={20} aria-hidden="true" /></a>
                   </>
                 )}
                 <small>CSV memakai filter tanggal, mencakup semua nama.</small>
@@ -472,10 +466,7 @@ export function EventWorkspace({
                   Jangan mengubah ID dan revision. Maksimal 500 peserta per
                   impor.
                 </p>
-                <a className="text-link" href={exportUrl("import")}>
-                  <Download size={16} />
-                  Unduh data untuk diedit
-                </a>
+                <a data-icon-action="" aria-label="Unduh data peserta untuk diedit" title="Unduh data peserta untuk diedit" className="text-link" href={exportUrl("import")}><Download size={20} aria-hidden="true" /></a>
                 <label>
                   File CSV
                   <input
