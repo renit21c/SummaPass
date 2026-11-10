@@ -50,7 +50,7 @@ export function PwaInstall(){
   finally{setBusy(false);}
  }
  if(!ready)return null;
- const activeFlow=/^\/bookings\//.test(pathname)||/\/seats\/?$/.test(pathname)||pathname==='/staff';
+ const activeFlow=/^\/bookings\//.test(pathname)||/\/(seats|tickets)\/?$/.test(pathname)||pathname==='/staff';
  const showBanner=!installed&&mobile&&!activeFlow&&(!dismissed||instructions);
  const help=embedded?'Buka SummaPass di Chrome (Android) atau Safari (iPhone) terlebih dahulu. Browser dalam aplikasi mungkin tidak menyediakan menu install.':ios?'Di Safari, ketuk Bagikan, lalu pilih Tambahkan ke Layar Utama dan Tambah.':'Di Chrome, buka menu tiga titik, pilih Tambahkan ke layar utama atau Install aplikasi, lalu ikuti petunjuknya.';
  return <>

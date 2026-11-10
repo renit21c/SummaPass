@@ -13,10 +13,12 @@ type CategoryInfo = {
 export function TicketTiers({
   slug,
   basePrice,
+  withoutSeats = false,
   categories = []
 }: {
   slug: string;
   basePrice: number;
+  withoutSeats?: boolean;
   categories?: CategoryInfo[];
 }) {
   // If specific categories aren't passed, show rich default tiers based on venue setup
@@ -56,14 +58,14 @@ export function TicketTiers({
         <h2 style={{ fontSize: 26, margin: 0, fontWeight: 800 }}>Pilihan Kategori Tiket</h2>
       </div>
       <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 24px' }}>
-        Pilih paket tiket yang sesuai dengan preferensi tempat duduk dan fasilitas Anda.
+        {withoutSeats?'Pilih jumlah tiket. Event ini tidak menggunakan nomor kursi.':'Pilih paket tiket yang sesuai dengan preferensi tempat duduk dan fasilitas Anda.'}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
         {displayTiers.map((tier: any) => {
           const isVip = tier.name.toLowerCase().includes('vip');
           const categoryQuery = isVip ? 'front' : (tier.id?.toLowerCase().includes('reg') ? 'regular' : (tier.id || 'regular'));
-          const perks = tier.perks ?? [
+          const perks = withoutSeats?['Akses event tanpa nomor kursi','E-ticket dengan QR','Reservasi tiket selama 10 menit']:tier.perks ?? [
             `Tempat duduk di ${tier.sections?.join(', ') || 'Venue'}`,
             'Akses e-ticket dengan QR terenkripsi',
             'Reservasi slot 10 menit dengan checkout instan'
@@ -95,7 +97,7 @@ export function TicketTiers({
                   {tier.name}
                 </h3>
                 <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', marginBottom: 14 }}>
-                  {tier.sections?.join(', ') ? `Penempatan: ${tier.sections.join(' & ')}` : 'Tempat duduk bernomor'}
+                  {withoutSeats?'Tanpa nomor kursi':tier.sections?.join(', ') ? `Penempatan: ${tier.sections.join(' & ')}` : 'Tempat duduk bernomor'}
                 </span>
 
                 <div style={{ margin: '14px 0 20px', paddingBottom: 16, borderBottom: '1px dashed var(--line)' }}>
@@ -118,11 +120,11 @@ export function TicketTiers({
 
               <div>
                 <Link
-                  href={`/events/${slug}/seats?category=${categoryQuery}`}
+                  href={`/events/${slug}/${withoutSeats?'tickets':'seats'}?category=${encodeURIComponent(withoutSeats?tier.id:categoryQuery)}`}
                   className={`button ${isVip ? '' : 'button-dark'}`}
                   style={{ width: '100%', textDecoration: 'none' }}
                 >
-                  Pilih Kursi {tier.name.split(' ')[0]}
+                  {withoutSeats?'Pesan tiket':`Pilih Kursi ${tier.name.split(' ')[0]}`}
                   <ArrowRight size={16} />
                 </Link>
               </div>

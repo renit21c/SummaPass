@@ -8,7 +8,7 @@ const zones = {
   courtyard:{name:'Sawarga Courtyard',level:'Semi-outdoor',icon:Trees,desc:'Area pertunjukan terbuka.',features:['Panggung terbuka','Area duduk bertingkat']}
 };
 type Zone=keyof typeof zones;
-export function VenueMap({area='Summarecon Mall Bandung'}:{area?:string}) {
+export function VenueMap({area='Summarecon Mall Bandung',withoutSeats=false}:{area?:string;withoutSeats?:boolean}) {
   const [activeZone,setActiveZone]=useState<Zone>('ballroom');
   const selected=zones[activeZone],ZoneIcon=selected.icon;
   const venue=area.trim()||'Summarecon Mall Bandung';
@@ -27,7 +27,7 @@ export function VenueMap({area='Summarecon Mall Bandung'}:{area?:string}) {
           <svg viewBox="0 0 700 240" className="venue-diagram" role="img" aria-label="Ilustrasi zona atrium, ballroom, dan courtyard">
             {/* Mall Outline */}
             <rect x="10" y="10" width="680" height="220" rx="16" fill="var(--cream)" stroke="var(--ink)" strokeWidth="2" strokeDasharray="4 4" />
-            
+
             {/* Lobi Barat & Timur */}
             <rect x="25" y="80" width="40" height="80" rx="6" fill="var(--purple-light)" stroke="var(--ink)" strokeWidth="1.5" />
             <text x="45" y="120" textAnchor="middle" dominantBaseline="central" transform="rotate(-90 45 120)" fontSize="11" fontWeight="700" fill="var(--purple)">LOBI BARAT</text>
@@ -67,7 +67,7 @@ export function VenueMap({area='Summarecon Mall Bandung'}:{area?:string}) {
                 strokeWidth={activeZone === 'ballroom' ? 3 : 1.5}
               />
               <text x="365" y="60" textAnchor="middle" fontSize="14" fontWeight="800" fill="var(--ink)">GRAND BALLROOM</text>
-              <text x="365" y="80" textAnchor="middle" fontSize="10" fill="var(--muted)">Lantai 2 • Kursi Bernomor</text>
+              <text x="365" y="80" textAnchor="middle" fontSize="10" fill="var(--muted)">{withoutSeats?'Lantai 2':'Lantai 2 • Kursi Bernomor'}</text>
               {/* Stage block */}
               <rect x="290" y="95" width="150" height="35" rx="6" fill="var(--purple)" />
               <text x="365" y="117" textAnchor="middle" fontSize="11" fontWeight="800" fill="#fff">PANGGUNG UTAMA</text>
@@ -99,7 +99,7 @@ export function VenueMap({area='Summarecon Mall Bandung'}:{area?:string}) {
       </div>
       <div className="venue-zone-detail" id="venue-zone-detail" aria-live="polite">
         <span className="venue-zone-icon"><ZoneIcon size={25} aria-hidden="true"/></span>
-        <div><h3>{selected.name}<span>{selected.level}</span></h3><p>{selected.desc}</p><ul>{selected.features.map(feature=><li key={feature}><Check size={15} aria-hidden="true"/>{feature}</li>)}</ul></div>
+        <div><h3>{selected.name}<span>{selected.level}</span></h3><p>{selected.desc}</p><ul>{selected.features.filter(feature=>!withoutSeats||feature!=='Kursi bernomor').map(feature=><li key={feature}><Check size={15} aria-hidden="true"/>{feature}</li>)}</ul></div>
       </div>
       <p className="venue-map-note">Skema ilustrasi. Ikuti petunjuk lokasi dari panitia saat acara.</p>
     </>:<div className="venue-location-summary"><Building2 size={30} aria-hidden="true"/><div><h3>{venue}</h3><p>Lihat rute menuju lokasi melalui Google Maps.</p></div></div>}

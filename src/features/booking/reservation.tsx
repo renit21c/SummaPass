@@ -165,8 +165,8 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
           : active
           ? 'Selesaikan pembayaran sebelum waktunya habis.'
           : failed
-          ? 'Kursi sudah dilepas. Silakan pesan ulang.'
-          : 'Kursi sudah dilepas.'}
+          ? 'Tiket sudah dilepas. Silakan pesan ulang.'
+          : 'Tiket sudah dilepas.'}
       </p>
 
       <section className={`reservation-card ${paid ? 'payment-confirmed' : ''}`}>
@@ -190,7 +190,7 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
 
         <div className="booking-reference reference-with-copy"><span>Referensi {data.reference}</span><CopyReference value={data.reference}/></div>
         <h2>
-          {data.categoryName} · {data.items.length} kursi
+          {data.categoryName} · {data.items.length} tiket
         </h2>
 
         <ul className="reservation-items">
@@ -308,9 +308,9 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
         {active &&
           (confirmCancel ? (
             <div className="cancel-confirm">
-              <p>Lepaskan seluruh kursi reservasi ini?</p>
+              <p>Batalkan seluruh tiket dalam reservasi ini?</p>
               <button className="button" disabled={busy} onClick={cancel}>
-                {busy ? 'Melepas kursi...' : 'Ya, batalkan reservasi'}
+                {busy ? 'Membatalkan...' : 'Ya, batalkan reservasi'}
               </button>
               <button className="text-link" onClick={() => setConfirmCancel(false)} disabled={busy}>
                 Tetap simpan
@@ -337,8 +337,8 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
       </section>
 
       {!data.eventCancelledAt && (
-        <Link className="text-link" href={`/events/${data.slug}/seats`}>
-          {paid ? 'Pesan kursi lainnya' : 'Pilih kursi lagi'}
+        <Link className="text-link" href={`/events/${data.slug}/${data.items.every(i=>i.label==='Tanpa nomor kursi')?'tickets':'seats'}`} >
+          {paid ? 'Pesan tiket lainnya' : 'Pesan tiket lagi'}
         </Link>
       )}
       <Link className="text-link" href="/bookings">

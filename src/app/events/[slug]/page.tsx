@@ -1,3 +1,4 @@
+import { inventory } from '@/features/booking/service';
 import { publicEvent } from '@/features/catalog/service';
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
@@ -14,6 +15,8 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const event = await publicEvent(slug);
   if (!event) notFound();
+  const withoutSeats=event.seatingMode==='GENERAL_ADMISSION';
+  const admissionInventory=withoutSeats?await inventory(slug):undefined;
 
   return (
     <main id="main" className="container section">
@@ -51,16 +54,16 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
             <span>Harga demo mulai dari</span>
             <strong>{rupiah(event.price)}</strong>
             <p>Reservasi berlaku 10 menit. Bayar lewat simulasi.</p>
-            <Link className="button" href={`/events/${event.slug}/seats`}>Pilih kursi</Link>
+            <Link className="button" href={`/events/${event.slug}/${withoutSeats?'tickets':'seats'}`}>{withoutSeats?'Pesan tiket':'Pilih kursi'}</Link>
           </div>
         </div>
       </div>
 
       {/* Ticket Tiers Details */}
-      <TicketTiers slug={event.slug} basePrice={event.price} />
+      <TicketTiers slug={event.slug} basePrice={event.price} withoutSeats={withoutSeats} categories={admissionInventory?.categories} />
 
       {/* Interactive Venue Map & Floorplan */}
-      <VenueMap area={event.area} />
+      <VenueMap area={event.area} withoutSeats={withoutSeats} />
 
       {/* Event Photo Gallery & Lightbox */}
       <EventGallery eventTitle={event.title} />

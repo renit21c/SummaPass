@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { Asterisk, ArrowRight, ArrowUpRight, MapPin, Ticket, ScanLine, MousePointer2 } from 'lucide-react';
 import { Explorer } from '@/features/events/explorer';
+import './home-hero.css';
 
 const marqueeItems = ['MUSIK', 'WORKSHOP', 'KELUARGA', 'MUSIK', 'WORKSHOP', 'KELUARGA'];
 

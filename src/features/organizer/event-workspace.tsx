@@ -170,7 +170,7 @@ export function EventWorkspace({
       </div>
       <nav className="manage-tabs" aria-label="Pengelolaan event">
         {[
-          { id: "seating", label: "Denah dan kategori", icon: Map },
+          { id: "seating", label: event.seatingMode === "GENERAL_ADMISSION" ? "Kuota tiket" : "Denah dan kategori", icon: Map },
           { id: "attendees", label: "Peserta", icon: Users },
           { id: "reports", label: "Laporan", icon: BarChart3 },
           { id: "announcements", label: "Pengumuman", icon: Mail },
@@ -200,8 +200,7 @@ export function EventWorkspace({
           {message}
         </p>
       )}
-      {tab === "seating" ? (
-        <SeatingEditor
+      {tab === "seating" ? (event.seatingMode === "GENERAL_ADMISSION" ? <section className="manage-card"><h2>Tiket tanpa kursi</h2><p>Kuota {event.regularQuota.toLocaleString('id-ID')} tiket. Harga dan kuota dapat diatur di detail event.</p><Link className="button" href={`/organizer/events/${event.id}/edit`}>Atur tiket</Link></section> : <SeatingEditor
           eventId={event.id}
           disabled={disabled}
           locked={
