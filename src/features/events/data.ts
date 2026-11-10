@@ -1,5 +1,5 @@
 export type EventCategory = 'Musik' | 'Workshop' | 'Keluarga';
-export type Event = { slug: string; title: string; category: EventCategory; date: string; time: string; price: number; theme: string; headline: string; description: string; coverUrl?:string; organizer?:string; area?:string; rules?:string };
+export type Event = { seatingMode?:'SEATED'|'GENERAL_ADMISSION'; slug: string; title: string; category: EventCategory; date: string; time: string; price: number; theme: string; headline: string; description: string; coverUrl?:string; organizer?:string; area?:string; rules?:string };
 export const events: Event[] = [
   { slug: 'senja-di-summa', title: 'Senja di Summa', category: 'Musik', date: '2026-12-12', time: '16.00 WIB', price: 125000, theme: 'sunset', headline: 'SENJA\nDI SUMMA', description: 'Pertunjukan musik akustik dari musisi demo Bandung.' },
   { slug: 'clay-and-coffee', title: 'Clay & Coffee Club', category: 'Workshop', date: '2026-12-13', time: '10.00 WIB', price: 175000, theme: 'clay', headline: 'a little clay.\na little coffee.', description: 'Pelan-pelan membuat sesuatu dengan tangan sendiri. Workshop keramik pemula dengan material dan satu minuman nonalkohol.' },

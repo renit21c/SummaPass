@@ -9,5 +9,5 @@ export function safeReturnPath(value: unknown): string {
   if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || /[\\\r\n]/.test(value)) return '/account';
   // Only allow application destinations; never bounce back into an auth endpoint.
   const pathname = value.split(/[?#]/)[0];
-  return ['/account', '/bookings', '/my-tickets', '/organizer', '/staff', '/reset-password', '/verify-email'].some(p => pathname === p || pathname.startsWith(`${p}/`)) || /^\/events\/[a-z0-9-]+\/seats$/.test(pathname) ? value : '/account';
+  return ['/account', '/bookings', '/my-tickets', '/organizer', '/staff', '/reset-password', '/verify-email'].some(p => pathname === p || pathname.startsWith(`${p}/`)) || /^\/events\/[a-z0-9-]+\/(seats|tickets)$/.test(pathname) ? value : '/account';
 }

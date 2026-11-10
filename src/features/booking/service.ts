@@ -9,12 +9,12 @@ import 'server-only';
 import { DemoBookingStore } from './demo-store';
 import { authMode } from '@/lib/auth/config';
 import { supabaseServer } from '@/lib/supabase/server';
-import { BookingError,type Inventory,type Booking,type ReserveInput } from './types';
+import { BookingError,type Inventory,type Booking,type BookingRequest } from './types';
 const state=globalThis as typeof globalThis & {summaBookingStore?:DemoBookingStore};
 function demoStore(){return state.summaBookingStore??=new DemoBookingStore(undefined,loadCatalog(),loadCheckIns(),loadStaffAssignments(),loadCheckInAudits());}
 async function rpc<T>(name:string,args:Record<string,unknown>):Promise<T>{const client=await supabaseServer();const {data,error}=await client.rpc(name,args);if(error)throw new BookingError('DATABASE','Reservasi belum dapat diproses. Periksa konfigurasi database.',503);const result=data as T&{error?:string;message?:string};if(result?.error)throw new BookingError(result.error,result.message??'Permintaan belum dapat diproses.',result.error==='NOT_FOUND'?404:409);return data as T;}
 export async function inventory(slug:string):Promise<Inventory>{return authMode()==='demo'?demoStore().inventory(slug):rpc('seat_inventory',{p_slug:slug});}
-export async function reserve(userId:string,input:ReserveInput):Promise<Booking>{return authMode()==='demo'?demoStore().reserve(userId,input):rpc('reserve_booking',{p_slug:input.slug,p_category:input.categoryId,p_items:input.seats,p_key:input.key});}
+export async function reserve(userId:string,input:BookingRequest):Promise<Booking>{if('attendees' in input)return authMode()==='demo'?demoStore().reserveAdmission(userId,input):rpc('reserve_general_admission',{p_slug:input.slug,p_category:input.categoryId,p_attendees:input.attendees,p_key:input.key});return authMode()==='demo'?demoStore().reserve(userId,input):rpc('reserve_booking',{p_slug:input.slug,p_category:input.categoryId,p_items:input.seats,p_key:input.key});}
 export async function booking(userId:string,id:string):Promise<Booking>{return authMode()==='demo'?demoStore().get(userId,id):rpc('get_booking',{p_id:id});}
 export async function bookings(userId:string):Promise<Booking[]>{return authMode()==='demo'?demoStore().list(userId):rpc('my_bookings',{});}
 export async function cancel(userId:string,id:string):Promise<Booking>{return authMode()==='demo'?demoStore().cancel(userId,id):rpc('cancel_booking',{p_id:id});}

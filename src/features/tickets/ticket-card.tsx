@@ -8,6 +8,7 @@ import { dateLabel, rupiah, type Event } from '@/features/events/data';
 
 export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; event: Event }) {
   const [ticket, setTicket] = useState<Ticket>(initialTicket);
+  const withoutSeats=ticket.seatLabel==='Tanpa nomor kursi';
   const [downloading, setDownloading] = useState(false);
   const [printingPdf, setPrintingPdf] = useState(false);
   const [resending, setResending] = useState(false);
@@ -168,7 +169,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
 
       setResendStatus({
         type: 'success',
-        message: `Tiket ${ticket.reference} berhasil dibatalkan. Pengembalian dana simulasi sebesar ${rupiah(data.refundAmount ?? ticket.price)} telah diproses dan kursi ${ticket.seatLabel} telah kembali tersedia di denah acara.`
+        message: `Tiket ${ticket.reference} berhasil dibatalkan. Pengembalian dana simulasi sebesar ${rupiah(data.refundAmount ?? ticket.price)} telah diproses dan kuota tiket telah kembali tersedia.`
       });
       setShowRefundModal(false);
     } catch (err) {
@@ -382,7 +383,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 Alasan: {ticket.cancellationReason ?? 'Pengunjung berhalangan hadir'}
               </p>
               <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
-                Pengembalian dana simulasi sebesar {rupiah(ticket.refundAmount ?? ticket.price)} telah diproses. Kursi {ticket.seatLabel} kembali tersedia di denah publik.
+                Pengembalian dana simulasi sebesar {rupiah(ticket.refundAmount ?? ticket.price)} telah diproses. Kuota tiket kembali tersedia.
               </p>
             </div>
           )}
@@ -410,7 +411,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
               <strong>{ticket.categoryName}</strong>
             </div>
             <div>
-              <span>Kursi</span>
+              <span>{withoutSeats?'Penempatan':'Kursi'}</span>
               <strong>{ticket.seatLabel}</strong>
             </div>
           </div>
@@ -437,7 +438,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 Tiket Tidak Aktif
               </strong>
               <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0', lineHeight: 1.5 }}>
-                Tiket telah dibatalkan dan kursi {ticket.seatLabel} telah dilepas kembali ke denah acara.
+                Tiket telah dibatalkan dan kuota tiket kembali tersedia.
               </p>
             </div>
           )}
@@ -553,7 +554,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             Batalkan Tiket &amp; Pengembalian Dana
           </h3>
           <p style={{ fontSize: 13, margin: '0 0 16px', lineHeight: 1.6 }}>
-            Pembatalan tiket akan menonaktifkan kode QR e-ticket ini secara permanen. Kursi <strong>{ticket.seatLabel} ({ticket.categoryName})</strong> akan dilepas kembali ke denah acara untuk pengunjung lain.
+            Pembatalan tiket akan menonaktifkan kode QR e-ticket ini secara permanen. Tiket <strong>{ticket.categoryName}</strong> akan kembali tersedia untuk pengunjung lain.
           </p>
 
           <div style={{ background: 'var(--surface)', border: '1.5px solid var(--ink)', borderRadius: 8, padding: '14px 18px', marginBottom: 18, fontSize: 13 }}>
@@ -650,7 +651,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
 
           <div style={{ background: 'var(--surface)', border: '1.5px solid var(--ink)', borderRadius: 8, padding: '14px 18px', marginBottom: 18, fontSize: 13 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span>Kursi Terpilih</span>
+              <span>{withoutSeats?'Penempatan':'Kursi Terpilih'}</span>
               <strong>{ticket.seatLabel} ({ticket.categoryName})</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>

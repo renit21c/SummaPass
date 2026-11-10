@@ -6,7 +6,8 @@ import { events } from '@/features/events/data';
 import { requireSession } from '@/lib/auth/session';
 import { inventory } from '@/features/booking/service';
 import { SeatPicker } from '@/features/booking/seat-picker';
-export const metadata={title:'Pilih kursi'};
+import { QuantityPicker } from '@/features/booking/quantity-picker';
+export const metadata={title:'Pesan tiket'};
 export default async function SeatsPage({
   params,
   searchParams,
@@ -25,8 +26,8 @@ export default async function SeatsPage({
   } catch {
     return (
       <main id="main" className="container section empty-state">
-        <h1>Peta kursi belum tersedia.</h1>
-        <p>Coba muat ulang daftar kursi.</p>
+        <h1>Pilihan tiket belum tersedia.</h1>
+        <p>Coba muat ulang pilihan tiket.</p>
         <Link className="button" href={`/events/${slug}/seats`}>Coba lagi</Link>
       </main>
     );
@@ -35,13 +36,13 @@ export default async function SeatsPage({
   return (
     <main id="main" className="container section">
       <Link className="text-link back" href={`/events/${slug}`}>Kembali ke detail event</Link>
-      <SeatPicker
+      {event.seatingMode==='GENERAL_ADMISSION'?<QuantityPicker initial={data} title={event.title} user={{name:session.name}} initialCategory={category}/>:<SeatPicker
         initial={data}
         title={event.title}
         realtime={realtime}
         user={{ name: session.name, email: session.email, phone: session.phone }}
         initialCategory={category}
-      />
+      />}
     </main>
   );
 }

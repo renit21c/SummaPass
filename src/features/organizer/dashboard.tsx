@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { categoryInventory } from "./core";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -293,42 +294,14 @@ export function OrganizerDashboard({
                   </div>
                   {inv ? (
                     inv.categories.map((c) => {
-                      const seats = inv.seats.filter((s) =>
-                        c.sections.includes(s.section),
-                      );
+                      const counts = categoryInventory(inv,c);
                       return (
                         <section key={c.id}>
                           <strong>{c.name}</strong>
                           <p>
-                            {rupiah(c.price)} / kursi · Kuota {c.quota}
+                            {rupiah(c.price)} / tiket · Kuota {c.quota}
                           </p>
-                          <div className="inventory-stats">
-                            <span>
-                              Tersedia{" "}
-                              {Math.max(
-                                0,
-                                Math.min(
-                                  seats.filter((s) => s.status === "AVAILABLE")
-                                    .length,
-                                  c.quota -
-                                    seats.filter(
-                                      (s) => s.status !== "AVAILABLE",
-                                    ).length,
-                                ),
-                              )}
-                            </span>
-                            <span>
-                              Ditahan{" "}
-                              {
-                                seats.filter((s) => s.status === "RESERVED")
-                                  .length
-                              }
-                            </span>
-                            <span>
-                              Terjual{" "}
-                              {seats.filter((s) => s.status === "SOLD").length}
-                            </span>
-                          </div>
+                          <div className="inventory-stats"><span>Tersedia {counts.available}</span><span>Ditahan {counts.reserved}</span><span>Terjual {counts.sold}</span></div>
                         </section>
                       );
                     })
@@ -356,7 +329,7 @@ export function OrganizerDashboard({
                       className="button button-light"
                       href={"/organizer/events/" + e.id + "/manage"}
                     >
-                      Denah, peserta, dan laporan
+                      {e.seatingMode==='GENERAL_ADMISSION'?'Tiket, peserta, dan laporan':'Denah, peserta, dan laporan'}
                     </Link>
                   )}
                   {e.status === "PUBLISHED" && (

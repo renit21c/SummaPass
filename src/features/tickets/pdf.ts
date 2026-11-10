@@ -43,7 +43,7 @@ function drawPage(doc:PDFKit.PDFDocument,{ticket,event}:TicketPdfPage,index:numb
  panel(doc,62,420,280,120,colors.pink);panel(doc,358,420,170,120,colors.mint);
  text(doc,'Nama peserta',78,436,248,10,false,colors.ink);
  fitted(doc,ticket.attendeeName,78,457,248,67,18);
- text(doc,'Kursi',374,436,138,10,false,colors.ink);
+ text(doc,ticket.seatLabel==='Tanpa nomor kursi'?'Penempatan':'Kursi',374,436,138,10,false,colors.ink);
  fitted(doc,ticket.seatLabel,374,457,138,67,18);
  doc.dash(4,{space:4}).moveTo(40,556).lineTo(550,556).stroke(colors.ink).undash();
  doc.circle(40,556,8).fillAndStroke(colors.white,colors.ink);doc.circle(550,556,8).fillAndStroke(colors.white,colors.ink);

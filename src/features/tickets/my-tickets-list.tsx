@@ -70,7 +70,7 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
                 className={`my-ticket-card ${isRevoked ? 'is-revoked' : ''}`}
                 style={{ display: 'flex', flexDirection: 'column' }}
                 key={t.id}
-                aria-label={`Tiket ${event?.title ?? t.slug}, Kursi ${t.seatLabel}, Status ${isRevoked ? 'Dibatalkan' : 'Aktif'}`}
+                aria-label={`Tiket ${event?.title ?? t.slug}, ${t.seatLabel==='Tanpa nomor kursi'?'':'Kursi '}${t.seatLabel}, Status ${isRevoked ? 'Dibatalkan' : 'Aktif'}`}
               >
                 {/* Header card art */}
                 <div

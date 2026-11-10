@@ -7,8 +7,9 @@ import { createTicketPack,decryptToken,tokenHash } from '../tickets/crypto';
 import type { Ticket,StoredTicket } from '../tickets/types';
 import { randomUUID,randomBytes } from 'node:crypto';
 import { events } from '../events/data';
-import { BookingError,reserveSchema,type Booking,type Inventory,type ReserveInput } from './types';
+import { BookingError,reserveSchema,generalAdmissionSchema,type GeneralAdmissionInput,type Booking,type Inventory,type ReserveInput } from './types';
 export class DemoBookingStore {
+ private admissionRequests=new Map<string,{request:string;bookingId:string}>();
  private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>(); private checkIns:PersistedCheckIn[]=[]; private staffAssignments:StaffAssignment[]=[]; private checkInAudits:CheckInAuditRecord[]=[];
  constructor(private clock=()=>Date.now(),catalog?:ManagedEvent[],initialCheckIns?:PersistedCheckIn[],initialStaff?:StaffAssignment[],initialAudits?:CheckInAuditRecord[]){
   this.catalog=new Map((catalog??events.map(seedManaged)).map(e=>[e.slug,structuredClone(e)]));
@@ -27,6 +28,14 @@ export class DemoBookingStore {
  private expire(){for(const b of this.bookings.values())if(b.status==='PENDING_PAYMENT'&&Date.parse(b.expiresAt)<=this.clock()){b.status='EXPIRED';b.paymentStatus='EXPIRED';}}
  inventory(slug:string,privateRead=false):Inventory{
   const event=this.catalog.get(slug);if(!event||(!privateRead&&event.status!=='PUBLISHED'))throw new BookingError('NOT_FOUND','Event tidak ditemukan.',404);this.expire();
+  if(event.seatingMode==='GENERAL_ADMISSION'){
+   const occupied=[...this.bookings.values()].filter(b=>b.slug===slug&&(b.status==='CONFIRMED'||b.status==='PENDING_PAYMENT')).map(b=>({...b,items:b.items.filter(i=>![...this.issued.values()].some(t=>t.bookingId===b.id&&t.seatId===i.seatId&&t.status==='REVOKED'))}));
+   const seats:Inventory['seats']=Array.from({length:Math.max(event.regularQuota,...occupied.flatMap(b=>b.items.map(i=>Number(i.seatId.split('-').at(-1))||0)))},(_,index)=>{
+    const id=`GA-${index+1}`,booking=occupied.find(b=>b.items.some(i=>i.seatId===id));
+    return {id,section:'Regular',row:'GA',number:index+1,x:0,y:0,status:booking?.status==='CONFIRMED'?'SOLD':booking?'RESERVED':'AVAILABLE'};
+   });
+   return {eventId:event.id,slug,seatingMode:'GENERAL_ADMISSION',categories:[{id:'regular',name:'Regular',price:event.price,quota:event.regularQuota,remaining:Math.max(0,event.regularQuota-seats.filter(s=>s.status!=='AVAILABLE').length),sold:seats.filter(s=>s.status==='SOLD').length,reserved:seats.filter(s=>s.status==='RESERVED').length,sections:[],salesStart:event.salesStart,salesEnd:event.salesEnd}],seats:privateRead?seats:[],serverNow:new Date(this.clock()).toISOString(),mode:'demo'};
+  }
   const seats:Inventory['seats']=[];
   for(const [sectionIndex,section] of ['Front','Regular'].entries())for(const [rowIndex,row] of ['A','B','C'].entries())for(let number=1;number<=8;number++){
    const id=`${section}-${row}${number}`;
@@ -39,15 +48,28 @@ export class DemoBookingStore {
   }
   return {eventId:slug,slug,categories:[{id:'front',name:'Front',price:event.frontPrice,quota:event.frontQuota,sections:['Front']},{id:'regular',name:'Regular',price:event.price,quota:event.regularQuota,sections:['Regular']}],seats,serverNow:new Date(this.clock()).toISOString(),mode:'demo'};
  }
- reserve(userId:string,raw:ReserveInput):Booking{
+ reserveAdmission(userId:string,raw:GeneralAdmissionInput):Booking{
+  const input=generalAdmissionSchema.parse(raw),key=`${userId}:${input.key}`,request=JSON.stringify(input),previous=this.admissionRequests.get(key);
+  if(previous){if(previous.request!==request)throw new BookingError('KEY_REUSED','Permintaan berubah. Silakan coba lagi.');return this.get(userId,previous.bookingId);}
+  const inventory=this.inventory(input.slug,true),event=this.catalog.get(input.slug)!;
+  if(event.status!=='PUBLISHED')throw new BookingError('SALES_CLOSED','Penjualan tidak sedang dibuka.');
+  if(event.seatingMode!=='GENERAL_ADMISSION')throw new BookingError('MODE','Pilih kursi untuk event ini.');
+  if(input.categoryId!=='regular')throw new BookingError('CATEGORY','Kategori tidak sesuai event.');
+  if((inventory.categories[0].remaining??0)<input.attendees.length)throw new BookingError('QUOTA','Jumlah tiket tersedia tidak mencukupi.');
+  const units=inventory.seats.filter(s=>s.status==='AVAILABLE').slice(0,input.attendees.length);
+  const booking=this.reserve(userId,{slug:input.slug,categoryId:input.categoryId,key:input.key,seats:units.map((unit,i)=>({seatId:unit.id,name:input.attendees[i].name}))},true);
+  this.admissionRequests.set(key,{request,bookingId:booking.id});return booking;
+ }
+ reserve(userId:string,raw:ReserveInput,admission=false):Booking{
   const input=reserveSchema.parse(raw);this.expire();const key=`${userId}:${input.key}`;const existing=this.keys.get(key);
   if(existing){const previous=this.bookings.get(existing)!;if(previous.slug!==input.slug||previous.categoryId!==input.categoryId||JSON.stringify(previous.items.map(i=>({seatId:i.seatId,name:i.name})))!==JSON.stringify(input.seats))throw new BookingError('KEY_REUSED','Permintaan berubah. Muat ulang dan coba lagi.');return structuredClone(previous);}
-  const inventory=this.inventory(input.slug),event=this.catalog.get(input.slug)!;
+  const inventory=this.inventory(input.slug,admission),event=this.catalog.get(input.slug)!;
+  if(event.seatingMode==='GENERAL_ADMISSION'&&!admission)throw new BookingError('MODE','Pilih jumlah tiket untuk event ini.');
   const start=Date.parse(`${event.date}T${event.time.replace(' WIB','').replace('.',':')}:00+07:00`);
   if(this.clock()<Date.parse(event.salesStart)||this.clock()>=Date.parse(event.salesEnd)||this.clock()>=start)throw new BookingError('SALES_CLOSED','Penjualan sudah ditutup atau belum dimulai.');
   const category=inventory.categories.find(c=>c.id===input.categoryId);if(!category)throw new BookingError('CATEGORY','Kategori tidak ditemukan.',400);
-  const chosen=input.seats.map(item=>{const seat=inventory.seats.find(s=>s.id===item.seatId);if(!seat||!category.sections.includes(seat.section))throw new BookingError('CATEGORY','Kursi tidak sesuai kategori.',400);if(seat.status!=='AVAILABLE')throw new BookingError('SEAT_UNAVAILABLE',`Kursi ${seat.section} ${seat.row}${seat.number} sudah tidak tersedia.`);return {...item,label:`${seat.section} ${seat.row}${seat.number}`,price:category.price};});
-  const occupied=inventory.seats.filter(s=>category.sections.includes(s.section)&&s.status!=='AVAILABLE').length;
+  const chosen=input.seats.map(item=>{const seat=inventory.seats.find(s=>s.id===item.seatId);if(!seat||(!admission&&!category.sections.includes(seat.section)))throw new BookingError('CATEGORY','Kursi tidak sesuai kategori.',400);if(seat.status!=='AVAILABLE')throw new BookingError('SEAT_UNAVAILABLE','Pilihan sudah tidak tersedia.');return {...item,label:admission?'Tanpa nomor kursi':`${seat.section} ${seat.row}${seat.number}`,price:category.price};});
+  const occupied=inventory.seats.filter(s=>(admission||category.sections.includes(s.section))&&s.status!=='AVAILABLE').length;
   if(occupied+chosen.length>category.quota)throw new BookingError('QUOTA','Kuota kategori tidak mencukupi.');
   // No await inside this critical section: one local Node process serializes writes.
   const id=randomUUID();const booking:Booking={id,reference:`SP-${id.slice(0,8).toUpperCase()}`,slug:input.slug,userId,categoryId:category.id,categoryName:category.name,eventTitle:event.title,status:'PENDING_PAYMENT',paymentStatus:'PENDING',expiresAt:new Date(this.clock()+600000).toISOString(),total:chosen.length*category.price,items:chosen};
@@ -143,7 +165,7 @@ export class DemoBookingStore {
  assignedEvent(userId:string,id:string){const e=[...this.catalog.values()].find(e=>e.id===id);if(!e||(!demoOrganizerEvents.includes(e.slug)&&e.ownerId!==userId))throw new BookingError('FORBIDDEN','Event tidak ditugaskan.',403);return structuredClone(e);}
  createEvent(userId:string,raw:EventInput){const input=eventInput.parse(raw),id=randomUUID(),slug=input.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,65)+'-'+id.slice(0,8);const e:ManagedEvent={...input,...dateParts(input.startsAt),ownerId:userId,id,slug,status:'DRAFT',headline:input.title.toUpperCase(),coverUrl:''};this.catalog.set(slug,e);return structuredClone(e);}
  duplicateEvent(userId:string,id:string){const source=this.assignedEvent(userId,id);const input=duplicateEventInput(source,this.clock());return this.createEvent(userId,input);}
- updateEvent(userId:string,id:string,raw:EventInput){const old=this.assignedEvent(userId,id),input=eventInput.parse(raw);if(old.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event arsip tidak dapat diedit.');this.expire();const live=[...this.bookings.values()].filter(b=>b.slug===old.slug&&(b.status==='CONFIRMED'||b.status==='PENDING_PAYMENT'));if(live.length&&(Date.parse(input.startsAt)!==Date.parse(old.startsAt)||Date.parse(input.endsAt)!==Date.parse(old.endsAt)||input.area!==old.area))throw new BookingError('EVENT_LOCKED','Jadwal dan lokasi tidak dapat diubah saat ada tiket terjual atau hold aktif.');const inv=this.inventory(old.slug,true);for(const [section,quota] of [['Front',input.frontQuota],['Regular',input.regularQuota]] as const)if(quota<inv.seats.filter(s=>s.section===section&&s.status!=='AVAILABLE').length)throw new BookingError('QUOTA','Kuota tidak boleh di bawah jumlah kursi terjual dan hold aktif.');const e:ManagedEvent={...old,...input,...dateParts(input.startsAt),headline:input.title.toUpperCase()};this.catalog.set(e.slug,e);return structuredClone(e);}
+ updateEvent(userId:string,id:string,raw:EventInput){const old=this.assignedEvent(userId,id),input=eventInput.parse(raw);if((old.seatingMode??'SEATED')!==input.seatingMode)throw new BookingError('MODE_LOCKED','Jenis tiket terkunci setelah event disimpan. Buat event baru.');if(old.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event arsip tidak dapat diedit.');this.expire();const live=[...this.bookings.values()].filter(b=>b.slug===old.slug&&(b.status==='CONFIRMED'||b.status==='PENDING_PAYMENT'));if(live.length&&(Date.parse(input.startsAt)!==Date.parse(old.startsAt)||Date.parse(input.endsAt)!==Date.parse(old.endsAt)||input.area!==old.area))throw new BookingError('EVENT_LOCKED','Jadwal dan lokasi tidak dapat diubah saat ada tiket terjual atau hold aktif.');const inv=this.inventory(old.slug,true);for(const [section,quota] of [['Front',input.frontQuota],['Regular',input.regularQuota]] as const)if(quota<inv.seats.filter(s=>s.section===section&&s.status!=='AVAILABLE').length)throw new BookingError('QUOTA','Kuota tidak boleh di bawah jumlah kursi terjual dan hold aktif.');const e:ManagedEvent={...old,...input,...dateParts(input.startsAt),headline:input.title.toUpperCase()};this.catalog.set(e.slug,e);return structuredClone(e);}
  eventStatus(userId:string,id:string,action:'publish'|'unpublish'|'archive'){const e=this.assignedEvent(userId,id);this.expire();if(e.status==='ARCHIVED')throw new BookingError('ARCHIVED','Event sudah diarsipkan.');if(action==='publish'&&Date.parse(e.startsAt)<=this.clock())throw new BookingError('DATE','Acara yang sudah dimulai tidak dapat dipublikasikan.');if(action==='archive'&&(Date.parse(e.endsAt)>this.clock()||[...this.bookings.values()].some(b=>b.slug===e.slug&&b.status==='PENDING_PAYMENT')))throw new BookingError('ACTIVE','Arsip hanya setelah acara selesai dan tidak ada hold aktif.');e.status=action==='publish'?'PUBLISHED':action==='unpublish'?'UNPUBLISHED':'ARCHIVED';this.catalog.set(e.slug,e);return structuredClone(e);}
  deleteEvent(userId:string,id:string,confirmation:string){
   const e=this.assignedEvent(userId,id);
