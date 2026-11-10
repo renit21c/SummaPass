@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { OrganizerSubo } from './organizer-subo';
 import { Bot, X, ArrowUpRight, CalendarDays, MapPin, Car, Ticket, ScanLine, Mail, ChevronLeft, LoaderCircle } from 'lucide-react';
 import './subo.css';
 
@@ -24,7 +26,9 @@ const answers: Record<Exclude<Topic, 'events'>, { text: string; links: { label: 
   email: { text: 'Pastikan pesanan sudah lunas, lalu cek folder Spam atau Promosi. Tiket tetap bisa dibuka dari Tiket saya. Buka detail tiket untuk meminta kirim ulang email. Pengiriman dapat menunggu antrean.', links: [{ label: 'Buka tiket saya', href: '/my-tickets' }, { label: 'Cek status pesanan', href: '/bookings' }] },
 };
 
-export function Subo() {
+export function Subo(){const pathname=usePathname();return pathname.startsWith('/organizer')?<OrganizerSubo key={pathname}/>:<VisitorSubo/>;}
+
+function VisitorSubo() {
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [events, setEvents] = useState<EventOption[]>([]);
