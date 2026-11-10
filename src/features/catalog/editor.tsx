@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useConfirmation } from '@/components/confirmation-dialog';
 import { useRouter } from 'next/navigation';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { AlertCircle, CheckCircle2, Copy } from 'lucide-react';
@@ -11,6 +12,7 @@ const local = (v:string) => new Date(Date.parse(v)+25200000).toISOString().slice
 const dates = ['startsAt','endsAt','salesStart','salesEnd'];
 export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:string;mode?:'demo'|'supabase'}) {
  const router=useRouter();
+ const confirmAction=useConfirmation();
  const [saved,setSaved]=useState(initial),[busy,setBusy]=useState(false),[duplicating,setDuplicating]=useState(false),[message,setMessage]=useState(''),[failed,setFailed]=useState(false);
  const [submitted,setSubmitted]=useState(false),[touched,setTouched]=useState<Record<string,boolean>>({});
  const [values,setValues]=useState<EditorValues>(()=>({title:initial?.title??'',description:initial?.description??'',category:initial?.category??'Musik',organizer:initial?.organizer??'SummaPass Demo',area:initial?.area??'Summarecon Mall Bandung',startsAt:initial?local(initial.startsAt):'',endsAt:initial?local(initial.endsAt):'',salesStart:initial?local(initial.salesStart):now?local(now):'',salesEnd:initial?local(initial.salesEnd):'',price:String(initial?.price??75000),frontPrice:String(initial?.frontPrice??125000),regularQuota:String(initial?.regularQuota??24),frontQuota:String(initial?.frontQuota??24),rules:initial?.rules??'Datang 30 menit sebelum acara. Satu tiket untuk satu peserta dan satu kursi.',theme:initial?.theme??'sunset'}));
@@ -51,7 +53,7 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
   }catch(e){setFailed(true);setMessage(e instanceof Error?e.message:'Gagal menyimpan.');}finally{setBusy(false);}
  }
  async function action(action:string) {
-  if(!saved||!confirm('Ubah status event? Pastikan perubahan sudah disimpan.'))return;
+  if(!saved||!await confirmAction('Pastikan perubahan detail event sudah disimpan sebelum mengubah status.',{title:action==='publish'?'Publikasikan event?':action==='unpublish'?'Sembunyikan event?':'Arsipkan event?',confirmLabel:action==='publish'?'Publikasikan':action==='unpublish'?'Sembunyikan':'Arsipkan'}))return;
   setBusy(true);setMessage('');setFailed(false);
   try {const r=await fetch(`/api/organizer/events/${saved.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});const data=await r.json();if(!r.ok)throw Error(data.error);setSaved(data);setMessage('Status event diperbarui.');}
   catch(e){setFailed(true);setMessage(e instanceof Error?e.message:'Gagal.');}finally{setBusy(false);}
@@ -68,8 +70,8 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
  }
  async function removeEvent() {
   if(!saved)return;
-  const confirmation=prompt(`Hapus "${saved.title}" beserta seluruh sales, tiket, peserta, dan riwayat check-in?\n\nKetik nama event persis untuk melanjutkan:`);
-  if(confirmation===null)return;
+  if(!await confirmAction('Seluruh sales, tiket, peserta, notifikasi, dan riwayat check-in event ini akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.',{title:'Hapus event permanen?',confirmLabel:'Hapus event',destructive:true,confirmationText:saved.title}))return;
+  const confirmation=saved.title;
   setBusy(true);setMessage('');setFailed(false);
   try{const response=await fetch(`/api/organizer/events/${saved.id}`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirmation})});const data=await response.json();if(!response.ok)throw Error(data.error||'Gagal menghapus event.');router.push('/organizer');router.refresh();}
   catch(error){setFailed(true);setMessage(error instanceof Error?error.message:'Gagal menghapus event.');setBusy(false);}

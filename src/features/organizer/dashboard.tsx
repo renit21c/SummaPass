@@ -47,10 +47,12 @@ export function OrganizerDashboard({
 }) {
   const router = useRouter();
   const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [duplicateError,setDuplicateError]=useState('');
 
   async function handleDuplicate(eventId: string) {
     if (duplicating) return;
     setDuplicating(eventId);
+    setDuplicateError('');
     try {
       const res = await fetch(`/api/organizer/events/${eventId}/duplicate`, {
         method: 'POST',
@@ -61,7 +63,7 @@ export function OrganizerDashboard({
       const newId = data.event?.id ?? data.id;
       router.push(`/organizer/events/${newId}/edit`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Gagal menduplikasi event.');
+      setDuplicateError(err instanceof Error ? err.message : 'Gagal menduplikasi event.');
       setDuplicating(null);
     }
   }
@@ -150,6 +152,7 @@ export function OrganizerDashboard({
         </Link>
       </aside>
       <section className="organizer-main">
+        {duplicateError&&<p className="form-error" role="alert">{duplicateError}</p>}
         <div className="organizer-heading">
           <div>
             <h2>
