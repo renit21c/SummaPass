@@ -16,7 +16,11 @@ export const metadata: Metadata = {
   applicationName:'SummaPass',
   manifest:'/manifest.webmanifest',
   appleWebApp:{capable:true,title:'SummaPass',statusBarStyle:'default'},
-  icons:{apple:[{url:'/pwa/apple-touch-icon.png',sizes:'180x180',type:'image/png'}]},
+  icons:{
+    icon:[{url:'/favicon.ico',sizes:'any'},{url:'/icon.svg',sizes:'any',type:'image/svg+xml'}],
+    shortcut:'/favicon.ico',
+    apple:[{url:'/pwa/apple-touch-icon.png',sizes:'180x180',type:'image/png'}]
+  },
   title: { default: 'SummaPass | Tiket event', template: '%s | SummaPass' },
   description: 'Cari event dan pesan tiket di Summarecon Mall Bandung. Aplikasi demo.'
 };
