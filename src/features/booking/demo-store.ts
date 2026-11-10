@@ -7,6 +7,7 @@ import { createTicketPack,decryptToken,tokenHash } from '../tickets/crypto';
 import type { Ticket,StoredTicket } from '../tickets/types';
 import { randomUUID,randomBytes } from 'node:crypto';
 import { events } from '../events/data';
+import { topSellingSlugs } from '../events/trending';
 import { BookingError,reserveSchema,generalAdmissionSchema,type GeneralAdmissionInput,type Booking,type Inventory,type ReserveInput } from './types';
 export class DemoBookingStore {
  private admissionRequests=new Map<string,{request:string;bookingId:string}>();
@@ -158,10 +159,14 @@ export class DemoBookingStore {
   };
  }
  organizerSnapshot(userId?:string):OrganizerSnapshot{this.expire();const assigned=[...this.catalog.values()].filter(e=>demoOrganizerEvents.includes(e.slug)||(!!userId&&e.ownerId===userId));return {events:assigned.map(e=>structuredClone(e)),bookings:[...this.bookings.values()].filter(b=>assigned.some(e=>e.slug===b.slug)).reverse().map(b=>structuredClone(b)),inventory:assigned.map(e=>this.inventory(e.slug,true)),attendance:assigned.map(e=>({slug:e.slug,checkedIn:[...this.issued.values()].filter(t=>t.slug===e.slug&&t.checkedInAt).length})),mode:'demo'};}
- publicEvents(){return [...this.catalog.values()].filter(e=>e.status==='PUBLISHED').map(e=>structuredClone(e));}
+ publicEvents(){
+  const catalog=[...this.catalog.values()].filter(e=>e.status==='PUBLISHED');
+  const leaders=topSellingSlugs(catalog.filter(e=>!e.cancelledAt&&Date.parse(e.endsAt)>this.clock()).map(e=>({slug:e.slug,sold:[...this.issued.values()].filter(t=>{const b=this.bookings.get(t.bookingId);return t.slug===e.slug&&t.status==='ACTIVE'&&b?.status==='CONFIRMED'&&b.paymentStatus==='PAID';}).length})));
+  return catalog.map(e=>({...structuredClone(e),isTrending:leaders.has(e.slug)}));
+ }
  restoreCatalog(items:ManagedEvent[]){this.catalog=new Map(items.map(e=>[e.slug,structuredClone(e)]));}
  catalogItems(){return [...this.catalog.values()].map(e=>structuredClone(e));}
- publicEvent(slug:string){const e=this.catalog.get(slug);return e?.status==='PUBLISHED'?structuredClone(e):null;}
+ publicEvent(slug:string){return this.publicEvents().find(e=>e.slug===slug)??null;}
  assignedEvent(userId:string,id:string){const e=[...this.catalog.values()].find(e=>e.id===id);if(!e||(!demoOrganizerEvents.includes(e.slug)&&e.ownerId!==userId))throw new BookingError('FORBIDDEN','Event tidak ditugaskan.',403);return structuredClone(e);}
  createEvent(userId:string,raw:EventInput){const input=eventInput.parse(raw),id=randomUUID(),slug=input.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,65)+'-'+id.slice(0,8);const e:ManagedEvent={...input,...dateParts(input.startsAt),ownerId:userId,id,slug,status:'DRAFT',headline:input.title.toUpperCase(),coverUrl:''};this.catalog.set(slug,e);return structuredClone(e);}
  duplicateEvent(userId:string,id:string){const source=this.assignedEvent(userId,id);const input=duplicateEventInput(source,this.clock());return this.createEvent(userId,input);}

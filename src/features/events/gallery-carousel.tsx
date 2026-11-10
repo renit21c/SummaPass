@@ -5,6 +5,7 @@ import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Gift, Mic2, Sparkles, Ticket, X } from 'lucide-react';
 import { Poster } from '@/components/poster';
 import { type Event, dateLabel, rupiah } from './data';
+import { CategoryLabel, TrendingBadge } from './event-labels';
 
 export function EventGalleryCarousel({ events }: { events: Event[] }) {
   const [active, setActive] = useState(0);
@@ -69,10 +70,10 @@ export function EventGalleryCarousel({ events }: { events: Event[] }) {
                 key={event.slug}
                 aria-label={position === 0 ? `Lihat preview ${event.title}` : `Tampilkan ${event.title}`}
               >
-                <div className="event-carousel-poster"><Poster event={event} /></div>
+                <div className="event-carousel-poster event-cover"><Poster event={event} />{event.isTrending&&<TrendingBadge/>}</div>
                 <span className="event-carousel-caption">
                   <strong>{event.title}</strong>
-                  <small>{event.category}</small>
+                  <small><CategoryLabel category={event.category}/></small>
                 </span>
               </button>
             );
@@ -139,14 +140,14 @@ export function EventGalleryCarousel({ events }: { events: Event[] }) {
             </button>
             <div className="event-preview-cover"><Poster event={selectedEvent} /></div>
             <div className="event-preview-copy">
-              <span className="category-badge">{selectedEvent.category}</span>
+              <div className="event-detail-labels"><span className="category-badge"><CategoryLabel category={selectedEvent.category}/></span>{selectedEvent.isTrending&&<TrendingBadge/>}</div>
               <h2 id="event-preview-title">{selectedEvent.title}</h2>
               <p>{selectedEvent.description}</p>
               <div className="event-preview-facts">
                 <span><CalendarDays size={17} />{dateLabel(selectedEvent.date)}</span>
                 <strong>{rupiah(selectedEvent.price)}</strong>
               </div>
-              <Link className="button event-preview-book" href={`/events/${selectedEvent.slug}/seats`}>
+              <Link className="button event-preview-book" href={`/events/${selectedEvent.slug}/${selectedEvent.seatingMode==='GENERAL_ADMISSION'?'tickets':'seats'}`}>
                 <Ticket size={18} />Pesan tiket
               </Link>
             </div>

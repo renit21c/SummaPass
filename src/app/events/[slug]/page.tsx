@@ -7,6 +7,7 @@ import { ArrowLeft, CalendarDays, MapPin, Clock3 } from 'lucide-react';
 import { events, dateLabel, rupiah } from '@/features/events/data';
 import { Poster } from '@/components/poster';
 import { FavoriteButton } from '@/features/events/favorite-button';
+import { CategoryLabel, TrendingBadge } from '@/features/events/event-labels';
 import { TicketTiers } from '@/features/events/ticket-tiers';
 import { VenueMap } from '@/features/events/venue-map';
 import { EventGallery } from '@/features/events/gallery';
@@ -34,7 +35,7 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
 
         <div className="detail-copy">
           <h1>{event.title}</h1>
-          <span className="category-badge">{event.category}</span>
+          <div className="event-detail-labels"><span className="category-badge"><CategoryLabel category={event.category}/></span>{event.isTrending&&<TrendingBadge/>}</div>
           <div className="detail-facts">
             <p><CalendarDays size={19} />{dateLabel(event.date)}</p>
             <p><Clock3 size={19} />{event.time}</p>
