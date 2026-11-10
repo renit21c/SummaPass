@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowUpRight, Ticket } from 'lucide-react';
 import '@fontsource-variable/plus-jakarta-sans';
 import './globals.css';
+import '@/components/ux-enhancements.css';
 import '@/features/organizer/workspace.css';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { getSession } from '@/lib/auth/session';
@@ -28,12 +29,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             </Link>
             <nav aria-label="Navigasi utama">
               <Link href="/events">Cari event</Link>
+              {session && <><Link href="/bookings">Pesanan saya</Link><Link href="/my-tickets">Tiket saya</Link></>}
               <Link href="/#cara-kerja">Cara pesan</Link>
             </nav>
             <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <NotificationBell loggedIn={Boolean(session)} />
               <Link className="button button-small" href={session ? '/account' : '/login'}>
-                Akun saya <ArrowUpRight size={16} />
+                {session ? 'Akun saya' : 'Masuk/Daftar'} <ArrowUpRight size={18} />
               </Link>
             </div>
               <MobileNavigation loggedIn={Boolean(session)} />

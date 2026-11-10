@@ -283,7 +283,7 @@ export function ConcurrencySimulatorModal({
                       </div>
                     </div>
                     <span className={`status-pill ${result.buyerA.status === 'WINNER' ? 'pill-winner' : 'pill-rejected'}`}>
-                      {result.buyerA.status === 'WINNER' ? '✓ PEMENANG LOCK' : '✕ DITOLAK AMAN'}
+                      {result.buyerA.status === 'WINNER' ? 'PEMENANG LOCK' : 'DITOLAK AMAN'}
                     </span>
                   </div>
 
@@ -319,7 +319,7 @@ export function ConcurrencySimulatorModal({
                       </div>
                     </div>
                     <span className={`status-pill ${result.buyerB.status === 'WINNER' ? 'pill-winner' : 'pill-rejected'}`}>
-                      {result.buyerB.status === 'WINNER' ? '✓ PEMENANG LOCK' : '✕ DITOLAK AMAN'}
+                      {result.buyerB.status === 'WINNER' ? 'PEMENANG LOCK' : 'DITOLAK AMAN'}
                     </span>
                   </div>
 

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AuthForm, AuthField } from '@/components/auth-form';
 import { KeyRound, ArrowUpRight, CheckCircle } from 'lucide-react';
 import { authMode } from '@/lib/auth/config';
 
@@ -63,17 +64,16 @@ export default async function ForgotPassword({
             </p>
           </div>
         ) : (
-          <form action="/api/auth/forgot-password" method="post" className="auth-form">
-            <label>
-              Alamat Email Terdaftar
+          <AuthForm action="/api/auth/forgot-password">
+            <AuthField label="Alamat Email Terdaftar">
               <input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="nama@email.com" defaultValue={params.email ?? ''} />
-            </label>
+            </AuthField>
 
             <button className="button" type="submit">
               Kirim Tautan Reset
               <ArrowUpRight size={18} />
             </button>
-          </form>
+          </AuthForm>
         )}
 
         {!sent && (

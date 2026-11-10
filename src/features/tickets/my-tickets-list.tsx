@@ -37,7 +37,7 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
           className={`my-tickets-tab ${tab === 'active' ? 'active' : ''}`}
           onClick={() => setTab('active')}
         >
-          ✓ Aktif ({activeCount})
+          Aktif ({activeCount})
         </button>
         {revokedCount > 0 && (
           <button
@@ -47,7 +47,7 @@ export function MyTicketsList({ tickets }: { tickets: Ticket[] }) {
             className={`my-tickets-tab ${tab === 'revoked' ? 'active' : ''}`}
             onClick={() => setTab('revoked')}
           >
-            ✕ Dibatalkan ({revokedCount})
+            Dibatalkan ({revokedCount})
           </button>
         )}
       </div>

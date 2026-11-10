@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { AuthForm, AuthField } from '@/components/auth-form';
+import { PasswordInput } from '@/components/password-input';
 import { redirect } from 'next/navigation';
 import { ArrowUpRight, Ticket } from 'lucide-react';
 import { authMode, safeReturnPath } from '@/lib/auth/config';
@@ -35,18 +37,16 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
           </div>
         )}
 
-        <form action="/api/auth/login" method="post" className="auth-form">
+        <AuthForm action="/api/auth/login">
           <input type="hidden" name="next" value={next} />
           {mode === 'supabase' && (
             <>
-              <label>
-                Email
-                <input name="email" type="email" autoComplete="email" required maxLength={254} />
-              </label>
-              <label>
-                Kata sandi
-                <input name="password" type="password" autoComplete="current-password" required maxLength={128} />
-              </label>
+              <AuthField label="Email">
+<input name="email" type="email" autoComplete="email" required maxLength={254} />
+              </AuthField>
+              <AuthField label="Kata sandi">
+<PasswordInput name="password" autoComplete="current-password" required maxLength={128} />
+              </AuthField>
             </>
           )}
 
@@ -65,7 +65,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
               Masuk sebagai petugas demo
             </button>
           )}
-        </form>
+        </AuthForm>
 
         <p className="auth-note">
           Belum punya akun? <Link className="text-link" href={`/register?next=${encodeURIComponent(next)}`}>Daftar akun baru</Link>

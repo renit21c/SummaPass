@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { ArrowRight, Trash2, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { rupiah } from '@/features/events/data';
 import { statusLabel, type Inventory } from './types';
 import { ConcurrencySimulatorModal } from './concurrency-simulator-modal';
@@ -79,6 +79,7 @@ export function SeatPicker({
 
   const category = data.categories.find(c => c.id === categoryId);
   const chosen = data.seats.filter(s => selected.includes(s.id));
+  const reservationHint = busy ? 'Reservasi sedang diproses.' : !chosen.length ? 'Pilih minimal satu kursi untuk melanjutkan.' : error ? 'Perbarui ketersediaan kursi sebelum melanjutkan.' : !terms ? 'Setujui ketentuan reservasi di bawah untuk melanjutkan.' : 'Lengkapi data pemesan dan peserta, lalu lanjutkan reservasi.';
   useEffect(() => {
     const current=data.categories.find(c=>c.id===categoryId);
     if(!current){setCategoryId(data.categories[0]?.id??'');setSelected([]);return;}
@@ -344,7 +345,7 @@ export function SeatPicker({
                     >
                       <rect x={s.x - 6} y={s.y - 8} width="44" height="44" rx="8" />
                       <text x={s.x + 16} y={s.y + 18} textAnchor="middle">
-                        {isSelected ? '✓' : s.status === 'SOLD' ? '×' : s.status === 'RESERVED' ? '−' : s.number}
+                        {isSelected ? 'OK' : s.status === 'SOLD' ? '×' : s.status === 'RESERVED' ? '−' : s.number}
                       </text>
                       <title>{`${s.section} ${s.row}${s.number}`}</title>
                     </g>
@@ -382,7 +383,7 @@ export function SeatPicker({
             </div>
           )}
 
-          <button
+          <button data-icon-action="" aria-label="Perbarui ketersediaan kursi" title="Perbarui ketersediaan kursi"
             className="text-link refresh-button"
             disabled={refreshing || busy}
             onClick={async () => {
@@ -390,21 +391,18 @@ export function SeatPicker({
               await refresh();
               setRefreshing(false);
             }}
-          >
-            <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
-            {refreshing ? 'Memperbarui...' : 'Perbarui ketersediaan'}
-          </button>
+          ><RefreshCw size={20} className={refreshing ? 'spin' : ''} aria-hidden="true" /></button>
           <p className="seat-sync-note">Diperbarui setiap 5 detik.</p>
         </section>
 
-        <aside className="seat-summary">
+        <aside className="seat-summary" id="seat-order-summary">
           <h2>Ringkasan pesanan</h2>
           <div className="summary-event">
             <MapPin size={18} />
             <span>{title}</span>
           </div>
 
-          <form onSubmit={submit}>
+          <form onSubmit={submit} id="seat-reservation-form">
             {chosen.length === 0 ? (
               <p className="selection-empty">Pilih kursi dari peta atau daftar.</p>
             ) : (
@@ -476,7 +474,7 @@ export function SeatPicker({
                   </div>
 
                   {chosen.map((s, idx) => {
-                    const isExpanded = expandedSeat === s.id || chosen.length === 1;
+                    const isExpanded = expandedSeat === s.id;
 
                     return (
                       <div className="selected-seat" key={s.id} style={{ background: '#fff', border: '1px solid var(--ink)', borderRadius: 8, padding: 14 }}>
@@ -485,19 +483,19 @@ export function SeatPicker({
                           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                             <button
                               type="button"
-                              onClick={() => setExpandedSeat(isExpanded ? null : s.id)}
+                              data-icon-action="" aria-label={isExpanded ? 'Tutup detail peserta' : 'Lengkapi detail peserta'} title={isExpanded ? 'Tutup detail peserta' : 'Lengkapi detail peserta'} aria-expanded={isExpanded} onClick={() => setExpandedSeat(isExpanded ? null : s.id)}
                               style={{ border: 0, background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--purple)', fontWeight: 700 }}
                             >
-                              {isExpanded ? <><ChevronUp size={14} /> Tutup Form</> : <><ChevronDown size={14} /> Lengkapi Data</>}
+                              {isExpanded ? <ChevronUp size={20} aria-hidden="true"/> : <ChevronDown size={20} aria-hidden="true"/>}
                             </button>
                             <button
                               type="button"
                               disabled={busy}
                               onClick={() => toggle(s.id)}
-                              aria-label={`Hapus ${s.row}${s.number}`}
+                              data-icon-action="" title={`Hapus kursi ${s.row}${s.number}`} aria-label={`Hapus kursi ${s.row}${s.number}`}
                               style={{ color: 'var(--danger)', fontSize: 11 }}
                             >
-                              Hapus
+                              <Trash2 size={18} aria-hidden="true"/>
                             </button>
                           </div>
                         </div>
@@ -568,7 +566,8 @@ export function SeatPicker({
               <span>Saya memahami reservasi berlaku 10 menit. Ini adalah simulasi tanpa pembayaran nyata.</span>
             </label>
 
-            <button className="button reserve-button" disabled={busy || !chosen.length || !terms || !!error} type="submit">
+            <p id="reservation-hint" className="reservation-hint" aria-live="polite">{reservationHint}</p>
+            <button className="button reserve-button" aria-describedby="reservation-hint" disabled={busy || !chosen.length || !terms || !!error} type="submit">
               {busy ? 'Memproses...' : 'Reservasi 10 menit'}
               <ArrowRight size={18} />
             </button>
@@ -577,6 +576,11 @@ export function SeatPicker({
           <div role="status" aria-live="polite" className="seat-feedback">{message}</div>
           {error && <div role="alert" className="form-error">{error}</div>}
         </aside>
+      </div>
+
+      <div className="seat-mobile-bar" aria-label="Ringkasan kursi pilihan">
+        <div aria-live="polite"><span>{chosen.length} kursi dipilih</span><strong>{rupiah((category?.price ?? 0) * chosen.length)}</strong></div>
+        <a href="#seat-order-summary" className="button button-small">{chosen.length ? 'Lengkapi pesanan' : 'Lihat ringkasan'}<ArrowRight size={16} aria-hidden="true"/></a>
       </div>
 
       <ConcurrencySimulatorModal

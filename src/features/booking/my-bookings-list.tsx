@@ -55,7 +55,7 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
           className={`my-tickets-tab ${tab === 'confirmed' ? 'active' : ''}`}
           onClick={() => setTab('confirmed')}
         >
-          ✓ Dikonfirmasi ({confirmedCount})
+          Dikonfirmasi ({confirmedCount})
         </button>
         {pendingCount > 0 && (
           <button
@@ -65,7 +65,7 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
             className={`my-tickets-tab ${tab === 'pending' ? 'active' : ''}`}
             onClick={() => setTab('pending')}
           >
-            ⏳ Menunggu Bayar ({pendingCount})
+            Menunggu Bayar ({pendingCount})
           </button>
         )}
         {cancelledCount > 0 && (
@@ -76,7 +76,7 @@ export function MyBookingsList({ bookings }: { bookings: Booking[] }) {
             className={`my-tickets-tab ${tab === 'cancelled' ? 'active' : ''}`}
             onClick={() => setTab('cancelled')}
           >
-            ✕ Dibatalkan ({cancelledCount})
+            Dibatalkan ({cancelledCount})
           </button>
         )}
       </div>

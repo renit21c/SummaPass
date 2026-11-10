@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
+import { CopyReference } from '@/components/copy-reference';
 import { useCallback, useEffect, useState } from 'react';
-import { Clock3, CheckCircle2, CreditCard, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { Clock3, CheckCircle2, CreditCard, ArrowUpRight, ShieldCheck, RefreshCw } from 'lucide-react';
 import { rupiah } from '@/features/events/data';
 import type { Booking } from './types';
 
@@ -187,7 +188,7 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
           </div>
         </div>
 
-        <p className="booking-reference">Referensi {data.reference}</p>
+        <div className="booking-reference reference-with-copy"><span>Referensi {data.reference}</span><CopyReference value={data.reference}/></div>
         <h2>
           {data.categoryName} · {data.items.length} kursi
         </h2>
@@ -258,7 +259,7 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
                 lineHeight: 1.5
               }}
             >
-              💡 <strong>Tips Pengujian:</strong> Setelah popup Midtrans muncul, gunakan{' '}
+              <strong>Tips Pengujian:</strong> Setelah popup Midtrans muncul, gunakan{' '}
               <a
                 href="https://simulator.sandbox.midtrans.com"
                 target="_blank"
@@ -280,7 +281,7 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
                 onClick={() => void pay('success')}
                 title="Bypass instan tanpa membuka popup Midtrans"
               >
-                {busy ? 'Memproses...' : '⚡ Simulasi Instan (1-Klik)'}
+                {busy ? 'Memproses...' : 'Simulasi Instan (1-Klik)'}
               </button>
               <button
                 type="button"
@@ -328,8 +329,8 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
         {error && (
           <div role="alert" className="form-error">
             {error}
-            <button className="text-link" onClick={() => void refresh()}>
-              Perbarui status
+            <button data-icon-action="" title="Perbarui status pembayaran" aria-label="Perbarui status pembayaran" className="text-link" onClick={() => void refresh()}>
+              <RefreshCw size={20} aria-hidden="true"/>
             </button>
           </div>
         )}

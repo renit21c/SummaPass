@@ -26,7 +26,7 @@ export function QueueDashboard({ eventId }: { eventId: string }) {
     } catch (e) { setError(e instanceof Error ? e.message : 'Coba lagi.'); }
     finally { setBusy(false); }
   }
-  return <section className="operations-card"><div className="operations-title"><h2>Antrean pengiriman</h2><button className="button button-light" disabled={busy} onClick={() => void load()}><RefreshCw size={17} aria-hidden="true" /> Perbarui</button></div><p>Status diterima provider belum memastikan email tiba di inbox.</p>
+  return <section className="operations-card"><div className="operations-title"><h2>Antrean pengiriman</h2><button data-icon-action="" aria-label="Muat ulang data" title="Muat ulang data" className="button button-light" disabled={busy} onClick={() => void load()}><RefreshCw size={20} aria-hidden="true" /></button></div><p>Status diterima provider belum memastikan email tiba di inbox.</p>
     <div className="operations-counts">{Object.entries(data?.counts ?? {}).map(([status, count]) => <span key={status}>{labels[status] ?? status}: <strong>{count}</strong></span>)}</div>
     <label>Status<select value={filter} disabled={busy} onChange={e => setFilter(e.target.value)}><option value="">Semua</option>{['PENDING', 'PROCESSING', 'RETRY', 'SENT', 'FAILED', 'SKIPPED'].map(status => <option key={status} value={status}>{labels[status]}</option>)}</select></label>
     {error && <p role="alert" className="form-error">{error}</p>}{busy && <p role="status">Memuat...</p>}
