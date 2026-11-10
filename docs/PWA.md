@@ -2,7 +2,7 @@
 
 Manifest: `/manifest.webmanifest`. App icons follow the existing ticket favicon and include 192px, 512px, maskable 512px, and Apple 180px PNGs. Regenerate from the SVG with `node scripts/generate-pwa-icons.mjs`.
 
-The install button appears in the footer when the browser offers installation. On iOS it shows Safari Add to Home Screen instructions. Standalone launches use `/` and keep the existing authentication and role checks.
+The install button appears in the footer when the browser offers installation or the device is mobile. Mobile visitors also get a dismissible install banner, including when `beforeinstallprompt` is unavailable. Chrome/Android can use the native install flow when offered; otherwise the banner explains the browser menu. iOS gets Safari Add to Home Screen instructions. In-app browsers get instructions to open Chrome/Safari. Dismissing hides the banner for seven days, while the footer button remains available. The banner is hidden in standalone mode, during seat selection/payment detail/check-in, or while Subo is open. Standalone launches use `/` and keep the existing authentication and role checks.
 
 The service worker registers only in production, so local development does not leave an offline worker interfering with hot reload. It stores only the static offline page and application icons. It does not cache API calls, RSC responses, authenticated pages, tickets, seat availability, payments, or staff/organizer reports. Full-page offline navigation shows the public offline page. Booking and check-in remain online-only.
 
