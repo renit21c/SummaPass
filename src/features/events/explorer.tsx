@@ -5,6 +5,7 @@ import { ArrowUpRight, CalendarDays, Search, SlidersHorizontal, Heart, Filter, X
 import { type Event, dateLabel, rupiah } from './data';
 import { Poster } from '@/components/poster';
 import { useFavorites } from './favorites';
+import { CategoryIcon, CategoryLabel, TrendingBadge } from './event-labels';
 
 export function Explorer({ items }: { items: Event[] }) {
   const [query, setQuery] = useState('');
@@ -193,7 +194,7 @@ export function Explorer({ items }: { items: Event[] }) {
               setOnlyFavorites(false);
             }}
           >
-            {c}
+            <CategoryIcon category={c}/>{c}
           </button>
         ))}
 
@@ -247,9 +248,9 @@ export function Explorer({ items }: { items: Event[] }) {
               </button>
 
               <Link href={`/events/${e.slug}`} style={{ display: 'block', height: '100%' }}>
-                <Poster event={e} />
+                <div className="event-cover"><Poster event={e} />{e.isTrending&&<TrendingBadge/>}</div>
                 <div className="card-meta">
-                  <span>{e.category}</span>
+                  <CategoryLabel category={e.category}/>
                   <span>
                     <CalendarDays size={13} />
                     {dateLabel(e.date)}
