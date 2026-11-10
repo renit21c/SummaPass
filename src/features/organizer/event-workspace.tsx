@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useConfirmation } from '@/components/confirmation-dialog';
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -37,6 +38,7 @@ export function EventWorkspace({
   event: ManagedEvent;
   mode: string;
 }) {
+  const confirmAction=useConfirmation();
   const router = useRouter(),
     announceKey = useRef(crypto.randomUUID()),
     duplicateKey = useRef(crypto.randomUUID());
@@ -511,13 +513,13 @@ export function EventWorkspace({
                 </label>
                 {imported.length > 0 && (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (
-                        confirm(
+                        await confirmAction(
                           "Terapkan perubahan untuk " +
                             imported.length +
-                            " peserta?",
+                            " peserta?",{title:'Terapkan impor peserta?',confirmLabel:'Terapkan impor'},
                         )
                       )
                         void saveParticipants(imported);
@@ -573,7 +575,7 @@ export function EventWorkspace({
             onSubmit={async (e) => {
               e.preventDefault();
               if (
-                !confirm("Kirim pengumuman ini kepada seluruh pemesan lunas?")
+                !await confirmAction("Pengumuman akan dikirim ke notifikasi dan antrean email seluruh pemesan lunas yang memenuhi syarat.",{title:'Kirim pengumuman?',confirmLabel:'Kirim pengumuman'})
               )
                 return;
               const d = await mutate({

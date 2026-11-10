@@ -1,4 +1,5 @@
 "use client";
+import { useConfirmation } from '@/components/confirmation-dialog';
 import { useEffect, useState } from "react";
 import { RefreshCw, Plus, Save, Trash2 } from "lucide-react";
 import { ZodError } from "zod";
@@ -22,6 +23,7 @@ export function SeatingEditor({
   locked: boolean;
   disabled: boolean;
 }) {
+  const confirmAction=useConfirmation();
   const [config, setConfig] = useState<SeatingConfig | null>(null),
     [draft, setDraft] = useState<LayoutInput | null>(null);
   const [error, setError] = useState(""),
@@ -89,8 +91,8 @@ export function SeatingEditor({
         : categoryFields.parse(cat);
       if (
         layout &&
-        !confirm(
-          "Ganti denah dan kategori draf ini? Semua perubahan harus sudah benar.",
+        !await confirmAction(
+          "Denah dan kategori akan diganti dengan konfigurasi draf ini. Periksa kembali jumlah dan posisi kursi sebelum menyimpan.",{title:'Simpan denah baru?',confirmLabel:'Simpan denah'},
         )
       )
         return;
@@ -444,10 +446,10 @@ export function SeatingEditor({
                       <button
                         className="icon-button"
                         aria-label={"Hapus section " + s.name}
-                        onClick={() => {
+                        onClick={async () => {
                           if (
-                            confirm(
-                              "Hapus section dan kursinya dari draf denah?",
+                            await confirmAction(
+                              "Section dan seluruh kursinya akan dihapus dari draf denah.",{title:'Hapus section?',confirmLabel:'Hapus section',destructive:true},
                             )
                           ) {
                             setDraft({
@@ -608,12 +610,12 @@ export function SeatingEditor({
                     </button>
                     <button
                       className="button button-light"
-                      onClick={() => {
+                      onClick={async () => {
                         if (
-                          !confirm(
+                          !await confirmAction(
                             "Hapus seluruh kursi baris " +
                               seat.row +
-                              " dari section ini?",
+                              " dari section ini?",{title:'Hapus baris kursi?',confirmLabel:'Hapus baris',destructive:true},
                           )
                         )
                           return;

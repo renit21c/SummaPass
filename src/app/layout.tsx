@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata,Viewport } from 'next';
 import Link from 'next/link';
 import { ArrowUpRight, Ticket } from 'lucide-react';
 import '@fontsource-variable/plus-jakarta-sans';
@@ -9,11 +9,18 @@ import { NotificationBell } from '@/features/notifications/notification-bell';
 import { getSession } from '@/lib/auth/session';
 import { MobileNavigation } from '@/components/mobile-navigation';
 import { Subo } from '@/features/subo/subo';
+import { PwaInstall } from '@/components/pwa-install';
+import { ConfirmationProvider } from '@/components/confirmation-dialog';
 
 export const metadata: Metadata = {
+  applicationName:'SummaPass',
+  manifest:'/manifest.webmanifest',
+  appleWebApp:{capable:true,title:'SummaPass',statusBarStyle:'default'},
+  icons:{apple:[{url:'/pwa/apple-touch-icon.png',sizes:'180x180',type:'image/png'}]},
   title: { default: 'SummaPass | Tiket event', template: '%s | SummaPass' },
   description: 'Cari event dan pesan tiket di Summarecon Mall Bandung. Aplikasi demo.'
 };
+export const viewport:Viewport={width:'device-width',initialScale:1,themeColor:'#ff681c'};
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await getSession();
@@ -21,6 +28,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="id">
       <body>
+        <ConfirmationProvider>
         <a href="#main" className="skip-link">Lewati ke konten</a>
         <header className="site-header">
           <div className="container nav">
@@ -48,12 +56,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <div className="container footer-top">
             <Link className="wordmark" href="/">Summa<span>Pass</span></Link>
             <Link href="/events">Temukan event <ArrowUpRight size={16} /></Link>
+            <PwaInstall/>
           </div>
           <div className="container footer-bottom">
             <span>© 2026 SummaPass. Prototipe independen.</span>
             <span>Bandung</span>
           </div>
         </footer>
+        </ConfirmationProvider>
       </body>
     </html>
   );

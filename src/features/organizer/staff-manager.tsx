@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useConfirmation } from '@/components/confirmation-dialog';
 import { Users, UserPlus, ShieldAlert, CheckCircle2, Trash2 } from 'lucide-react';
 import type { StaffAssignment } from './staff-persistence';
 
 export function StaffManager({ eventId, mode }: { eventId: string; mode?: 'demo'|'supabase' }) {
+  const confirmAction=useConfirmation();
   const [staffList, setStaffList] = useState<StaffAssignment[]>([]);
   const [nameInput, setNameInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,7 +60,7 @@ export function StaffManager({ eventId, mode }: { eventId: string; mode?: 'demo'
   }
 
   async function handleUnassign(userId: string, name: string) {
-    if (!confirm(`Cabut tugas check-in untuk "${name}"?`)) return;
+    if (!await confirmAction(`"${name}" tidak lagi dapat melakukan check-in untuk event ini.`,{title:'Cabut akses petugas?',confirmLabel:'Cabut akses',destructive:true})) return;
     setBusy(true);
     setMessage('');
     setError('');
