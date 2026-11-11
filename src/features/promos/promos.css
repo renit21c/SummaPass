@@ -11,7 +11,7 @@ body .discount-price>.discount-price-before,body .discount-price>.discount-price
 .event-card .card-price>.discount-price>strong{font-size:inherit;font-weight:850}
 .booking-preview>.discount-price{display:inline-flex;font-size:clamp(38px,4vw,48px);color:var(--purple);margin-top:8px}
 .discount-price.customer-ticket-price{display:inline-flex;font-size:clamp(32px,3vw,42px)}
-.buyer-package-options .discount-price.buyer-package-price{font-size:26px}
+.buyer-package-options .discount-price.buyer-package-price{font-size:20px}
 .tier-packages .discount-price{font-size:23px}
 .quantity-summary .discount-price.quantity-total{font-size:clamp(38px,4vw,48px)}
 .price-breakdown .discount-price{font-size:32px;align-items:flex-end}
@@ -20,7 +20,7 @@ body .discount-price>.discount-price-before,body .discount-price>.discount-price
 .seat-mobile-bar .discount-price>strong{font-size:inherit}
 .event-preview-facts .discount-price{font-size:30px;align-items:flex-start;gap:5px}
 .event-preview-facts .discount-price>strong{font-size:inherit}
-@media(max-width:639px){.event-card .card-price>.discount-price{font-size:25px}.buyer-package-options .discount-price.buyer-package-price{font-size:24px}.price-breakdown .discount-price{font-size:28px}.seat-mobile-bar .discount-price{font-size:24px}}
+@media(max-width:639px){.event-card .card-price>.discount-price{font-size:25px}.buyer-package-options .discount-price.buyer-package-price{font-size:18px}.price-breakdown .discount-price{font-size:28px}.seat-mobile-bar .discount-price{font-size:24px}}
 .promo-voucher{padding:16px;border:1.5px solid var(--line);border-radius:12px;background:var(--cream);margin:16px 0;min-width:0}
 .promo-voucher>label,.promo-voucher>strong{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;margin-bottom:10px}
 .promo-voucher-row{display:flex;gap:8px;align-items:center;min-width:0}

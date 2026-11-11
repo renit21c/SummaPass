@@ -411,7 +411,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                   <span>Kamera belum aktif</span>
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '12px' }}>
+              <div className="action-group scanner-actions" style={{ marginTop: '12px' }}>
                 <button className="button" disabled={busy} onClick={() => (camera ? stop() : void start())}>
                   <Camera size={18} />
                   {camera ? 'Hentikan kamera' : 'Buka kamera'}
