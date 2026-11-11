@@ -57,6 +57,17 @@ try {
     ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('Akses anonim konfigurasi denah harus ditolak. Periksa migrasi 010.');}
     console.log('OK: RPC denah menolak akses anonim');
   }
+  if(process.argv.includes('--gallery')) {
+    await requireResult('Foto galeri per event',admin.from('event_gallery_images').select('id,event_id,object_name,caption,position').limit(1));
+    const bucket=await requireResult('Bucket galeri privat',admin.storage.getBucket('event-gallery'));
+    if(bucket.public||Number(bucket.file_size_limit)!==3145728||!bucket.allowed_mime_types?.includes('image/webp'))throw new Error('Bucket galeri harus privat, WebP, maksimal 3 MB. Periksa migrasi 025.');
+    const id='00000000-0000-4000-8000-000000000000';
+    const denied=await anonymous.rpc('manage_event_gallery',{p_event:id,p_action:'delete',p_image:id,p_caption:''});
+    if(denied.error?.code!=='42501')throw new Error('RPC pengelolaan galeri harus menolak akses anonim. Periksa migrasi 025.');
+    const missing=await requireResult('RPC pembacaan galeri',anonymous.rpc('event_gallery',{p_event:id}));
+    if(missing?.error!=='NOT_FOUND')throw new Error('Galeri event yang tidak ada tidak boleh terbuka.');
+    console.log('OK: RPC galeri menolak perubahan anonim');
+  }
   if(process.argv.includes('--promos')) {
     await requireResult('Promo dan voucher',admin.from('event_promos').select('id,event_id,type,scope,quota,deleted_at').limit(1));
     await requireResult('Snapshot diskon pesanan',admin.from('bookings').select('id,original_total_idr,discount_amount_idr,promo_name_snapshot,promo_request').limit(1));

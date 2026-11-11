@@ -7,6 +7,8 @@ import { CalendarDays, ChevronLeft, ChevronRight, Gift, Mic2, Sparkles, Ticket, 
 import { Poster } from '@/components/poster';
 import { type Event, dateLabel, rupiah } from './data';
 import { CategoryLabel, TrendingBadge } from './event-labels';
+import type { GalleryImage } from '../gallery/core';
+import '../gallery/gallery.css';
 
 export function EventGalleryCarousel({ events }: { events: Event[] }) {
   const [active, setActive] = useState(0);
@@ -14,6 +16,16 @@ export function EventGalleryCarousel({ events }: { events: Event[] }) {
   const [paused, setPaused] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const selectedEvent = selected === null ? null : events[selected];
+  const [photos,setPhotos]=useState<{slug:string;images:GalleryImage[];error?:string}>({slug:'',images:[]});
+  const [photo,setPhoto]=useState<GalleryImage|null>(null);
+  useEffect(()=>{
+    setPhoto(null);
+    if(!selectedEvent)return;
+    const slug=selectedEvent.slug,controller=new AbortController();
+    setPhotos({slug:'',images:[]});
+    fetch(`/api/events/${slug}/gallery`,{cache:'no-store',signal:controller.signal}).then(async r=>{const body=await r.json();if(!r.ok)throw Error('Galeri belum dapat dimuat.');if(!controller.signal.aborted)setPhotos({slug,images:body.images});}).catch(()=>{if(!controller.signal.aborted)setPhotos({slug,images:[],error:'Galeri belum dapat dimuat.'});});
+    return()=>controller.abort();
+  },[selectedEvent?.slug]);
 
   useEffect(() => {
     if (selected === null) return;
@@ -139,7 +151,11 @@ export function EventGalleryCarousel({ events }: { events: Event[] }) {
             <button type="button" className="event-preview-close" onClick={closePreview} aria-label="Tutup preview">
               <X size={21} />
             </button>
-            <div className="event-preview-cover"><Poster event={selectedEvent} /></div>
+            <div className="event-preview-media">
+              <div className="event-preview-cover">{photo?<img src={photo.url} alt={photo.caption||`Foto acara ${selectedEvent.title}`} width={800} height={1000}/>:<Poster event={selectedEvent} />}</div>
+              {photos.slug===selectedEvent.slug&&photos.images.length>0&&<section className="event-preview-photos" aria-label="Galeri acara"><h3>Galeri acara</h3><div><button type="button" className="preview-photo-thumb" aria-label="Tampilkan cover utama" aria-pressed={!photo} onClick={()=>setPhoto(null)}><Poster event={selectedEvent}/></button>{photos.images.map((image,index)=><button type="button" className="preview-photo-thumb" key={image.id} aria-label={`Lihat foto ${index+1}${image.caption?`: ${image.caption}`:''}`} aria-pressed={photo?.id===image.id} onClick={()=>setPhoto(image)}><img src={image.url} alt={image.caption||`Foto acara ${index+1}`} width={160} height={120} loading="lazy"/></button>)}</div>{photo?.caption&&<p aria-live="polite">{photo.caption}</p>}</section>}
+              {photos.slug===selectedEvent.slug&&photos.error&&<p className="event-preview-gallery-status" role="status">{photos.error}</p>}
+            </div>
             <div className="event-preview-copy">
               <div className="event-detail-labels"><span className="category-badge"><CategoryLabel category={selectedEvent.category}/></span>{selectedEvent.isTrending&&<TrendingBadge/>}</div>
               <h2 id="event-preview-title">{selectedEvent.title}</h2>
