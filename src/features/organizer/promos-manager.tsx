@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmation } from '@/components/confirmation-dialog';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, CheckCircle2, ShieldAlert, Trash2, Calendar, Ticket, Percent, Sparkles, AlertCircle } from 'lucide-react';
 import { rupiah } from '@/features/events/data';
@@ -11,6 +12,7 @@ interface PromosManagerProps {
 }
 
 export function PromosManager({ eventId, categories = [] }: PromosManagerProps) {
+  const confirmAction=useConfirmation();
   const [promos, setPromos] = useState<Promo[]>([]);
   const [availableCategories, setAvailableCategories] = useState(categories);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
   useEffect(() => {
     if (eventId) {
       void loadPromos();
-      fetch(`/api/organizer/events/${eventId}/seating`)
+      fetch(`/api/organizer/events/${eventId}/ticket-options`)
         .then(r => r.json())
         .then(d => {
           if (d && Array.isArray(d.categories) && d.categories.length > 0) {
@@ -92,7 +94,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
         discountValue: Number(formDiscountValue),
         scope: formScope,
         categoryId: formScope === 'CATEGORY' ? formCategoryId : null,
-        categoryName: formScope === 'CATEGORY' ? categories.find(c => c.id === formCategoryId)?.name : null,
+        categoryName: formScope === 'CATEGORY' ? availableCategories.find(c => c.id === formCategoryId)?.name : null,
         startDate: new Date(`${formStartDate}T00:00:00+07:00`).toISOString(),
         endDate: new Date(`${formEndDate}T23:59:59+07:00`).toISOString(),
         quota: formQuota ? Number(formQuota) : null,
@@ -141,7 +143,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
   }
 
   async function handleDelete(promo: Promo) {
-    if (!confirm(`Hapus promo "${promo.name}" secara permanen?`)) return;
+    if (!await confirmAction(`Promo ${promo.name} tidak dapat digunakan lagi. Harga pesanan sebelumnya tetap tersimpan.`,{title:'Hapus promo?',confirmLabel:'Hapus promo',destructive:true})) return;
     setBusy(true);
     setMessage('');
     setError('');
@@ -362,7 +364,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
               <input
                 type="number"
                 min={1}
-                max={6}
+                max={30}
                 placeholder="Contoh: 3 untuk diskon beli min 3"
                 value={formMinQuantity}
                 onChange={e => setFormMinQuantity(e.target.value)}

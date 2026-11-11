@@ -14,6 +14,7 @@ import { BookingError,reserveSchema,generalAdmissionSchema,type GeneralAdmission
 import { getPromosByEvent, incrementPromoUsage } from '../promos/persistence';
 import { calculateApplicablePromo } from '../promos/core';
 export class DemoBookingStore {
+ private requestVouchers=new Map<string,string|null>();
  private packageRequests=new Map<string,{request:string;bookingId:string}>();
  private eventOptions(event:ManagedEvent):TicketOptions{
   if(event.ticketOptions)return event.ticketOptions;
@@ -133,7 +134,7 @@ export class DemoBookingStore {
  }
  reserve(userId:string,raw:ReserveInput,admission=false,packageInfo?:{pack:TicketPackage;quantity:number}):Booking{
   const input=reserveSchema.parse(raw);this.expire();const key=`${userId}:${input.key}`;const existing=this.keys.get(key);
-  if(existing){const previous=this.bookings.get(existing)!;if(previous.slug!==input.slug||previous.categoryId!==input.categoryId||JSON.stringify(previous.items.map(i=>({seatId:i.seatId,name:i.name})))!==JSON.stringify(input.seats))throw new BookingError('KEY_REUSED','Permintaan berubah. Muat ulang dan coba lagi.');return structuredClone(previous);}
+  if(existing){const previous=this.bookings.get(existing)!;if(previous.slug!==input.slug||previous.categoryId!==input.categoryId||(this.requestVouchers.get(key)??null)!==(input.voucherCode?.trim().toUpperCase()||null)||JSON.stringify(previous.items.map(i=>({seatId:i.seatId,name:i.name})))!==JSON.stringify(input.seats))throw new BookingError('KEY_REUSED','Permintaan berubah. Muat ulang dan coba lagi.');return structuredClone(previous);}
   const inventory=this.inventory(input.slug,admission),event=this.catalog.get(input.slug)!;
   if(!packageInfo&&(input.packageId||event.customTicketing))throw new BookingError('PACKAGE_REQUIRED','Pilih jenis paket tiket.');
   if(event.seatingMode==='GENERAL_ADMISSION'&&!admission)throw new BookingError('MODE','Pilih jumlah tiket untuk event ini.');
@@ -147,11 +148,12 @@ export class DemoBookingStore {
   if(occupied+chosen.length>category.quota)throw new BookingError('QUOTA','Kuota kategori tidak mencukupi.');
   const baseTotal=chosen.reduce((n,item)=>n+item.price,0);
   const discountCalc=calculateApplicablePromo({basePrice:baseTotal/chosen.length,quantity:chosen.length,categoryId:category.id,voucherCode:input.voucherCode,promos:getPromosByEvent(event.id),now:this.clock()});
+  if(discountCalc.voucherError)throw new BookingError('VOUCHER',discountCalc.voucherError);
   if(discountCalc.appliedPromo)incrementPromoUsage(discountCalc.appliedPromo.id);
   if(discountCalc.discountAmount>0){const discounted=participantPrices(discountCalc.finalTotal,chosen.length,1);chosen.forEach((item,i)=>{item.price=discounted[i];});}
   // No await inside this critical section: one local Node process serializes writes.
   const id=randomUUID();const booking:Booking={id,reference:`SP-${id.slice(0,8).toUpperCase()}`,slug:input.slug,userId,categoryId:category.id,categoryName:category.name,eventTitle:event.title,status:'PENDING_PAYMENT',paymentStatus:'PENDING',expiresAt:new Date(this.clock()+600000).toISOString(),total:discountCalc.finalTotal,originalTotal:baseTotal,discountAmount:discountCalc.discountAmount,promoName:discountCalc.appliedPromo?.name??null,voucherCode:discountCalc.appliedPromo?.code??null,...(packageInfo?{packageId:packageInfo.pack.id,packageName:packageInfo.pack.name,packageSize:packageInfo.pack.participants,packageQuantity:packageInfo.quantity,packagePrice:packageInfo.pack.price}:{}),items:chosen};
-  this.bookings.set(id,booking);this.keys.set(key,id);return structuredClone(booking);
+  this.bookings.set(id,booking);this.keys.set(key,id);this.requestVouchers.set(key,input.voucherCode?.trim().toUpperCase()||null);return structuredClone(booking);
  }
  get(userId:string,id:string){this.expire();const b=this.bookings.get(id);if(!b||b.userId!==userId)throw new BookingError('NOT_FOUND','Reservasi tidak ditemukan.',404);return structuredClone(b);}
  findByReference(ref:string){this.expire();const b=[...this.bookings.values()].find(x=>x.reference===ref);return b?structuredClone(b):undefined;}

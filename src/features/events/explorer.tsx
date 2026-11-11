@@ -1,4 +1,5 @@
 'use client';
+import { DiscountPrice } from '../promos/price';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, CalendarDays, Search, SlidersHorizontal, Heart, Filter, X, RotateCcw } from 'lucide-react';
@@ -263,7 +264,7 @@ export function Explorer({ items }: { items: Event[] }) {
                 <p className="card-venue">Summarecon Mall Bandung</p>
                 <div className="card-price">
                   <span>Mulai dari</span>
-                  <strong>{rupiah(e.price)}</strong>
+                  <DiscountPrice price={e.price} originalPrice={e.originalPrice}/>
                 </div>
               </Link>
             </div>

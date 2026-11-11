@@ -1,4 +1,6 @@
 'use client';
+import { DiscountPrice } from '@/features/promos/price';
+import { VoucherInput } from '@/features/promos/voucher-input';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Trash2, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp, Zap, Tag, Ticket as TicketIcon } from 'lucide-react';
@@ -83,9 +85,8 @@ export function SeatPicker({
 
   // Promos & Vouchers
   const [promos, setPromos] = useState<Promo[]>([]);
-  const [voucherCodeInput, setVoucherCodeInput] = useState('');
-  const [appliedVoucher, setAppliedVoucher] = useState('');
-  const [voucherError, setVoucherError] = useState('');
+  const [voucherBusy,setVoucherBusy]=useState(false);
+ const [appliedVoucher, setAppliedVoucher] = useState('');
 
   useEffect(() => {
     fetch(`/api/events/${initial.slug}/promos`)
@@ -198,7 +199,7 @@ export function SeatPicker({
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!category || busy || !chosen.length || (pack&&chosen.length!==selectionLimit)||!packageAvailable) return;
+    if (!category || busy || voucherBusy || !chosen.length || (pack&&chosen.length!==selectionLimit)||!packageAvailable) return;
     setBusy(true);
     pending.current = true;
     setError('');
@@ -335,7 +336,7 @@ export function SeatPicker({
             })}
           </div>
 
-          {pack&&<PackagePicker packages={category?.packages??[]} selected={pack} quantity={packageQuantity} remaining={categoryCapacity} busy={busy} onChange={(id,quantity)=>{setPackageId(id);setPackageQuantity(quantity);setSelected([]);setMessage('');}}/>}
+          {pack&&<PackagePicker packages={category?.packages??[]} selected={pack} quantity={packageQuantity} remaining={categoryCapacity} promos={promos} categoryId={categoryId} busy={busy} onChange={(id,quantity)=>{setPackageId(id);setPackageQuantity(quantity);setSelected([]);setMessage('');}}/>}
           {pack&&<button type="button" className="button button-light" disabled={busy||!packageAvailable} onClick={()=>{const ids=adjacentSeats(data.seats,category?.sections??[],selectionLimit);if(ids.length){setSelected(ids);setMessage('Kursi berdekatan dipilih. Periksa denah sebelum melanjutkan.');}else setMessage('Kursi berdekatan tidak tersedia untuk jumlah peserta ini. Pilih kursi secara manual.');}}>Cari kursi berdekatan</button>}
           <div className="map-toolbar">
             <h2>Denah kursi</h2>
@@ -610,69 +611,7 @@ export function SeatPicker({
               </>
             )}
 
-            {/* Voucher input form */}
-            <div style={{ margin: '14px 0', padding: '12px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: 8, boxShadow: '2px 2px 0 var(--ink)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontWeight: 700, fontSize: 13 }}>
-                <Tag size={15} />
-                <span>Punya Kode Voucher?</span>
-              </div>
-              {appliedVoucher ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#dcfce7', border: '1.5px solid #16a34a', padding: '8px 12px', borderRadius: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#166534' }}>
-                    <TicketIcon size={16} />
-                    <span>Voucher: {appliedVoucher}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAppliedVoucher('');
-                      setVoucherError('');
-                    }}
-                    style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}
-                  >
-                    Hapus
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input
-                    type="text"
-                    placeholder="Contoh: HEMAT30K"
-                    value={voucherCodeInput}
-                    disabled={busy}
-                    onChange={e => {
-                      setVoucherCodeInput(e.target.value.toUpperCase());
-                      setVoucherError('');
-                    }}
-                    style={{ flex: 1, textTransform: 'uppercase', padding: '6px 10px', fontSize: 12, border: '1.5px solid var(--ink)', borderRadius: 6, background: '#fff' }}
-                  />
-                  <button
-                    type="button"
-                    className="button button-small"
-                    style={{ padding: '6px 12px', fontSize: 12 }}
-                    disabled={busy || !voucherCodeInput.trim()}
-                    onClick={() => {
-                      const code = voucherCodeInput.trim().toUpperCase();
-                      const check = calculateApplicablePromo(
-                        promos,
-                        { categoryId, quantity: chosen.length || 1, subtotal: orderTotal },
-                        code
-                      );
-                      if (check.appliedPromo?.code?.toUpperCase() === code) {
-                        setAppliedVoucher(code);
-                        setVoucherCodeInput('');
-                        setVoucherError('');
-                      } else {
-                        setVoucherError('Kode voucher tidak valid atau syarat belum terpenuhi.');
-                      }
-                    }}
-                  >
-                    Pakai
-                  </button>
-                </div>
-              )}
-              {voucherError && <p style={{ margin: '6px 0 0', color: 'var(--red, #e11d48)', fontSize: 11, fontWeight: 600 }}>{voucherError}</p>}
-            </div>
+            <VoucherInput slug={initial.slug} categoryId={categoryId} quantity={chosen.length} packageId={pack?.id} packageQuantity={pack?packageQuantity:undefined} disabled={busy} code={appliedVoucher} onCode={setAppliedVoucher} onPromos={setPromos} onPending={setVoucherBusy} invalidMessage={promoCalculation.voucherError}/>
 
             <div className="price-breakdown">
               <p>
@@ -691,7 +630,7 @@ export function SeatPicker({
               </p>
               <div>
                 <strong>Total</strong>
-                <strong>{rupiah(finalTotal)}</strong>
+                <DiscountPrice price={finalTotal} originalPrice={discountAmount>0?subtotal:undefined}/>
               </div>
             </div>
 
@@ -701,7 +640,7 @@ export function SeatPicker({
             </label>
 
             <p id="reservation-hint" className="reservation-hint" aria-live="polite">{reservationHint}</p>
-            <button className="button reserve-button" aria-describedby="reservation-hint" disabled={busy || !chosen.length || !terms || !!error || !packageAvailable || (!!pack&&chosen.length!==selectionLimit)} type="submit">
+            <button className="button reserve-button" aria-describedby="reservation-hint" disabled={busy || voucherBusy || !chosen.length || !terms || !!error || !!promoCalculation.voucherError || !packageAvailable || (!!pack&&chosen.length!==selectionLimit)} type="submit">
               {busy ? 'Memproses...' : 'Reservasi 10 menit'}
               <ArrowRight size={18} />
             </button>
@@ -713,7 +652,7 @@ export function SeatPicker({
       </div>
 
       <div className="seat-mobile-bar" aria-label="Ringkasan kursi pilihan">
-        <div aria-live="polite"><span>{chosen.length} kursi dipilih</span><strong>{rupiah(finalTotal)}</strong></div>
+        <div aria-live="polite"><span>{chosen.length} kursi dipilih</span><DiscountPrice price={finalTotal} originalPrice={discountAmount>0?subtotal:undefined}/></div>
         <a href="#seat-order-summary" className="button button-small">{chosen.length ? 'Lengkapi pesanan' : 'Lihat ringkasan'}<ArrowRight size={16} aria-hidden="true"/></a>
       </div>
 

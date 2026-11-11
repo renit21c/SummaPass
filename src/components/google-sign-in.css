@@ -1,0 +1,7 @@
+.google-sign-in{margin:24px 0 20px}
+.google-sign-in form{margin:0}
+.google-sign-in .google-sign-in-button{width:100%;min-height:50px;background:#fff;border:1.5px solid var(--ink);color:var(--ink);gap:12px}
+.google-sign-in .google-sign-in-button:hover:not(:disabled){background:var(--cream)}
+.google-sign-in-button svg{flex-shrink:0}
+.auth-method-divider{display:flex;align-items:center;gap:14px;margin-top:22px;color:var(--muted);font-size:12px}
+.auth-method-divider:before,.auth-method-divider:after{content:'';height:1px;background:var(--line);flex:1}

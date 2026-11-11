@@ -57,6 +57,19 @@ try {
     ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('Akses anonim konfigurasi denah harus ditolak. Periksa migrasi 010.');}
     console.log('OK: RPC denah menolak akses anonim');
   }
+  if(process.argv.includes('--promos')) {
+    await requireResult('Promo dan voucher',admin.from('event_promos').select('id,event_id,type,scope,quota,deleted_at').limit(1));
+    await requireResult('Snapshot diskon pesanan',admin.from('bookings').select('id,original_total_idr,discount_amount_idr,promo_name_snapshot,promo_request').limit(1));
+    const prices=await requireResult('Harga promo katalog',anonymous.rpc('catalog_promo_prices',{p_slugs:[]}));
+    if(!Array.isArray(prices))throw new Error('Kontrak harga promo tidak sesuai.');
+    const id='00000000-0000-4000-8000-000000000000';
+    for(const [name,args] of [
+      ['organizer_promos',{p_event:id}],
+      ['manage_event_promo',{p_event:id,p_action:'create',p_id:null,p_data:{}}],
+      ['reserve_with_promo',{p_slug:'metadata-only',p_category:id,p_package:null,p_quantity:1,p_items:[],p_key:id,p_voucher:null}]
+    ]){const denied=await anonymous.rpc(name,args);if(denied.error?.code!=='42501')throw new Error('RPC promo harus menolak akses anonim: '+name+'. Periksa migrasi 024.');}
+    console.log('OK: RPC promo dan transaksi menolak akses anonim');
+  }
   if(process.argv.includes('--notifications')) {
     await requireResult('Notifikasi per akun', admin.from('notifications').select('id,user_id,kind,read_at,dismissed_at').limit(1));
     await requireResult('Preferensi pengingat', admin.from('notification_preferences').select('user_id,booking_reminders,event_reminders,email_reminders').limit(1));

@@ -1,3 +1,5 @@
+import { DiscountPrice } from '../promos/price';
+import { calculateApplicablePromo,type Promo } from '../promos/core';
 import Link from 'next/link';
 import type {TicketPackage} from '@/features/ticket-options/core';
 import '../ticket-options/options.css';
@@ -17,12 +19,14 @@ export function TicketTiers({
   slug,
   basePrice,
   withoutSeats = false,
+  promos = [],
   categories = []
 }: {
   slug: string;
   basePrice: number;
   withoutSeats?: boolean;
   categories?: CategoryInfo[];
+  promos?:Promo[];
 }) {
   // If specific categories aren't passed, show rich default tiers based on venue setup
   const displayTiers:CategoryInfo[] = categories.length > 0 ? categories : [
@@ -66,6 +70,8 @@ export function TicketTiers({
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
         {displayTiers.map((tier) => {
+          const prices=(tier.packages?.length?tier.packages:[{price:tier.price,participants:1}]).map(p=>{const quote=calculateApplicablePromo(promos,{categoryId:tier.id,quantity:p.participants,subtotal:p.price});return {original:p.price,price:quote.finalTotal};}).sort((a,b)=>a.price-b.price||a.original-b.original);
+          const lowest=prices[0];
           const isVip = tier.name.toLowerCase().includes('vip');
           const categoryQuery = categories.length>0?tier.id:isVip ? 'front' : (tier.id?.toLowerCase().includes('reg') ? 'regular' : (tier.id || 'regular'));
           const perks = withoutSeats?['Akses event tanpa nomor kursi','E-ticket dengan QR','Reservasi tiket selama 10 menit']:tier.perks ?? [
@@ -101,14 +107,12 @@ export function TicketTiers({
 
                 <div style={{ margin: '14px 0 20px', paddingBottom: 16, borderBottom: '1px dashed var(--line)' }}>
                   <span style={{ fontSize: 11, color: 'var(--muted)', display: 'block' }}>Harga Tiket</span>
-                  <strong className="customer-ticket-price">
-                    {rupiah(tier.packages?.length?Math.min(...tier.packages.map(p=>p.price)):tier.price)}
-                  </strong>
+                  <DiscountPrice className="customer-ticket-price" price={lowest.price} originalPrice={lowest.original}/>
                   <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>{tier.packages?.length?'/ paket':'/ orang'}</span>
                 </div>
 
                 {tier.description&&<p style={{fontSize:13,lineHeight:1.6}}>{tier.description}</p>}
-                {!!tier.packages?.length&&<ul className="tier-packages">{tier.packages.map(p=><li key={p.id}><span><strong>{p.name}</strong> · {p.participants} orang</span><strong>{rupiah(p.price)} / paket</strong></li>)}</ul>}
+                {!!tier.packages?.length&&<ul className="tier-packages">{tier.packages.map(p=>{const quote=calculateApplicablePromo(promos,{categoryId:tier.id,quantity:p.participants,subtotal:p.price});return <li key={p.id}><span><strong>{p.name}</strong> · {p.participants} orang</span><span><DiscountPrice price={quote.finalTotal} originalPrice={p.price}/><small> / paket</small></span></li>;})}</ul>}
                 <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
                   {perks.map((perk: string, i: number) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'start', gap: 8, fontSize: 12, lineHeight: 1.5 }}>

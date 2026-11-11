@@ -1,3 +1,6 @@
+import { publicPromos } from '@/features/promos/service';
+import { calculateApplicablePromo } from '@/features/promos/core';
+import { DiscountPrice } from '@/features/promos/price';
 import { inventory } from '@/features/booking/service';
 import { publicEvent } from '@/features/catalog/service';
 export const dynamic = 'force-dynamic';
@@ -17,7 +20,9 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
   const event = await publicEvent(slug);
   if (!event) notFound();
   const withoutSeats=event.seatingMode==='GENERAL_ADMISSION';
-  const admissionInventory=await inventory(slug);
+  const [admissionInventory,promos]=await Promise.all([inventory(slug),publicPromos(slug)]);
+  const offers=admissionInventory.categories.flatMap(c=>(c.packages?.length?c.packages:[{price:c.price,participants:1}]).map(p=>({original:p.price,...calculateApplicablePromo(promos,{categoryId:c.id,quantity:p.participants,subtotal:p.price})}))).sort((a,b)=>a.finalTotal-b.finalTotal||a.original-b.original);
+  const lowest=offers[0];
 
   return (
     <main id="main" className="container section">
@@ -52,8 +57,8 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
           <p style={{ whiteSpace: 'pre-line' }}>{event.rules ?? '• Tiket berlaku untuk 1 orang per kursi terpilih.\n• Tunjukkan QR e-ticket pada petugas di pintu masuk.\n• Dilarang membawa makanan/minuman dari luar venue.'}</p>
 
           <div className="booking-preview">
-            <span>Harga demo mulai dari</span>
-            <strong>{rupiah(event.price)}</strong>
+            <span>Harga mulai dari</span>
+            <DiscountPrice price={lowest?.finalTotal??event.price} originalPrice={lowest?.original}/>
             <p>Reservasi berlaku 10 menit. Bayar lewat simulasi.</p>
             <Link className="button" href={`/events/${event.slug}/${withoutSeats?'tickets':'seats'}`}>{withoutSeats?'Pesan tiket':'Pilih kursi'}</Link>
           </div>
@@ -61,7 +66,7 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
       </div>
 
       {/* Ticket Tiers Details */}
-      <TicketTiers slug={event.slug} basePrice={event.price} withoutSeats={withoutSeats} categories={admissionInventory?.categories} />
+      <TicketTiers slug={event.slug} basePrice={event.price} withoutSeats={withoutSeats} categories={admissionInventory?.categories} promos={promos} />
 
       {/* Interactive Venue Map & Floorplan */}
       <VenueMap area={event.area} withoutSeats={withoutSeats} />
