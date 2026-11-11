@@ -126,7 +126,8 @@ h1,h2,h3{font-weight:800;letter-spacing:-.055em}.wordmark{font-weight:850}.wordm
 .staff-revoke-button:hover{background:#ffebee}
 .staff-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;border:1.5px dashed var(--line);border-radius:12px}
 
-html,body{max-width:100%;overflow-x:hidden}
+/* Avoid a scroll container on body so the header sticks to the viewport. */
+html,body{max-width:100%;overflow-x:clip}
 .nav,.container{min-width:0}
 .header-actions{flex-shrink:0}
 .notification-item,.account-card,.notifications-heading,.notifications-actions{max-width:100%}
