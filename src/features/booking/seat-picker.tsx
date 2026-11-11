@@ -340,7 +340,7 @@ export function SeatPicker({
           {pack&&<button type="button" className="button button-light" disabled={busy||!packageAvailable} onClick={()=>{const ids=adjacentSeats(data.seats,category?.sections??[],selectionLimit);if(ids.length){setSelected(ids);setMessage('Kursi berdekatan dipilih. Periksa denah sebelum melanjutkan.');}else setMessage('Kursi berdekatan tidak tersedia untuk jumlah peserta ini. Pilih kursi secara manual.');}}>Cari kursi berdekatan</button>}
           <div className="map-toolbar">
             <h2>Denah kursi</h2>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="action-group map-actions">
               <button
                 type="button"
                 className="concurrency-trigger-btn"
@@ -543,9 +543,9 @@ export function SeatPicker({
 
                     return (
                       <div className="selected-seat" key={s.id} style={{ background: '#fff', border: '1px solid var(--ink)', borderRadius: 8, padding: 14 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <div className="selected-seat-heading">
                           <strong>{s.section} {s.row}{s.number} (Tiket #{idx + 1})</strong>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <div className="selected-seat-actions">
                             <button
                               type="button"
                               data-icon-action="" aria-label={isExpanded ? 'Tutup detail peserta' : 'Lengkapi detail peserta'} title={isExpanded ? 'Tutup detail peserta' : 'Lengkapi detail peserta'} aria-expanded={isExpanded} onClick={() => setExpandedSeat(isExpanded ? null : s.id)}

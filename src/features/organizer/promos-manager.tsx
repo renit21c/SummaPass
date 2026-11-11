@@ -204,7 +204,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
       )}
 
       {/* Sub Tabs: Diskon Otomatis vs Kode Voucher */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '2px solid var(--ink)', paddingBottom: 12 }}>
+      <div className="promo-tabs" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24, borderBottom: '2px solid var(--ink)', paddingBottom: 12 }}>
         <button
           type="button"
           className={`chip ${activeTab === 'AUTOMATIC' ? 'active' : ''}`}
@@ -373,7 +373,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
             </label>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 20 }}>
+          <div className="action-group promo-form-actions" style={{ justifyContent: 'flex-end', marginTop: 20 }}>
             <button type="button" className="button button-light" onClick={resetForm} disabled={busy}>
               Batal
             </button>
@@ -509,7 +509,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+                <div className="action-group promo-card-actions" style={{ justifyContent: 'flex-end', paddingTop: 12, borderTop: '1px solid var(--line)' }}>
                   <button
                     type="button"
                     className="button button-small"
@@ -526,7 +526,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                     style={{ background: '#fff0f0', borderColor: '#d32f2f', color: '#d32f2f', minHeight: 36, padding: '6px 12px', fontSize: 12 }}
                     disabled={busy}
                     onClick={() => void handleDelete(promo)}
-                    aria-label={`Hapus ${promo.name}`}
+                    data-icon-action="" title="Hapus promo" aria-label={`Hapus ${promo.name}`}
                   >
                     <Trash2 size={14} />
                   </button>
