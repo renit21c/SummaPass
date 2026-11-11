@@ -3,7 +3,7 @@ export type EditorValues = Record<string, string>;
 export function editorValidation(values: EditorValues, customSeating = false) {
  const body: Record<string, unknown> = { ...values };
  const general=values.seatingMode==='GENERAL_ADMISSION';
- for (const name of ['price', 'frontPrice', 'frontQuota', 'regularQuota']) body[name] = customSeating&&!general ? (name.endsWith('Quota') ? 24 : 0) : values[name]?.trim() ? Number(values[name]) : NaN;
+ for (const name of ['price', 'frontPrice', 'frontQuota', 'regularQuota']) body[name] = customSeating ? (name.endsWith('Quota') ? 24 : 0) : values[name]?.trim() ? Number(values[name]) : NaN;
  if(general){body.frontQuota=24;body.frontPrice=0;}
  for (const name of ['startsAt', 'endsAt', 'salesStart', 'salesEnd']) {
   const raw = values[name] ?? '';

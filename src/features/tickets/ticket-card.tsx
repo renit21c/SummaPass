@@ -408,7 +408,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
           <div className="ticket-seat-details">
             <div>
               <span>Kategori</span>
-              <strong>{ticket.categoryName}</strong>
+              <strong>{ticket.categoryName}{ticket.packageName?` · ${ticket.packageName}`:''}</strong>
             </div>
             <div>
               <span>{withoutSeats?'Penempatan':'Kursi'}</span>
@@ -554,7 +554,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             Batalkan Tiket &amp; Pengembalian Dana
           </h3>
           <p style={{ fontSize: 13, margin: '0 0 16px', lineHeight: 1.6 }}>
-            Pembatalan tiket akan menonaktifkan kode QR e-ticket ini secara permanen. Tiket <strong>{ticket.categoryName}</strong> akan kembali tersedia untuk pengunjung lain.
+            Pembatalan tiket akan menonaktifkan kode QR e-ticket ini secara permanen. Tiket <strong>{ticket.categoryName}{ticket.packageName?` · ${ticket.packageName}`:''}</strong> akan kembali tersedia untuk pengunjung lain.
           </p>
 
           <div style={{ background: 'var(--surface)', border: '1.5px solid var(--ink)', borderRadius: 8, padding: '14px 18px', marginBottom: 18, fontSize: 13 }}>

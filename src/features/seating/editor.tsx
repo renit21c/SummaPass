@@ -92,7 +92,7 @@ export function SeatingEditor({
       if (
         layout &&
         !await confirmAction(
-          "Denah dan kategori akan diganti dengan konfigurasi draf ini. Periksa kembali jumlah dan posisi kursi sebelum menyimpan.",{title:'Simpan denah baru?',confirmLabel:'Simpan denah'},
+          "Denah, kategori, dan paket tiket akan diganti dengan konfigurasi draf ini. Periksa kembali jumlah dan posisi kursi sebelum menyimpan.",{title:'Simpan denah baru?',confirmLabel:'Simpan denah'},
         )
       )
         return;

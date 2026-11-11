@@ -34,7 +34,7 @@ function drawPage(doc:PDFKit.PDFDocument,{ticket,event}:TicketPdfPage,index:numb
  text(doc,'SummaPass',103,61,270,29,true);
  panel(doc,439,66,89,30,active?colors.yellow:colors.pink);text(doc,active?'E-ticket':'DICABUT',450,73,72,11,true);
  fitted(doc,event.title,62,145,466,82,28);
- fitted(doc,`Kategori: ${ticket.categoryName}`,62,237,466,24,11,false);
+ fitted(doc,`Kategori: ${ticket.categoryName}${ticket.packageName?' · '+ticket.packageName:''}`,62,237,466,24,11,false);
  panel(doc,62,276,466,126,colors.white);
  text(doc,'Tanggal',78,291,245,10,false,colors.muted);text(doc,'Waktu',365,291,145,10,false,colors.muted);
  fitted(doc,dateLabel(event.date),78,308,260,24,14);fitted(doc,event.time,365,308,145,24,14);
@@ -60,7 +60,7 @@ function drawPage(doc:PDFKit.PDFDocument,{ticket,event}:TicketPdfPage,index:numb
  text(doc,`${index+1} / ${total}`,499,785,50,9,true);
 }
 export async function generateTicketsPdf(pages:TicketPdfPage[]):Promise<Buffer>{
- if(pages.length<1||pages.length>6)throw Error('PDF_TICKET_LIMIT');
+ if(pages.length<1||pages.length>30)throw Error('PDF_TICKET_LIMIT');
  const doc=new PDFDocument({size:'A4',margin:0,autoFirstPage:false,pdfVersion:'1.4',info:{Title:'SummaPass E-ticket',Author:'SummaPass',Creator:'SummaPass',CreationDate:new Date(pages[0].ticket.issuedAt),ModDate:new Date(pages[0].ticket.issuedAt)}});
  const chunks:Buffer[]=[];const finished=new Promise<Buffer>((resolve,reject)=>{doc.on('data',(chunk:Buffer)=>chunks.push(chunk));doc.on('end',()=>resolve(Buffer.concat(chunks)));doc.on('error',reject);});
  try{const font=brandFonts();doc.registerFont('Brand',font.regular);doc.registerFont('BrandBold',font.bold);pages.forEach((page,index)=>{doc.addPage();drawPage(doc,page,index,pages.length);});doc.end();}catch(error){doc.destroy();throw error;}

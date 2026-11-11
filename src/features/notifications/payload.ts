@@ -1,7 +1,7 @@
 import { createCipheriv,createDecipheriv,hkdfSync,randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { emailPayload,type EmailPayload } from './email';
-export const encryptedEmailPayload=z.object({version:z.literal(2),ciphertext:z.string().max(3000000).regex(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),ticketIds:z.array(z.string().uuid()).max(6)});
+export const encryptedEmailPayload=z.object({version:z.literal(2),ciphertext:z.string().max(3000000).regex(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),ticketIds:z.array(z.string().uuid()).max(30)});
 export const storedEmailPayload=z.union([encryptedEmailPayload,emailPayload]);
 export type StoredEmailPayload=z.infer<typeof storedEmailPayload>;
 const aad=(ids:string[])=>Buffer.from('SummaPass notification delivery v2:'+JSON.stringify(ids));

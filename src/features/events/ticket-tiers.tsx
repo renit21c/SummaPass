@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { Ticket, Check, Sparkles, ArrowRight } from 'lucide-react';
+import type {TicketPackage} from '@/features/ticket-options/core';
+import '../ticket-options/options.css';
+import { Ticket, Check, ArrowRight } from 'lucide-react';
 import { rupiah } from './data';
 
 type CategoryInfo = {
@@ -8,6 +10,7 @@ type CategoryInfo = {
   price: number;
   quota: number;
   sections: string[];
+  description?:string;packages?:TicketPackage[];perks?:string[];
 };
 
 export function TicketTiers({
@@ -22,7 +25,7 @@ export function TicketTiers({
   categories?: CategoryInfo[];
 }) {
   // If specific categories aren't passed, show rich default tiers based on venue setup
-  const displayTiers = categories.length > 0 ? categories : [
+  const displayTiers:CategoryInfo[] = categories.length > 0 ? categories : [
     {
       id: 'reguler',
       name: 'Reguler Pass',
@@ -62,9 +65,9 @@ export function TicketTiers({
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-        {displayTiers.map((tier: any) => {
+        {displayTiers.map((tier) => {
           const isVip = tier.name.toLowerCase().includes('vip');
-          const categoryQuery = isVip ? 'front' : (tier.id?.toLowerCase().includes('reg') ? 'regular' : (tier.id || 'regular'));
+          const categoryQuery = categories.length>0?tier.id:isVip ? 'front' : (tier.id?.toLowerCase().includes('reg') ? 'regular' : (tier.id || 'regular'));
           const perks = withoutSeats?['Akses event tanpa nomor kursi','E-ticket dengan QR','Reservasi tiket selama 10 menit']:tier.perks ?? [
             `Tempat duduk di ${tier.sections?.join(', ') || 'Venue'}`,
             'Akses e-ticket dengan QR terenkripsi',
@@ -86,11 +89,7 @@ export function TicketTiers({
                 boxShadow: isVip ? '4px 5px 0 var(--purple)' : '3px 4px 0 var(--ink)'
               }}
             >
-              {isVip && (
-                <span style={{ position: 'absolute', top: -12, right: 18, background: 'var(--yellow)', border: '1.5px solid var(--ink)', borderRadius: 20, padding: '3px 12px', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Sparkles size={12} /> Paling Diminati
-                </span>
-              )}
+
 
               <div>
                 <h3 style={{ fontSize: 22, margin: '0 0 6px', fontWeight: 800 }}>
@@ -103,11 +102,13 @@ export function TicketTiers({
                 <div style={{ margin: '14px 0 20px', paddingBottom: 16, borderBottom: '1px dashed var(--line)' }}>
                   <span style={{ fontSize: 11, color: 'var(--muted)', display: 'block' }}>Harga Tiket</span>
                   <strong style={{ fontSize: 26, fontWeight: 850, color: 'var(--purple)' }}>
-                    {rupiah(tier.price)}
+                    {rupiah(tier.packages?.length?Math.min(...tier.packages.map(p=>p.price)):tier.price)}
                   </strong>
-                  <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>/ orang</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>{tier.packages?.length?'/ paket':'/ orang'}</span>
                 </div>
 
+                {tier.description&&<p style={{fontSize:13,lineHeight:1.6}}>{tier.description}</p>}
+                {!!tier.packages?.length&&<ul className="tier-packages">{tier.packages.map(p=><li key={p.id}><span><strong>{p.name}</strong> · {p.participants} orang</span><strong>{rupiah(p.price)} / paket</strong></li>)}</ul>}
                 <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
                   {perks.map((perk: string, i: number) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'start', gap: 8, fontSize: 12, lineHeight: 1.5 }}>
