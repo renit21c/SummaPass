@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       token: snapResult.token,
-      redirectUrl: snapResult.redirectUrl
+      redirectUrl: snapResult.redirectUrl,
+      orderId: snapResult.orderId
     });
   } catch (error) {
     return failure(error);

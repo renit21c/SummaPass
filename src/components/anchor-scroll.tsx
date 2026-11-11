@@ -38,3 +38,4 @@ export function AnchorScrollHandler() {
 
   return null;
 }
+
