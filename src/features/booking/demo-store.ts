@@ -9,6 +9,8 @@ import { randomUUID,randomBytes } from 'node:crypto';
 import { events } from '../events/data';
 import { topSellingSlugs } from '../events/trending';
 import { BookingError,reserveSchema,generalAdmissionSchema,type GeneralAdmissionInput,type Booking,type Inventory,type ReserveInput } from './types';
+import { getPromosByEvent, incrementPromoUsage } from '../promos/service';
+import { calculateApplicablePromo } from '../promos/core';
 export class DemoBookingStore {
  private admissionRequests=new Map<string,{request:string;bookingId:string}>();
  private catalog:Map<string,ManagedEvent>; private issued=new Map<string,StoredTicket>(); private encryptionKey=randomBytes(32); private bookings=new Map<string,Booking>(); private keys=new Map<string,string>(); private checkIns:PersistedCheckIn[]=[]; private staffAssignments:StaffAssignment[]=[]; private checkInAudits:CheckInAuditRecord[]=[];
@@ -58,7 +60,7 @@ export class DemoBookingStore {
   if(input.categoryId!=='regular')throw new BookingError('CATEGORY','Kategori tidak sesuai event.');
   if((inventory.categories[0].remaining??0)<input.attendees.length)throw new BookingError('QUOTA','Jumlah tiket tersedia tidak mencukupi.');
   const units=inventory.seats.filter(s=>s.status==='AVAILABLE').slice(0,input.attendees.length);
-  const booking=this.reserve(userId,{slug:input.slug,categoryId:input.categoryId,key:input.key,seats:units.map((unit,i)=>({seatId:unit.id,name:input.attendees[i].name}))},true);
+  const booking=this.reserve(userId,{slug:input.slug,categoryId:input.categoryId,key:input.key,seats:units.map((unit,i)=>({seatId:unit.id,name:input.attendees[i].name})),voucherCode:input.voucherCode},true);
   this.admissionRequests.set(key,{request,bookingId:booking.id});return booking;
  }
  reserve(userId:string,raw:ReserveInput,admission=false):Booking{
@@ -72,8 +74,39 @@ export class DemoBookingStore {
   const chosen=input.seats.map(item=>{const seat=inventory.seats.find(s=>s.id===item.seatId);if(!seat||(!admission&&!category.sections.includes(seat.section)))throw new BookingError('CATEGORY','Kursi tidak sesuai kategori.',400);if(seat.status!=='AVAILABLE')throw new BookingError('SEAT_UNAVAILABLE','Pilihan sudah tidak tersedia.');return {...item,label:admission?'Tanpa nomor kursi':`${seat.section} ${seat.row}${seat.number}`,price:category.price};});
   const occupied=inventory.seats.filter(s=>(admission||category.sections.includes(s.section))&&s.status!=='AVAILABLE').length;
   if(occupied+chosen.length>category.quota)throw new BookingError('QUOTA','Kuota kategori tidak mencukupi.');
-  // No await inside this critical section: one local Node process serializes writes.
-  const id=randomUUID();const booking:Booking={id,reference:`SP-${id.slice(0,8).toUpperCase()}`,slug:input.slug,userId,categoryId:category.id,categoryName:category.name,eventTitle:event.title,status:'PENDING_PAYMENT',paymentStatus:'PENDING',expiresAt:new Date(this.clock()+600000).toISOString(),total:chosen.length*category.price,items:chosen};
+  // Calculate promo discounts
+  const baseTotal = chosen.length * category.price;
+  const promos = getPromosByEvent(event.id);
+  const discountCalc = calculateApplicablePromo({
+    basePrice: category.price,
+    quantity: chosen.length,
+    categoryId: category.id,
+    voucherCode: input.voucherCode,
+    promos,
+    now: this.clock()
+  });
+  if (discountCalc.appliedPromo) {
+    incrementPromoUsage(discountCalc.appliedPromo.id);
+  }
+  const id=randomUUID();
+  const booking:Booking={
+    id,
+    reference:`SP-${id.slice(0,8).toUpperCase()}`,
+    slug:input.slug,
+    userId,
+    categoryId:category.id,
+    categoryName:category.name,
+    eventTitle:event.title,
+    status:'PENDING_PAYMENT',
+    paymentStatus:'PENDING',
+    expiresAt:new Date(this.clock()+600000).toISOString(),
+    total:discountCalc.finalTotal,
+    originalTotal:baseTotal,
+    discountAmount:discountCalc.discountAmount,
+    promoName:discountCalc.appliedPromo?.name??null,
+    voucherCode:discountCalc.appliedPromo?.code??null,
+    items:chosen
+  };
   this.bookings.set(id,booking);this.keys.set(key,id);return structuredClone(booking);
  }
  get(userId:string,id:string){this.expire();const b=this.bookings.get(id);if(!b||b.userId!==userId)throw new BookingError('NOT_FOUND','Reservasi tidak ditemukan.',404);return structuredClone(b);}

@@ -12,9 +12,11 @@ import {
   Users,
   Map,
   BarChart3,
+  Tag,
 } from "lucide-react";
 import type { ManagedEvent } from "@/features/catalog/core";
 import { SeatingEditor } from "@/features/seating/editor";
+import { PromosManager } from "./promos-manager";
 import {
   attendeeChange,
   attendeeRow,
@@ -171,6 +173,7 @@ export function EventWorkspace({
       <nav className="manage-tabs" aria-label="Pengelolaan event">
         {[
           { id: "seating", label: event.seatingMode === "GENERAL_ADMISSION" ? "Kuota tiket" : "Denah dan kategori", icon: Map },
+          { id: "promos", label: "Diskon & Voucher", icon: Tag },
           { id: "attendees", label: "Peserta", icon: Users },
           { id: "reports", label: "Laporan", icon: BarChart3 },
           { id: "announcements", label: "Pengumuman", icon: Mail },
@@ -563,6 +566,8 @@ export function EventWorkspace({
             </>
           )}
         </section>
+      ) : tab === "promos" ? (
+        <PromosManager eventId={event.id} eventTitle={event.title} />
       ) : tab === "announcements" ? (
         <section className="manage-card">
           <h2>Kirim pengumuman</h2>
