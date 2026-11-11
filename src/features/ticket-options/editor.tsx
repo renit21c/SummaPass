@@ -1,0 +1,46 @@
+'use client';
+import { useEffect,useState } from 'react';
+import { Plus,RefreshCw,Save,Ticket,UsersRound } from 'lucide-react';
+import { optionsSchema,type TicketOptions,type TicketCategory,type TicketPackage } from './core';
+import { rupiah } from '../events/data';
+import './options.css';
+const local=(value:string)=>new Date(Date.parse(value)+25200000).toISOString().slice(0,16);
+const iso=(value:string)=>new Date(value+':00+07:00').toISOString();
+export function TicketOptionsEditor({eventId,disabled=false,onManaged}:{eventId:string;disabled?:boolean;onManaged?:()=>void}){
+ const [config,setConfig]=useState<TicketOptions|null>(null),[category,setCategory]=useState<TicketCategory|null>(null),[pack,setPack]=useState<TicketPackage|null>(null);
+ const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[message,setMessage]=useState('');
+ function accept(raw:unknown,categoryId?:string,packageId?:string){const next=optionsSchema.parse(raw);setConfig(next);const selected=next.categories.find(c=>c.id===categoryId)??next.categories[0]??null;setCategory(selected);setPack(selected?.packages.find(p=>p.id===packageId)??selected?.packages[0]??null);}
+ async function load(){setLoading(true);setError('');try{const r=await fetch(`/api/organizer/events/${eventId}/ticket-options`,{cache:'no-store'});const data=await r.json();if(!r.ok)throw Error(data.error);accept(data);}catch(e){setError(e instanceof Error?e.message:'Data tiket belum dapat dimuat.');}finally{setLoading(false);}}
+ useEffect(()=>{void load();},[eventId]);
+ async function save(kind:'category'|'package'){
+  if(!config||!category||busy)return;setBusy(true);setError('');setMessage('');
+  try{
+   const id=kind==='category'?category.id:pack?.id;
+   const data=kind==='category'?{name:category.name,description:category.description,price:category.price,quota:category.quota,salesStart:category.salesStart,salesEnd:category.salesEnd,sections:category.sections,active:category.active}:pack?{categoryId:category.id,name:pack.name,participants:pack.participants,price:pack.price,quota:pack.quota,active:pack.active}:null;
+   const r=await fetch(`/api/organizer/events/${eventId}/ticket-options`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,id:id||undefined,expectedVersion:config.version,data})});
+   const result=await r.json();if(!r.ok)throw Error(result.error);
+   const parsed=optionsSchema.parse(result),selected=parsed.categories.find(c=>c.id===category.id||c.name===category.name);
+   accept(parsed,selected?.id,kind==='package'?selected?.packages.find(p=>p.id===pack?.id||p.name===pack?.name)?.id:undefined);
+   onManaged?.();setMessage(kind==='category'?'Kategori disimpan.':'Paket disimpan. Harga pesanan lama tetap.');
+  }catch(e){setError(e instanceof Error?e.message:'Perubahan belum tersimpan.');}finally{setBusy(false);}
+ }
+ function newCategory(){if(!config)return;const first=config.categories[0];setCategory({id:'',name:'',description:'',price:0,quota:Math.min(24,config.sections[0]?.capacity??24),active:true,salesStart:first?.salesStart??new Date().toISOString(),salesEnd:first?.salesEnd??new Date(Date.now()+86400000).toISOString(),sections:config.mode==='SEATED'?[config.sections[0]?.name??'Front']:[],packages:[]});setPack(null);setMessage('');setError('');}
+ function preset(name:string,participants:number){if(!category?.id)return;const existing=category.packages.find(p=>p.name===name);setPack(existing??{id:'',name,participants,price:Math.min(100000000,category.price*participants),quota:null,active:true});setMessage('');setError('');}
+ return <section className="ticket-options-manager" aria-labelledby="ticket-options-heading">
+  <div className="ticket-options-heading"><div><h2 id="ticket-options-heading"><Ticket size={24} aria-hidden="true"/>Kategori dan paket tiket</h2><p>Nama kategori bebas. Kuota kategori dihitung per peserta.</p></div><button type="button" className="icon-button" disabled={busy||loading} aria-label="Muat ulang kategori dan paket" onClick={()=>void load()}><RefreshCw size={19}/></button></div>
+  {loading&&<p role="status">Memuat kategori dan paket...</p>}{error&&<p className="form-error" role="alert">{error}</p>}{message&&<p role="status">{message}</p>}
+  {config&&<><div className="ticket-category-tabs">{config.categories.map(c=><button type="button" key={c.id} className={`chip${category?.id===c.id?' active':''}`} disabled={busy} aria-pressed={category?.id===c.id} onClick={()=>{setCategory(c);setPack(c.packages[0]??null);setError('');setMessage('');}}>{c.name}{!c.active?' (Nonaktif)':''}</button>)}<button type="button" className="button button-light" disabled={busy||disabled} onClick={newCategory}><Plus size={17}/>Tambah kategori</button></div>
+   <div className="ticket-options-columns">{category&&<form onSubmit={e=>{e.preventDefault();void save('category');}}><fieldset disabled={busy||disabled}><legend>{category.id?'Edit kategori':'Kategori baru'}</legend>
+    <label>Nama kategori<input required maxLength={80} value={category.name} placeholder="VIP A, VIP B, Festival..." onChange={e=>setCategory({...category,name:e.target.value})}/></label>
+    <label>Deskripsi singkat<textarea maxLength={500} rows={3} value={category.description} placeholder="Fasilitas atau akses yang termasuk." onChange={e=>setCategory({...category,description:e.target.value})}/></label>
+    <div className="ticket-field-row"><label>Harga Single (Rp)<input type="number" required min={0} max={100000000} step={1} value={category.price} onChange={e=>setCategory({...category,price:Number(e.target.value)})}/></label><label>Kuota peserta<input type="number" required min={1} max={2000} step={1} value={category.quota} onChange={e=>setCategory({...category,quota:Number(e.target.value)})}/></label></div>
+    <label>Penjualan mulai (WIB)<input type="datetime-local" required value={local(category.salesStart)} onChange={e=>{if(e.target.value)setCategory({...category,salesStart:iso(e.target.value)});}}/></label>
+    <label>Penjualan selesai (WIB)<input type="datetime-local" required value={local(category.salesEnd)} onChange={e=>{if(e.target.value)setCategory({...category,salesEnd:iso(e.target.value)});}}/></label>
+    {config.mode==='SEATED'?<div><p>Section yang dapat dipilih</p>{config.sections.map(s=><label className="ticket-check" key={s.name}><input type="checkbox" checked={category.sections.includes(s.name)} onChange={e=>setCategory({...category,sections:e.target.checked?[...category.sections,s.name]:category.sections.filter(n=>n!==s.name)})}/><span>{s.name} · {s.capacity} kursi</span></label>)}</div>:<small>Event tanpa kursi. Total kuota semua kategori maksimal 2.000 peserta.</small>}
+    <label className="ticket-check"><input type="checkbox" checked={category.active} onChange={e=>setCategory({...category,active:e.target.checked})}/><span>Kategori aktif</span></label><button className="button" type="submit"><Save size={17}/>{busy?'Menyimpan...':'Simpan kategori'}</button>
+   </fieldset></form>}
+   <div>{category?.id?<><h3><UsersRound size={21} aria-hidden="true"/>Jenis paket · {category.name}</h3><div className="ticket-package-presets">{[['Single',1],['Couple',2],['Group',4],['Custom',3]].map(([name,size])=><button type="button" className="chip" key={name} disabled={busy||disabled} onClick={()=>preset(String(name),Number(size))}><Plus size={14}/>{name}</button>)}</div><div className="ticket-package-list">{category.packages.map(p=><button type="button" key={p.id} className={pack?.id===p.id?'is-active':''} onClick={()=>setPack(p)}><strong>{p.name}{!p.active?' (Nonaktif)':''}</strong><span>{p.participants} orang · {rupiah(p.price)} / paket</span></button>)}</div>
+    {pack&&<form onSubmit={e=>{e.preventDefault();void save('package');}}><fieldset disabled={busy||disabled}><legend>{pack.id?'Edit paket':'Paket baru'}</legend><label>Nama paket<input required maxLength={80} value={pack.name} onChange={e=>setPack({...pack,name:e.target.value})}/></label><div className="ticket-field-row"><label>Peserta per paket<input type="number" required min={1} max={10} step={1} disabled={pack.isDefault} value={pack.participants} onChange={e=>setPack({...pack,participants:Number(e.target.value)})}/></label><label>Harga per paket (Rp)<input type="number" required min={0} max={100000000} step={1} value={pack.price} onChange={e=>setPack({...pack,price:Number(e.target.value)})}/></label></div><label>Kuota paket (opsional)<input type="number" min={1} max={2000} step={1} value={pack.quota??''} placeholder="Mengikuti sisa kuota kategori" onChange={e=>setPack({...pack,quota:e.target.value?Number(e.target.value):null})}/><small>Kosongkan jika cukup mengikuti kuota peserta kategori.</small></label><label className="ticket-check"><input type="checkbox" checked={pack.active} onChange={e=>setPack({...pack,active:e.target.checked})}/><span>Paket aktif</span></label><small>Jumlah peserta terkunci setelah paket memiliki pesanan. Harga baru hanya berlaku untuk pesanan berikutnya.</small><button type="submit" className="button"><Save size={17}/>{busy?'Menyimpan...':'Simpan paket'}</button></fieldset></form>}
+   </>:<p>Simpan kategori terlebih dahulu untuk menambahkan paket.</p>}</div></div></>}
+ </section>;
+}

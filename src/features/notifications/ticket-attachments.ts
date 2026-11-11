@@ -3,7 +3,7 @@ import { decryptToken,tokenHash } from '@/features/tickets/crypto';
 import { generateTicketsPdf } from '@/features/tickets/pdf';
 import type { EmailAttachment } from './email';
 export async function ticketPdfAttachment(records:StoredTicket[],scope:{userId:string;bookingId:string;ticketId:string|null},key:Buffer):Promise<{attachment:EmailAttachment;ticketIds:string[]}>{
- if(records.length<1||records.length>6)throw Error('ATTACHMENT_TICKET_COUNT');
+ if(records.length<1||records.length>30)throw Error('ATTACHMENT_TICKET_COUNT');
  if(new Set(records.map(t=>t.id)).size!==records.length)throw Error('ATTACHMENT_DUPLICATE');
  const pages=records.map(record=>{
   if(record.userId!==scope.userId||record.bookingId!==scope.bookingId||record.status!=='ACTIVE'||(scope.ticketId&&record.id!==scope.ticketId))throw Error('ATTACHMENT_TICKET_SCOPE');

@@ -1,6 +1,7 @@
 import { loadCatalog,saveCatalog } from '../catalog/persistence';
 import { loadCheckIns,saveCheckIns,loadCheckInAudits,saveCheckInAudits } from '../check-in/persistence';
 import { loadStaffAssignments,saveStaffAssignments } from '../organizer/staff-persistence';
+import type { OptionMutation } from '../ticket-options/core';
 import type { EventInput } from '../catalog/core';
 import { confirmSupabasePayment,supabaseTickets,supabaseRefundTicket,supabaseTransferTicket } from '../tickets/supabase';
 import { paymentConfiguration } from '../tickets/admin';
@@ -14,7 +15,7 @@ const state=globalThis as typeof globalThis & {summaBookingStore?:DemoBookingSto
 function demoStore(){return state.summaBookingStore??=new DemoBookingStore(undefined,loadCatalog(),loadCheckIns(),loadStaffAssignments(),loadCheckInAudits());}
 async function rpc<T>(name:string,args:Record<string,unknown>):Promise<T>{const client=await supabaseServer();const {data,error}=await client.rpc(name,args);if(error)throw new BookingError('DATABASE','Reservasi belum dapat diproses. Periksa konfigurasi database.',503);const result=data as T&{error?:string;message?:string};if(result?.error)throw new BookingError(result.error,result.message??'Permintaan belum dapat diproses.',result.error==='NOT_FOUND'?404:409);return data as T;}
 export async function inventory(slug:string):Promise<Inventory>{return authMode()==='demo'?demoStore().inventory(slug):rpc('seat_inventory',{p_slug:slug});}
-export async function reserve(userId:string,input:BookingRequest):Promise<Booking>{if('attendees' in input)return authMode()==='demo'?demoStore().reserveAdmission(userId,input):rpc('reserve_general_admission',{p_slug:input.slug,p_category:input.categoryId,p_attendees:input.attendees,p_key:input.key});return authMode()==='demo'?demoStore().reserve(userId,input):rpc('reserve_booking',{p_slug:input.slug,p_category:input.categoryId,p_items:input.seats,p_key:input.key});}
+export async function reserve(userId:string,input:BookingRequest):Promise<Booking>{if(input.packageId)return authMode()==='demo'?demoStore().reservePackage(userId,input):rpc('reserve_ticket_package',{p_slug:input.slug,p_category:input.categoryId,p_package:input.packageId,p_quantity:input.packageQuantity??1,p_items:'attendees' in input?input.attendees:input.seats,p_key:input.key});if('attendees' in input)return authMode()==='demo'?demoStore().reserveAdmission(userId,input):rpc('reserve_general_admission',{p_slug:input.slug,p_category:input.categoryId,p_attendees:input.attendees,p_key:input.key});return authMode()==='demo'?demoStore().reserve(userId,input):rpc('reserve_booking',{p_slug:input.slug,p_category:input.categoryId,p_items:input.seats,p_key:input.key});}
 export async function booking(userId:string,id:string):Promise<Booking>{return authMode()==='demo'?demoStore().get(userId,id):rpc('get_booking',{p_id:id});}
 export async function bookings(userId:string):Promise<Booking[]>{return authMode()==='demo'?demoStore().list(userId):rpc('my_bookings',{});}
 export async function cancel(userId:string,id:string):Promise<Booking>{return authMode()==='demo'?demoStore().cancel(userId,id):rpc('cancel_booking',{p_id:id});}
@@ -43,6 +44,8 @@ export const demoPublicEvents=()=>demoStore().publicEvents();
 export const demoPublicEvent=(slug:string)=>demoStore().publicEvent(slug);
 export const demoAssignedEvent=(userId:string,id:string)=>demoStore().assignedEvent(userId,id);
 function persistMutation<T>(operation:()=>T):T{const previous=demoStore().catalogItems();try{const result=operation();saveCatalog(demoStore().catalogItems());return result;}catch(e){demoStore().restoreCatalog(previous);throw e;}}
+export const demoTicketOptions=(userId:string,id:string)=>demoStore().ticketOptions(userId,id);
+export function demoSaveTicketOption(userId:string,id:string,input:OptionMutation){return persistMutation(()=>demoStore().saveTicketOption(userId,id,input));}
 export function demoCreateEvent(userId:string,input:EventInput){return persistMutation(()=>demoStore().createEvent(userId,input));}
 export function demoDuplicateEvent(userId:string,id:string){return persistMutation(()=>demoStore().duplicateEvent(userId,id));}
 export function demoEditEvent(userId:string,id:string,input:EventInput){return persistMutation(()=>demoStore().updateEvent(userId,id,input));}

@@ -17,7 +17,7 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
   const event = await publicEvent(slug);
   if (!event) notFound();
   const withoutSeats=event.seatingMode==='GENERAL_ADMISSION';
-  const admissionInventory=withoutSeats?await inventory(slug):undefined;
+  const admissionInventory=await inventory(slug);
 
   return (
     <main id="main" className="container section">

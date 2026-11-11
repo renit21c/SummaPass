@@ -193,6 +193,7 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
           {data.categoryName} · {data.items.length} tiket
         </h2>
 
+        {data.packageName&&<p>{data.packageQuantity} paket {data.packageName} · {data.packageSize} peserta per paket</p>}
         <ul className="reservation-items">
           {data.items.map(item => (
             <li key={item.seatId}>

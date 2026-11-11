@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, Trash2, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { rupiah } from '@/features/events/data';
 import { statusLabel, type Inventory } from './types';
+import { PackagePicker } from '@/features/ticket-options/package-picker';
+import { adjacentSeats } from '@/features/ticket-options/core';
 import { ConcurrencySimulatorModal } from './concurrency-simulator-modal';
 
 export function SeatPicker({
@@ -54,6 +56,7 @@ export function SeatPicker({
   };
 
   const [categoryId, setCategoryId] = useState(resolveInitialCategoryId);
+  const [packageId,setPackageId]=useState(''),[packageQuantity,setPackageQuantity]=useState(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [emails, setEmails] = useState<Record<string, string>>({});
@@ -78,13 +81,18 @@ export function SeatPicker({
   const requestKey = useRef('');
 
   const category = data.categories.find(c => c.id === categoryId);
+  const pack=category?.packages?.find(p=>p.id===packageId)??category?.packages?.[0];
+  const selectionLimit=pack?pack.participants*packageQuantity:6;
+  const categoryCapacity=Math.min(category?.remaining??category?.quota??0,data.seats.filter(s=>s.status==='AVAILABLE'&&category?.sections.includes(s.section)).length);
+  const packageAvailable=(!category?.packages||!!pack)&&(!pack||(packageQuantity<=(pack.remaining??6)&&selectionLimit<=categoryCapacity&&selectionLimit<=30));
+  const orderTotal=pack?pack.price*packageQuantity:(category?.price??0)*selected.length;
   const chosen = data.seats.filter(s => selected.includes(s.id));
-  const reservationHint = busy ? 'Reservasi sedang diproses.' : !chosen.length ? 'Pilih minimal satu kursi untuk melanjutkan.' : error ? 'Perbarui ketersediaan kursi sebelum melanjutkan.' : !terms ? 'Setujui ketentuan reservasi di bawah untuk melanjutkan.' : 'Lengkapi data pemesan dan peserta, lalu lanjutkan reservasi.';
+  const reservationHint = pack&&chosen.length!==selectionLimit?`Pilih ${selectionLimit} kursi sesuai jumlah peserta paket.`:busy ? 'Reservasi sedang diproses.' : !chosen.length ? 'Pilih minimal satu kursi untuk melanjutkan.' : error ? 'Perbarui ketersediaan kursi sebelum melanjutkan.' : !terms ? 'Setujui ketentuan reservasi di bawah untuk melanjutkan.' : 'Lengkapi data pemesan dan peserta, lalu lanjutkan reservasi.';
   useEffect(() => {
     const current=data.categories.find(c=>c.id===categoryId);
     if(!current){setCategoryId(data.categories[0]?.id??'');setSelected([]);return;}
-    setSelected(previous=>previous.filter(id=>data.seats.some(s=>s.id===id&&s.status==='AVAILABLE'&&current.sections.includes(s.section))).slice(0,Math.min(6,current.remaining??current.quota)));
-  },[data,categoryId]);
+    setSelected(previous=>previous.filter(id=>data.seats.some(s=>s.id===id&&s.status==='AVAILABLE'&&current.sections.includes(s.section))).slice(0,Math.min(selectionLimit,current.remaining??current.quota)));
+  },[data,categoryId,selectionLimit]);
 
   // Sync first ticket name if user opted in
   useEffect(() => {
@@ -154,7 +162,7 @@ export function SeatPicker({
 
   useEffect(() => {
     requestKey.current = crypto.randomUUID();
-  }, [selected, names, categoryId, bookerName, bookerEmail]);
+  }, [selected, names, categoryId, bookerName, bookerEmail,pack?.id,packageQuantity]);
 
   function toggle(id: string) {
     if (busy) return;
@@ -163,7 +171,7 @@ export function SeatPicker({
       if (previous.includes(id)) {
         return previous.filter(s => s !== id);
       }
-      if (previous.length >= Math.min(6, category?.remaining ?? category?.quota ?? 0)) {
+      if (previous.length >= Math.min(selectionLimit, categoryCapacity)) {
         setMessage('Batas kursi atau kuota kategori sudah tercapai.');
         return previous;
       }
@@ -173,7 +181,7 @@ export function SeatPicker({
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!category || busy || !chosen.length) return;
+    if (!category || busy || !chosen.length || (pack&&chosen.length!==selectionLimit)||!packageAvailable) return;
     setBusy(true);
     pending.current = true;
     setError('');
@@ -182,6 +190,7 @@ export function SeatPicker({
       const payload = {
         slug: data.slug,
         categoryId,
+        ...(pack?{packageId:pack.id,packageQuantity}:{}),
         seats: chosen.map((s, idx) => ({
           seatId: s.id,
           name: names[s.id] || (idx === 0 && bookerName ? bookerName : `Peserta ${s.row}${s.number}`),
@@ -249,7 +258,7 @@ export function SeatPicker({
                   className={`category-option ${isActive ? 'is-active' : ''}`}
                   aria-pressed={isActive}
                   onClick={() => {
-                    setCategoryId(c.id);
+                    setCategoryId(c.id);setPackageId('');setPackageQuantity(1);
                     setSelected([]);
                     setMessage('');
                   }}
@@ -273,6 +282,8 @@ export function SeatPicker({
             })}
           </div>
 
+          {pack&&<PackagePicker packages={category?.packages??[]} selected={pack} quantity={packageQuantity} remaining={categoryCapacity} busy={busy} onChange={(id,quantity)=>{setPackageId(id);setPackageQuantity(quantity);setSelected([]);setMessage('');}}/>}
+          {pack&&<button type="button" className="button button-light" disabled={busy||!packageAvailable} onClick={()=>{const ids=adjacentSeats(data.seats,category?.sections??[],selectionLimit);if(ids.length){setSelected(ids);setMessage('Kursi berdekatan dipilih. Periksa denah sebelum melanjutkan.');}else setMessage('Kursi berdekatan tidak tersedia untuk jumlah peserta ini. Pilih kursi secara manual.');}}>Cari kursi berdekatan</button>}
           <div className="map-toolbar">
             <h2>Denah kursi</h2>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -301,7 +312,7 @@ export function SeatPicker({
             ))}
           </div>
 
-          <p className="seat-hint">Pilih maksimal 6 kursi dalam satu kategori. Kursi baru ditahan setelah reservasi berhasil.</p>
+          <p className="seat-hint">{pack?`Pilih tepat ${selectionLimit} kursi untuk ${packageQuantity} paket ${pack.name}.`:'Pilih maksimal 6 kursi dalam satu kategori.'} Kursi baru ditahan setelah reservasi berhasil.</p>
 
           {view === 'map' ? (
             <div className="seat-map">
@@ -548,8 +559,8 @@ export function SeatPicker({
 
             <div className="price-breakdown">
               <p>
-                <span>{category?.name ?? 'Kategori'} × {chosen.length}</span>
-                <strong>{rupiah((category?.price ?? 0) * chosen.length)}</strong>
+                <span>{pack?`${packageQuantity} paket ${pack.name} (${selectionLimit} orang)`:`${category?.name??'Kategori'} × ${chosen.length}`}</span>
+                <strong>{rupiah(orderTotal)}</strong>
               </p>
               <p>
                 <span>Biaya layanan demo</span>
@@ -557,7 +568,7 @@ export function SeatPicker({
               </p>
               <div>
                 <strong>Total</strong>
-                <strong>{rupiah((category?.price ?? 0) * chosen.length)}</strong>
+                <strong>{rupiah(orderTotal)}</strong>
               </div>
             </div>
 
@@ -567,7 +578,7 @@ export function SeatPicker({
             </label>
 
             <p id="reservation-hint" className="reservation-hint" aria-live="polite">{reservationHint}</p>
-            <button className="button reserve-button" aria-describedby="reservation-hint" disabled={busy || !chosen.length || !terms || !!error} type="submit">
+            <button className="button reserve-button" aria-describedby="reservation-hint" disabled={busy || !chosen.length || !terms || !!error || !packageAvailable || (!!pack&&chosen.length!==selectionLimit)} type="submit">
               {busy ? 'Memproses...' : 'Reservasi 10 menit'}
               <ArrowRight size={18} />
             </button>
@@ -579,7 +590,7 @@ export function SeatPicker({
       </div>
 
       <div className="seat-mobile-bar" aria-label="Ringkasan kursi pilihan">
-        <div aria-live="polite"><span>{chosen.length} kursi dipilih</span><strong>{rupiah((category?.price ?? 0) * chosen.length)}</strong></div>
+        <div aria-live="polite"><span>{chosen.length} kursi dipilih</span><strong>{rupiah(orderTotal)}</strong></div>
         <a href="#seat-order-summary" className="button button-small">{chosen.length ? 'Lengkapi pesanan' : 'Lihat ringkasan'}<ArrowRight size={16} aria-hidden="true"/></a>
       </div>
 
