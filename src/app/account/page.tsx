@@ -4,7 +4,9 @@ import { requireSession, canAccessRole } from '@/lib/auth/session';
 import { publicCatalog } from '@/features/catalog/service';
 import { ProfileEditor } from '@/features/account/profile-editor';
 import { FavoritesSection } from '@/features/account/favorites-section';
+import { DeleteAccount } from '@/features/account/delete-account';
 import '@/features/account/account.css';
+import '@/features/account/account-actions.css';
 export const metadata = { title: 'Akun saya' };
 export default async function Account() {
  const user = await requireSession();
@@ -21,9 +23,9 @@ export default async function Account() {
      <Link href="/notifications"><Bell size={20}/><span>Notifikasi</span><ArrowUpRight size={16}/></Link>
      {(organizer||staff)&&<div className="profile-workspace-links">{organizer&&<Link href="/organizer"><LayoutDashboard size={20}/><span>Organizer</span><ArrowUpRight size={16}/></Link>}{staff&&<Link href="/staff"><ScanLine size={20}/><span>Check-in petugas</span><ArrowUpRight size={16}/></Link>}</div>}
     </nav>
-    <form action="/api/auth/logout" method="post" className="profile-logout"><button data-icon-action="" aria-label="Keluar dari akun" title="Keluar dari akun" type="submit"><LogOut size={20} aria-hidden="true" /></button></form>
+    <form action="/api/auth/logout" method="post" className="profile-logout"><button className="profile-danger-button" aria-label="Keluar dari akun" type="submit"><LogOut size={20} aria-hidden="true" />Keluar akun</button></form>
    </aside>
-   <div className="profile-main"><ProfileEditor initialUser={user}/></div>
+   <div className="profile-main"><ProfileEditor initialUser={user}/><DeleteAccount mode={user.mode}/></div>
   </div>
   <FavoritesSection catalog={catalog}/>
   {user.mode==='demo'&&(!organizer||!staff)&&<section className="profile-demo-access"><h2>Coba peran lain</h2><div>{!organizer&&<form action="/api/auth/login" method="post"><input type="hidden" name="demoRole" value="organizer"/><button className="button button-light">Organizer demo</button></form>}{!staff&&<form action="/api/auth/login" method="post"><input type="hidden" name="demoRole" value="staff"/><button className="button button-light">Petugas demo</button></form>}</div></section>}

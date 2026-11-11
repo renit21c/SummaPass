@@ -8,7 +8,7 @@ import { getSession, loginDestination } from '@/lib/auth/session';
 
 export const metadata = { title: 'Masuk' };
 
-export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; accountDeleted?:string }> }) {
   const params = await searchParams;
   const next = safeReturnPath(params.next);
   const mode = authMode();
@@ -29,6 +29,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
 
       <section className="auth-panel">
         <h2>Masuk</h2>
+        {params.accountDeleted==='1'&&<p className="profile-success" role="status">Akun berhasil dihapus. Kamu sudah keluar.</p>}
         <p>{mode === 'demo' ? 'Pilih akses demo. Tidak perlu data pribadi.' : 'Gunakan akun SummaPass.'}</p>
 
         {params.error && (

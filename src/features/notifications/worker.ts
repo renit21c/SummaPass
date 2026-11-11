@@ -1,4 +1,5 @@
 import 'server-only';
+import { retryAccountDeletions } from '@/features/account/deletion';
 import { z } from 'zod';
 import { notificationAdmin } from './admin';
 import { emailPayload,renderEmail,sendResend } from './email';
@@ -12,6 +13,7 @@ const contextSchema=z.object({userId:z.string().uuid().nullable(),recipientEmail
 export async function runNotifications(){
  if(authMode()!=='supabase')throw new BookingError('SUPABASE_REQUIRED','Worker memerlukan mode Supabase.',409);
  const admin=notificationAdmin();
+ await retryAccountDeletions();
  async function rpc(name:string,args:Record<string,unknown>={}){const {data,error}=await admin.rpc(name,args);if(error)throw new BookingError('DATABASE','Antrean notifikasi belum dapat diproses.',503);return data as unknown;}
  const operations=await admin.rpc('notification_operations_configuration');
  if(operations.error||operations.data?.version!==3)throw new BookingError('MIGRATION_REQUIRED','Terapkan migrasi 013 sampai 015 sebelum menjalankan worker.',503);
