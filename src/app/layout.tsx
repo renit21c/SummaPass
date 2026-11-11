@@ -1,6 +1,6 @@
 import type { Metadata,Viewport } from 'next';
 import Link from 'next/link';
-import { ArrowUpRight, Ticket } from 'lucide-react';
+import { ArrowUpRight, Ticket, User } from 'lucide-react';
 import '@fontsource-variable/plus-jakarta-sans';
 import './globals.css';
 import '@/components/ux-enhancements.css';
@@ -13,6 +13,7 @@ import { MobileNavigation } from '@/components/mobile-navigation';
 import { Subo } from '@/features/subo/subo';
 import { PwaInstall } from '@/components/pwa-install';
 import { ConfirmationProvider } from '@/components/confirmation-dialog';
+import { AnchorScrollHandler } from '@/components/anchor-scroll';
 
 export const metadata: Metadata = {
   applicationName:'SummaPass',
@@ -49,13 +50,22 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <NotificationBell loggedIn={Boolean(session)} />
               <Link className="button button-small" href={session ? '/account' : '/login'}>
-                {session ? 'Akun saya' : 'Masuk/Daftar'} <ArrowUpRight size={18} />
+                {session ? (
+                  <>
+                    Akun saya <User size={18} />
+                  </>
+                ) : (
+                  <>
+                    Masuk/Daftar <ArrowUpRight size={18} />
+                  </>
+                )}
               </Link>
             </div>
               <MobileNavigation loggedIn={Boolean(session)} />
           </div>
         </header>
         {children}
+        <AnchorScrollHandler />
         <Subo />
         <footer>
           <div className="container footer-top">

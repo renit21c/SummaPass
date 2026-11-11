@@ -14,6 +14,20 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
   const [busy, setBusy] = useState(false);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [activeMidtransOrder, setActiveMidtransOrder] = useState<{
+    orderId: string;
+    token: string;
+    redirectUrl?: string;
+  } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = sessionStorage.getItem(`midtrans_${initial.id}`);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const refresh = useCallback(async () => {
     try {
@@ -27,6 +41,35 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
       setError('Status reservasi belum dapat diperbarui. Coba muat ulang.');
     }
   }, [initial.id]);
+
+  const checkMidtransPayment = useCallback(
+    async (orderIdOverride?: string) => {
+      const oid = orderIdOverride || activeMidtransOrder?.orderId;
+      if (!oid || data.status !== 'PENDING_PAYMENT') return;
+      setCheckingPayment(true);
+      try {
+        const res = await fetch('/api/payments/midtrans/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: data.id, orderId: oid })
+        });
+        const result = await res.json();
+        if (result.paid) {
+          try {
+            sessionStorage.removeItem(`midtrans_${data.id}`);
+          } catch {}
+          await refresh();
+        } else if (result.status === 'CANCELLED') {
+          await refresh();
+        }
+      } catch (err) {
+        console.error('Check status error:', err);
+      } finally {
+        setCheckingPayment(false);
+      }
+    },
+    [activeMidtransOrder?.orderId, data.id, data.status, refresh]
+  );
 
   useEffect(() => {
     setOffset(Date.parse(serverNow) - Date.now());
@@ -42,6 +85,20 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
       window.removeEventListener('online', refresh);
     };
   }, [refresh, serverNow]);
+
+  // Background polling for Midtrans payment status when an active order is being paid
+  useEffect(() => {
+    if (!activeMidtransOrder?.orderId || data.status !== 'PENDING_PAYMENT') return;
+    const interval = setInterval(() => {
+      void checkMidtransPayment();
+    }, 3500);
+    const onFocus = () => void checkMidtransPayment();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [activeMidtransOrder?.orderId, checkMidtransPayment, data.status]);
 
   const seconds = Math.max(0, Math.ceil((Date.parse(data.expiresAt) - now - offset) / 1000));
   const active = data.status === 'PENDING_PAYMENT' && seconds > 0;
@@ -114,20 +171,56 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
         });
       }
 
-      // 2. Fetch Snap Token from our backend
-      const res = await fetch('/api/payments/midtrans/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: data.id })
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Gagal memulai sesi Midtrans.');
+      // 2. Check if existing active order is already paid
+      if (activeMidtransOrder?.orderId) {
+        try {
+          const checkRes = await fetch('/api/payments/midtrans/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bookingId: data.id, orderId: activeMidtransOrder.orderId })
+          });
+          const checkData = await checkRes.json();
+          if (checkData.paid) {
+            try {
+              sessionStorage.removeItem(`midtrans_${data.id}`);
+            } catch {}
+            await refresh();
+            setLoadingSnap(false);
+            return;
+          }
+        } catch {}
+      }
 
-      // 3. Open Midtrans Snap Popup
-      if (typeof window !== 'undefined' && (window as any).snap) {
-        (window as any).snap.pay(result.token, {
+      // 3. Obtain Snap Token (reuse existing token if valid or fetch new)
+      let snapToken = activeMidtransOrder?.token;
+      let redirectUrl = activeMidtransOrder?.redirectUrl;
+
+      if (!snapToken) {
+        const res = await fetch('/api/payments/midtrans/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: data.id })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Gagal memulai sesi Midtrans.');
+
+        snapToken = result.token;
+        redirectUrl = result.redirectUrl;
+        const orderInfo = { orderId: result.orderId, token: result.token, redirectUrl: result.redirectUrl };
+        setActiveMidtransOrder(orderInfo);
+        try {
+          sessionStorage.setItem(`midtrans_${data.id}`, JSON.stringify(orderInfo));
+        } catch {}
+      }
+
+      // 4. Open Midtrans Snap Popup
+      if (typeof window !== 'undefined' && (window as any).snap && snapToken) {
+        (window as any).snap.pay(snapToken, {
+          uiMode: 'qr',
           onSuccess: async () => {
-            // Instant client-side reconciliation
+            try {
+              sessionStorage.removeItem(`midtrans_${data.id}`);
+            } catch {}
             await pay('success');
           },
           onPending: async () => {
@@ -138,11 +231,16 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
             await refresh();
           },
           onClose: () => {
-            // Modal closed by user
+            if (activeMidtransOrder?.orderId) {
+              void checkMidtransPayment(activeMidtransOrder.orderId);
+            }
           }
         });
-      } else if (result.redirectUrl) {
-        window.open(result.redirectUrl, '_blank');
+      } else if (redirectUrl) {
+        const url = redirectUrl.includes('?')
+          ? `${redirectUrl}&gopayMode=qr`
+          : `${redirectUrl}?gopayMode=qr`;
+        window.open(url, '_blank');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal membuka Midtrans Sandbox.');
@@ -261,6 +359,29 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
               {loadingSnap ? 'Menghubungkan Midtrans...' : 'Bayar via Midtrans Sandbox'}
               <ArrowUpRight size={18} />
             </button>
+
+            {activeMidtransOrder && (
+              <button
+                type="button"
+                className="button button-light"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontWeight: 800,
+                  fontSize: 14,
+                  padding: '12px 18px',
+                  background: 'var(--yellow)',
+                  color: 'var(--ink)'
+                }}
+                disabled={busy || checkingPayment}
+                onClick={() => void checkMidtransPayment()}
+              >
+                <RefreshCw size={16} className={checkingPayment ? 'animate-spin' : ''} />
+                {checkingPayment ? 'Mengecek ke Midtrans...' : 'Cek Status Pembayaran QRIS / VA'}
+              </button>
+            )}
 
             <div
               style={{

@@ -63,7 +63,12 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
 
           <div className="booking-preview">
             <span>Harga mulai dari</span>
-            <DiscountPrice price={lowest?.finalTotal??event.price} originalPrice={lowest?.original}/>
+            <DiscountPrice
+              price={lowest?.finalTotal ?? event.price}
+              originalPrice={lowest?.original}
+              promoName={lowest?.appliedPromo?.name}
+              unit={withoutSeats ? '/ tiket' : '/ orang'}
+            />
             <p>Reservasi berlaku 10 menit. Bayar lewat simulasi.</p>
             <Link className="button" href={`/events/${event.slug}/${withoutSeats?'tickets':'seats'}`}>{withoutSeats?'Pesan tiket':'Pilih kursi'}</Link>
           </div>

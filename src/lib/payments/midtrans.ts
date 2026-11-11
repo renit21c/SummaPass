@@ -7,7 +7,7 @@ export { getMidtransConfig, verifyMidtransSignature };
 export async function createMidtransSnapTransaction(
   booking: Booking,
   customer: { name?: string; email?: string }
-): Promise<{ token: string; redirectUrl: string }> {
+): Promise<{ token: string; redirectUrl: string; orderId: string }> {
   const config = getMidtransConfig();
   if (!config.serverKey) {
     throw new Error('MIDTRANS_SERVER_KEY belum dikonfigurasi di environment variables.');
@@ -34,6 +34,7 @@ export async function createMidtransSnapTransaction(
       email: customer.email || 'pengunjung@summapass.id'
     },
     enabled_payments: [
+      'other_qris',
       'gopay',
       'shopeepay',
       'qris',
@@ -64,6 +65,7 @@ export async function createMidtransSnapTransaction(
 
   return {
     token: data.token,
-    redirectUrl: data.redirect_url
+    redirectUrl: data.redirect_url,
+    orderId
   };
 }
