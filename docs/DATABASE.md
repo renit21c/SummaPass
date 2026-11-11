@@ -1,5 +1,9 @@
 # Database dan ERD
 
+## Galeri acara, migrasi 025
+
+`events` 1:N `event_gallery_images` (maksimal 10 per event). Foto menyimpan caption, position, waktu, dan object path UUID yang terikat ke event. Index `(event_id,position,created_at)` mendukung tampilan galeri. RLS publik hanya membaca foto acara PUBLISHED yang tidak dibatalkan; akses draf dan mutasi hanya organizer assigned. Bucket privat `event-gallery` memakai kebijakan yang sama, dengan SELECT publik terbatas pada objek tertaut. Mutasi RPC mengunci event dan mencatat audit. Detail aktivasi dan operasi ada di [EVENT_GALLERY.md](EVENT_GALLERY.md).
+
 ## Promo, migrasi 024
 
 `events` 1:N `event_promos`; kategori opsional membatasi promo ke satu jenis tiket. `event_promos` 1:N `bookings` melalui `promo_id`. Tabel promo memiliki RLS organizer dan index `(event_id,status)` serta kode voucher unik per event yang belum dihapus. Tidak ada write grant untuk browser.

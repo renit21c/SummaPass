@@ -6,6 +6,7 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { AlertCircle, CheckCircle2, Copy } from 'lucide-react';
 import { eventFieldLimits, type ManagedEvent } from './core';
 import { coverDimensionsError, coverFileError, editorValidation, type EditorValues } from './editor-validation';
+import { GalleryManager } from '@/features/gallery/manager';
 import { TicketOptionsEditor } from '@/features/ticket-options/editor';
 import { EventOperations } from '@/features/operations/event-operations';
 import { StaffManager } from '@/features/organizer/staff-manager';
@@ -89,6 +90,7 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
    </fieldset>
   </form>
   {message&&<p className={`editor-message${failed?' editor-message-error':''}`} role={failed?'alert':'status'}>{failed?<AlertCircle size={20} aria-hidden="true"/>:<CheckCircle2 size={20} aria-hidden="true"/>}{message}</p>}
+  {saved?.id&&<GalleryManager eventId={saved.id} disabled={busy||saved.status==='ARCHIVED'||!!saved.cancelledAt}/>}
   {saved?.id&&<TicketOptionsEditor eventId={saved.id} disabled={saved.status==='ARCHIVED'||!!saved.cancelledAt} onManaged={()=>setSaved(previous=>previous?{...previous,customTicketing:true}:previous)}/>}
   {saved?.id&&<>{mode==='supabase'&&<section className="manage-card"><h2>Pengelolaan event</h2><Link className="button" href={'/organizer/events/'+saved.id+'/manage'}>Denah, peserta, laporan, dan pengumuman</Link></section>}<StaffManager eventId={saved.id} mode={mode}/>{mode==='supabase'&&<EventOperations eventId={saved.id} cancelledAt={saved.cancelledAt}/>}</>}
   {saved&&!saved.cancelledAt&&saved.status!=='ARCHIVED'&&<section className="editor-actions"><h2>Publikasi</h2><p>Simpan perubahan sebelum publikasi.</p><button className="button" disabled={busy} onClick={()=>void action(saved.status==='PUBLISHED'?'unpublish':'publish')}>{saved.status==='PUBLISHED'?'Sembunyikan event':'Publikasikan event'}</button>{saved.status==='PUBLISHED'&&<Link className="button button-light" href={`/events/${saved.slug}`}>Lihat event</Link>}<button className="text-link" disabled={busy} onClick={()=>void action('archive')}>Arsipkan setelah acara selesai</button></section>}

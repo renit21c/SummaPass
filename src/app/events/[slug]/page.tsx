@@ -1,3 +1,4 @@
+import { eventGallery } from '@/features/gallery/service';
 import { publicPromos } from '@/features/promos/service';
 import { calculateApplicablePromo } from '@/features/promos/core';
 import { DiscountPrice } from '@/features/promos/price';
@@ -20,7 +21,10 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
   const event = await publicEvent(slug);
   if (!event) notFound();
   const withoutSeats=event.seatingMode==='GENERAL_ADMISSION';
-  const [admissionInventory,promos]=await Promise.all([inventory(slug),publicPromos(slug)]);
+  const [admissionInventory,promos,gallery]=await Promise.all([
+    inventory(slug),publicPromos(slug),
+    eventGallery(event.id).then(images=>({images,failed:false})).catch(()=>({images:[],failed:true})),
+  ]);
   const offers=admissionInventory.categories.flatMap(c=>(c.packages?.length?c.packages:[{price:c.price,participants:1}]).map(p=>({original:p.price,...calculateApplicablePromo(promos,{categoryId:c.id,quantity:p.participants,subtotal:p.price})}))).sort((a,b)=>a.finalTotal-b.finalTotal||a.original-b.original);
   const lowest=offers[0];
 
@@ -36,6 +40,7 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
       <div className="detail-grid">
         <div className="detail-poster-column">
           <Poster event={event} large />
+          {gallery.failed?<section className="event-photos"><h2>Galeri acara</h2><p role="status">Galeri belum dapat dimuat. Coba lagi nanti.</p></section>:<EventGallery eventTitle={event.title} images={gallery.images}/>}
         </div>
 
         <div className="detail-copy">
@@ -71,8 +76,6 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
       {/* Interactive Venue Map & Floorplan */}
       <VenueMap area={event.area} withoutSeats={withoutSeats} />
 
-      {/* Event Photo Gallery & Lightbox */}
-      <EventGallery eventTitle={event.title} />
     </main>
   );
 }
