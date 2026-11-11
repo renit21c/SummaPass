@@ -12,6 +12,7 @@ import { MobileNavigation } from '@/components/mobile-navigation';
 import { Subo } from '@/features/subo/subo';
 import { PwaInstall } from '@/components/pwa-install';
 import { ConfirmationProvider } from '@/components/confirmation-dialog';
+import { AnchorScrollHandler } from '@/components/anchor-scroll';
 
 export const metadata: Metadata = {
   applicationName:'SummaPass',
@@ -63,6 +64,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           </div>
         </header>
         {children}
+        <AnchorScrollHandler />
         <Subo />
         <footer>
           <div className="container footer-top">
