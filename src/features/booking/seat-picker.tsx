@@ -1,12 +1,13 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Trash2, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { ArrowRight, Trash2, RefreshCw, MapPin, User, Mail, Phone, Sparkles, ChevronDown, ChevronUp, Zap, Tag, Ticket as TicketIcon } from 'lucide-react';
 import { rupiah } from '@/features/events/data';
 import { statusLabel, type Inventory } from './types';
 import { PackagePicker } from '@/features/ticket-options/package-picker';
 import { adjacentSeats } from '@/features/ticket-options/core';
 import { ConcurrencySimulatorModal } from './concurrency-simulator-modal';
+import { calculateApplicablePromo, type Promo } from '@/features/promos/core';
 
 export function SeatPicker({
   initial,
@@ -79,6 +80,22 @@ export function SeatPicker({
   const [showSimulator, setShowSimulator] = useState(false);
   const pending = useRef(false);
   const requestKey = useRef('');
+
+  // Promos & Vouchers
+  const [promos, setPromos] = useState<Promo[]>([]);
+  const [voucherCodeInput, setVoucherCodeInput] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState('');
+  const [voucherError, setVoucherError] = useState('');
+
+  useEffect(() => {
+    fetch(`/api/events/${initial.slug}/promos`)
+      .then(r => r.json())
+      .then(d => {
+        const list = Array.isArray(d?.promos) ? d.promos : Array.isArray(d) ? d : [];
+        setPromos(list);
+      })
+      .catch(() => {});
+  }, [initial.slug]);
 
   const category = data.categories.find(c => c.id === categoryId);
   const pack=category?.packages?.find(p=>p.id===packageId)??category?.packages?.[0];
@@ -162,7 +179,7 @@ export function SeatPicker({
 
   useEffect(() => {
     requestKey.current = crypto.randomUUID();
-  }, [selected, names, categoryId, bookerName, bookerEmail,pack?.id,packageQuantity]);
+  }, [selected, names, categoryId, bookerName, bookerEmail,pack?.id,packageQuantity,appliedVoucher]);
 
   function toggle(id: string) {
     if (busy) return;
@@ -203,6 +220,7 @@ export function SeatPicker({
           email: bookerEmail || user?.email || '',
           phone: bookerPhone || user?.phone || ''
         },
+        voucherCode: appliedVoucher || undefined,
         key: requestKey.current || crypto.randomUUID()
       };
 
@@ -230,6 +248,14 @@ export function SeatPicker({
   }
 
   const sections = [...new Set(data.seats.map(s => s.section))];
+  const subtotal = orderTotal;
+  const promoCalculation = calculateApplicablePromo(
+    promos,
+    { categoryId, quantity: chosen.length, subtotal },
+    appliedVoucher || undefined
+  );
+  const discountAmount = chosen.length > 0 ? promoCalculation.discountAmount : 0;
+  const finalTotal = chosen.length > 0 ? promoCalculation.finalTotal : 0;
 
   return (
     <>
@@ -249,6 +275,10 @@ export function SeatPicker({
               const isActive = c.id === categoryId;
               const isVip = c.name.toLowerCase().includes('vip');
               const availableInCat = Math.min(c.remaining ?? c.quota, data.seats.filter(s => c.sections.includes(s.section) && s.status === 'AVAILABLE').length);
+              const autoPromo = calculateApplicablePromo(
+                promos.filter(p => p.type === 'AUTOMATIC'),
+                { categoryId: c.id, quantity: 1, subtotal: c.price }
+              );
 
               return (
                 <button
@@ -272,7 +302,30 @@ export function SeatPicker({
                       </span>
                     )}
                   </div>
-                  <span>{rupiah(c.price)} / orang</span>
+                  {autoPromo.discountAmount > 0 ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+                      <span style={{ textDecoration: 'line-through', color: 'var(--muted)', fontSize: 12 }}>
+                        {rupiah(c.price)}
+                      </span>
+                      <strong style={{ color: 'var(--red, #e11d48)' }}>
+                        {rupiah(c.price - autoPromo.discountAmount)}
+                      </strong>
+                      <span style={{
+                        fontSize: 10,
+                        fontWeight: 800,
+                        background: 'var(--orange, #ff6b35)',
+                        color: '#fff',
+                        padding: '1px 5px',
+                        borderRadius: 4
+                      }}>
+                        {autoPromo.appliedPromo?.discountType === 'PERCENT'
+                          ? `Diskon ${autoPromo.appliedPromo.discountValue}%`
+                          : `Diskon ${rupiah(autoPromo.discountAmount)}`}
+                      </span>
+                    </div>
+                  ) : (
+                    <span>{rupiah(c.price)} / orang</span>
+                  )}
                   <div style={{ fontSize: 11, color: 'var(--muted)', display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
                     <Sparkles size={12} />
                     <span>Area: {c.sections.join(', ')} • {availableInCat} kursi tersedia</span>
@@ -557,18 +610,88 @@ export function SeatPicker({
               </>
             )}
 
+            {/* Voucher input form */}
+            <div style={{ margin: '14px 0', padding: '12px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: 8, boxShadow: '2px 2px 0 var(--ink)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontWeight: 700, fontSize: 13 }}>
+                <Tag size={15} />
+                <span>Punya Kode Voucher?</span>
+              </div>
+              {appliedVoucher ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#dcfce7', border: '1.5px solid #16a34a', padding: '8px 12px', borderRadius: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#166534' }}>
+                    <TicketIcon size={16} />
+                    <span>Voucher: {appliedVoucher}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAppliedVoucher('');
+                      setVoucherError('');
+                    }}
+                    style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    type="text"
+                    placeholder="Contoh: HEMAT30K"
+                    value={voucherCodeInput}
+                    disabled={busy}
+                    onChange={e => {
+                      setVoucherCodeInput(e.target.value.toUpperCase());
+                      setVoucherError('');
+                    }}
+                    style={{ flex: 1, textTransform: 'uppercase', padding: '6px 10px', fontSize: 12, border: '1.5px solid var(--ink)', borderRadius: 6, background: '#fff' }}
+                  />
+                  <button
+                    type="button"
+                    className="button button-small"
+                    style={{ padding: '6px 12px', fontSize: 12 }}
+                    disabled={busy || !voucherCodeInput.trim()}
+                    onClick={() => {
+                      const code = voucherCodeInput.trim().toUpperCase();
+                      const check = calculateApplicablePromo(
+                        promos,
+                        { categoryId, quantity: chosen.length || 1, subtotal: orderTotal },
+                        code
+                      );
+                      if (check.appliedPromo?.code?.toUpperCase() === code) {
+                        setAppliedVoucher(code);
+                        setVoucherCodeInput('');
+                        setVoucherError('');
+                      } else {
+                        setVoucherError('Kode voucher tidak valid atau syarat belum terpenuhi.');
+                      }
+                    }}
+                  >
+                    Pakai
+                  </button>
+                </div>
+              )}
+              {voucherError && <p style={{ margin: '6px 0 0', color: 'var(--red, #e11d48)', fontSize: 11, fontWeight: 600 }}>{voucherError}</p>}
+            </div>
+
             <div className="price-breakdown">
               <p>
                 <span>{pack?`${packageQuantity} paket ${pack.name} (${selectionLimit} orang)`:`${category?.name??'Kategori'} × ${chosen.length}`}</span>
                 <strong>{rupiah(orderTotal)}</strong>
               </p>
+              {discountAmount > 0 && (
+                <p style={{ color: 'var(--red, #e11d48)' }}>
+                  <span>Diskon ({promoCalculation.appliedPromo?.name})</span>
+                  <strong>- {rupiah(discountAmount)}</strong>
+                </p>
+              )}
               <p>
                 <span>Biaya layanan demo</span>
                 <span>Rp0</span>
               </p>
               <div>
                 <strong>Total</strong>
-                <strong>{rupiah(orderTotal)}</strong>
+                <strong>{rupiah(finalTotal)}</strong>
               </div>
             </div>
 
@@ -590,7 +713,7 @@ export function SeatPicker({
       </div>
 
       <div className="seat-mobile-bar" aria-label="Ringkasan kursi pilihan">
-        <div aria-live="polite"><span>{chosen.length} kursi dipilih</span><strong>{rupiah(orderTotal)}</strong></div>
+        <div aria-live="polite"><span>{chosen.length} kursi dipilih</span><strong>{rupiah(finalTotal)}</strong></div>
         <a href="#seat-order-summary" className="button button-small">{chosen.length ? 'Lengkapi pesanan' : 'Lihat ringkasan'}<ArrowRight size={16} aria-hidden="true"/></a>
       </div>
 

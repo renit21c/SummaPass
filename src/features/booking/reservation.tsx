@@ -206,8 +206,21 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
           ))}
         </ul>
 
+        {data.discountAmount && data.discountAmount > 0 ? (
+          <div style={{ display: 'grid', gap: 6, margin: '14px 0', padding: '10px 12px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)', fontSize: 13 }}>
+              <span>Harga Asli</span>
+              <span style={{ textDecoration: 'line-through' }}>{rupiah(data.originalTotal ?? data.total + data.discountAmount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--red, #e11d48)', fontWeight: 700, fontSize: 13 }}>
+              <span>Potongan Promo {data.promoName ? `(${data.promoName})` : ''}</span>
+              <span>- {rupiah(data.discountAmount)}</span>
+            </div>
+          </div>
+        ) : null}
+
         <div className="reservation-total">
-          <strong>Total</strong>
+          <strong>Total Bayar</strong>
           <strong>{rupiah(data.total)}</strong>
         </div>
 
