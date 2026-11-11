@@ -70,8 +70,26 @@ export function TicketTiers({
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
         {displayTiers.map((tier) => {
-          const prices=(tier.packages?.length?tier.packages:[{price:tier.price,participants:1}]).map(p=>{const quote=calculateApplicablePromo(promos,{categoryId:tier.id,quantity:p.participants,subtotal:p.price});return {original:p.price,price:quote.finalTotal};}).sort((a,b)=>a.price-b.price||a.original-b.original);
-          const lowest=prices[0];
+          const rawPackages = tier.packages ?? [];
+          const hasMultiplePackages = rawPackages.length > 1 || (rawPackages.length === 1 && rawPackages[0].participants > 1);
+
+          const quotes = (rawPackages.length ? rawPackages : [{ id: 'default', name: 'Tiket Standar', price: tier.price, participants: 1 }]).map(p => {
+            const quote = calculateApplicablePromo(promos, {
+              categoryId: tier.id,
+              quantity: p.participants,
+              subtotal: p.price
+            });
+            return {
+              package: p,
+              original: p.price,
+              price: quote.finalTotal,
+              appliedPromo: quote.appliedPromo,
+              discountAmount: quote.discountAmount
+            };
+          }).sort((a, b) => a.price - b.price || a.original - b.original);
+
+          const lowest = quotes[0];
+          const promoName = lowest?.appliedPromo?.name;
           const isVip = tier.name.toLowerCase().includes('vip');
           const categoryQuery = categories.length>0?tier.id:isVip ? 'front' : (tier.id?.toLowerCase().includes('reg') ? 'regular' : (tier.id || 'regular'));
           const perks = withoutSeats?['Akses event tanpa nomor kursi','E-ticket dengan QR','Reservasi tiket selama 10 menit']:tier.perks ?? [
@@ -106,13 +124,47 @@ export function TicketTiers({
                 </span>
 
                 <div style={{ margin: '14px 0 20px', paddingBottom: 16, borderBottom: '1px dashed var(--line)' }}>
-                  <span style={{ fontSize: 11, color: 'var(--muted)', display: 'block' }}>Harga Tiket</span>
-                  <DiscountPrice className="customer-ticket-price" price={lowest.price} originalPrice={lowest.original}/>
-                  <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>{tier.packages?.length?'/ paket':'/ orang'}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>
+                    {hasMultiplePackages ? 'Harga Mulai Dari' : 'Harga Tiket'}
+                  </span>
+                  <DiscountPrice
+                    className="customer-ticket-price"
+                    price={lowest.price}
+                    originalPrice={lowest.original}
+                    promoName={promoName}
+                    unit={hasMultiplePackages ? '/ paket' : (withoutSeats ? '/ tiket' : '/ orang')}
+                  />
                 </div>
 
-                {tier.description&&<p style={{fontSize:13,lineHeight:1.6}}>{tier.description}</p>}
-                {!!tier.packages?.length&&<ul className="tier-packages">{tier.packages.map(p=>{const quote=calculateApplicablePromo(promos,{categoryId:tier.id,quantity:p.participants,subtotal:p.price});return <li key={p.id}><span><strong>{p.name}</strong> · {p.participants} orang</span><span><DiscountPrice price={quote.finalTotal} originalPrice={p.price}/><small> / paket</small></span></li>;})}</ul>}
+                {tier.description && <p style={{ fontSize: 13, lineHeight: 1.6, margin: '0 0 16px' }}>{tier.description}</p>}
+                {hasMultiplePackages && (
+                  <div style={{ marginBottom: 18 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--muted)', display: 'block', marginBottom: 8 }}>
+                      Pilihan Paket
+                    </span>
+                    <ul className="tier-packages">
+                      {rawPackages.map(p => {
+                        const quote = calculateApplicablePromo(promos, {
+                          categoryId: tier.id,
+                          quantity: p.participants,
+                          subtotal: p.price
+                        });
+                        return (
+                          <li key={p.id}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span><strong>{p.name}</strong> · {p.participants} orang</span>
+                              <DiscountPrice
+                                price={quote.finalTotal}
+                                originalPrice={p.price}
+                                unit="/ paket"
+                              />
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
                 <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
                   {perks.map((perk: string, i: number) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'start', gap: 8, fontSize: 12, lineHeight: 1.5 }}>
