@@ -54,7 +54,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <MobileNavigation loggedIn={Boolean(session)} />
           </div>
         </header>
-        <div className="demo-strip">Demo SummaPass. Event dan harga fiktif.</div>
         {children}
         <Subo />
         <footer>
