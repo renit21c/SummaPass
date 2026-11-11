@@ -438,11 +438,30 @@ export function OrganizerDashboard({
                           }[b.paymentStatus ?? "PENDING"]
                         }
                       </td>
-                      <td>{rupiah(b.total)}</td>
+                      <td>
+                        {b.discountAmount ? (
+                          <div style={{ display: "grid", gap: 2 }}>
+                            <strong>{rupiah(b.total)}</strong>
+                            <small style={{ color: "var(--muted)", textDecoration: "line-through" }}>
+                              {rupiah(b.originalTotal ?? b.total + b.discountAmount)}
+                            </small>
+                            <span style={{ fontSize: 10, color: "var(--teal, #0d9488)", fontWeight: 700 }}>
+                              Hemat {rupiah(b.discountAmount)}
+                            </span>
+                          </div>
+                        ) : (
+                          rupiah(b.total)
+                        )}
+                      </td>
                       <td>
                         <details>
                           <summary>Lihat</summary>
                           <div className="booking-row-details">
+                            {b.discountAmount ? (
+                              <p style={{ background: "#fef08a", color: "#854d0e", padding: "4px 8px", borderRadius: 4, fontWeight: 700, margin: "0 0 6px" }}>
+                                Promo: {b.promoName ?? "Diskon"} (Potongan {rupiah(b.discountAmount)})
+                              </p>
+                            ) : null}
                             {b.items.map((i) => (
                               <p key={i.seatId}>
                                 {i.name}
