@@ -19,7 +19,7 @@ export const promoSchema = z.object({
   code: z.string().trim().max(30).optional().nullable(),
   name: z.string().trim().min(2, 'Nama promo minimal 2 karakter.').max(100),
   discountType: discountTypeSchema,
-  discountValue: z.number().positive('Nilai potongan harus lebih besar dari 0.'),
+  discountValue: z.number().int('Potongan harus bilangan bulat.').positive('Nilai potongan harus lebih besar dari 0.').max(10000000),
   scope: promoScopeSchema,
   categoryId: z.string().nullable().optional(),
   categoryName: z.string().nullable().optional(),
@@ -27,7 +27,7 @@ export const promoSchema = z.object({
   endDate: z.string(),
   quota: z.number().int().positive().nullable().optional(),
   usedCount: z.number().int().nonnegative().default(0),
-  minQuantity: z.number().int().positive().nullable().optional(),
+  minQuantity: z.number().int().min(1).max(30).nullable().optional(),
   status: promoStatusSchema.default('ACTIVE'),
   createdAt: z.string()
 });
@@ -39,22 +39,22 @@ export const promoInputSchema = z.object({
   code: z.string().trim().max(30).optional().nullable(),
   name: z.string().trim().min(2, 'Nama promo minimal 2 karakter.').max(100),
   discountType: discountTypeSchema,
-  discountValue: z.number().positive('Nilai potongan harus lebih besar dari 0.'),
+  discountValue: z.number().int('Potongan harus bilangan bulat.').positive('Nilai potongan harus lebih besar dari 0.').max(10000000),
   scope: promoScopeSchema.default('ALL'),
   categoryId: z.string().nullable().optional(),
   categoryName: z.string().nullable().optional(),
   startDate: z.string().min(1, 'Tanggal mulai wajib diisi.'),
   endDate: z.string().min(1, 'Tanggal berakhir wajib diisi.'),
   quota: z.number().int().positive().nullable().optional(),
-  minQuantity: z.number().int().positive().nullable().optional(),
+  minQuantity: z.number().int().min(1).max(30).nullable().optional(),
   status: promoStatusSchema.default('ACTIVE')
 }).refine(data => {
-  if (data.type === 'VOUCHER' && (!data.code || data.code.trim().length === 0)) {
+  if (data.type === 'VOUCHER' && !/^[A-Z0-9_-]{1,30}$/i.test(data.code?.trim()??'')) {
     return false;
   }
   return true;
 }, {
-  message: 'Kode voucher wajib diisi untuk jenis promo Voucher.',
+  message: 'Isi kode voucher dengan huruf, angka, garis bawah, atau tanda hubung (maksimal 30 karakter).',
   path: ['code']
 }).refine(data => {
   if (data.discountType === 'PERCENT' && data.discountValue > 100) {
@@ -67,14 +67,14 @@ export const promoInputSchema = z.object({
 }).refine(data => {
   const start = Date.parse(data.startDate);
   const end = Date.parse(data.endDate);
-  if (!Number.isNaN(start) && !Number.isNaN(end) && end < start) {
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
     return false;
   }
   return true;
 }, {
-  message: 'Tanggal berakhir harus sama atau setelah tanggal mulai.',
+  message: 'Isi tanggal yang valid. Tanggal berakhir harus setelah tanggal mulai.',
   path: ['endDate']
-});
+}).refine(data=>data.scope!=='CATEGORY'||!!data.categoryId,{message:'Pilih kategori tiket.',path:['categoryId']});
 
 export type PromoInput = z.infer<typeof promoInputSchema>;
 
@@ -136,7 +136,7 @@ export function calculateApplicablePromo(
     now = Date.now()
   } = ctx;
 
-  const originalTotal = Math.max(0, basePrice * quantity);
+  const originalTotal = Math.max(0, Math.round(basePrice * quantity));
   if (originalTotal === 0 || quantity <= 0) {
     return {
       originalTotal: 0,
@@ -169,6 +169,7 @@ export function calculateApplicablePromo(
     }
 
     const isCategoryScoped = p.scope === 'CATEGORY' || (p.scope as string) === 'SPECIFIC_CATEGORY';
+    if (isCategoryScoped && !categoryId) return { eligible:false,reason:'Pilih kategori tiket.' };
     if (isCategoryScoped && categoryId) {
       if (p.categoryId && p.categoryId !== categoryId) {
         return { eligible: false, reason: 'Promo tidak berlaku untuk kategori tiket ini.' };

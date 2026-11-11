@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { ArrowUpRight, UserPlus } from 'lucide-react';
 import { authMode, safeReturnPath } from '@/lib/auth/config';
 import { getSession } from '@/lib/auth/session';
+import { GoogleSignIn } from '@/components/google-sign-in';
 
 export const metadata = { title: 'Daftar Akun' };
 
@@ -36,6 +37,7 @@ export default async function Register({ searchParams }: { searchParams: Promise
           </div>
         )}
 
+        {mode==='supabase'&&<GoogleSignIn next={next}/>}
         <AuthForm action="/api/auth/register">
           <input type="hidden" name="next" value={next} />
           

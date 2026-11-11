@@ -1,5 +1,6 @@
 'use client';
 
+import { DiscountPrice } from '../promos/price';
 import Link from 'next/link';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Gift, Mic2, Sparkles, Ticket, X } from 'lucide-react';
@@ -145,7 +146,7 @@ export function EventGalleryCarousel({ events }: { events: Event[] }) {
               <p>{selectedEvent.description}</p>
               <div className="event-preview-facts">
                 <span><CalendarDays size={17} />{dateLabel(selectedEvent.date)}</span>
-                <strong>{rupiah(selectedEvent.price)}</strong>
+                <DiscountPrice price={selectedEvent.price} originalPrice={selectedEvent.originalPrice}/>
               </div>
               <Link className="button event-preview-book" href={`/events/${selectedEvent.slug}/${selectedEvent.seatingMode==='GENERAL_ADMISSION'?'tickets':'seats'}`}>
                 <Ticket size={18} />Pesan tiket

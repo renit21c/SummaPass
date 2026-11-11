@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { ArrowUpRight, Ticket } from 'lucide-react';
 import { authMode, safeReturnPath } from '@/lib/auth/config';
 import { getSession, loginDestination } from '@/lib/auth/session';
+import { GoogleSignIn } from '@/components/google-sign-in';
+import { loginErrorMessage } from '@/lib/auth/google';
 
 export const metadata = { title: 'Masuk' };
 
@@ -34,10 +36,11 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
 
         {params.error && (
           <div className="form-error" role="alert">
-            {params.error === 'invalid' ? 'Periksa format email dan isi kata sandi.' : 'Email atau kata sandi belum cocok. Silakan coba lagi.'}
+            {loginErrorMessage(params.error)}
           </div>
         )}
 
+        {mode==='supabase'&&<GoogleSignIn next={next}/>}
         <AuthForm action="/api/auth/login">
           <input type="hidden" name="next" value={next} />
           {mode === 'supabase' && (

@@ -1,5 +1,11 @@
 # Database dan ERD
 
+## Promo, migrasi 024
+
+`events` 1:N `event_promos`; kategori opsional membatasi promo ke satu jenis tiket. `event_promos` 1:N `bookings` melalui `promo_id`. Tabel promo memiliki RLS organizer dan index `(event_id,status)` serta kode voucher unik per event yang belum dihapus. Tidak ada write grant untuk browser.
+
+`bookings` menyimpan `original_total_idr`, `discount_amount_idr`, nama/kode snapshot dan `promo_request` untuk idempotency. Index `(promo_id,status,expires_at)` mendukung pemeriksaan kuota. Reservasi aktif serta confirmed menggunakan kuota; pending yang batal/gagal/kedaluwarsa melepaskannya. Harga booking items menjadi harga setelah diskon dalam Rupiah bulat. Semua perhitungan dan pemeriksaan kuota dilakukan dalam transaksi di bawah lock event. Lihat [PROMOS.md](PROMOS.md) untuk aktivasi dan aturan lengkap.
+
 Proposal konseptual; SQL migrations dibuat setelah persetujuan. Semua PK UUID kecuali inventory memakai composite key. Timestamps UTC, uang bigint IDR nonnegative. FK historis RESTRICT; event diarchive, booking/tiket tidak dihapus melalui UI.
 
 ```mermaid
