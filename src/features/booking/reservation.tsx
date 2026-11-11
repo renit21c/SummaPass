@@ -126,6 +126,7 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
       // 3. Open Midtrans Snap Popup
       if (typeof window !== 'undefined' && (window as any).snap) {
         (window as any).snap.pay(result.token, {
+          uiMode: 'qr',
           onSuccess: async () => {
             // Instant client-side reconciliation
             await pay('success');
@@ -142,7 +143,10 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
           }
         });
       } else if (result.redirectUrl) {
-        window.open(result.redirectUrl, '_blank');
+        const url = result.redirectUrl.includes('?')
+          ? `${result.redirectUrl}&gopayMode=qr`
+          : `${result.redirectUrl}?gopayMode=qr`;
+        window.open(url, '_blank');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal membuka Midtrans Sandbox.');

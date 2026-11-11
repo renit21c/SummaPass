@@ -34,6 +34,7 @@ export async function createMidtransSnapTransaction(
       email: customer.email || 'pengunjung@summapass.id'
     },
     enabled_payments: [
+      'other_qris',
       'gopay',
       'shopeepay',
       'qris',
