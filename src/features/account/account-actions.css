@@ -1,0 +1,11 @@
+.profile-logout{padding:10px 22px 24px}
+.profile-logout .profile-danger-button,.profile-delete-account .profile-danger-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:12px 18px;border:1.5px solid var(--ink);border-radius:8px;background:var(--danger);color:white;font-size:13px;font-weight:750;box-shadow:3px 3px 0 var(--ink);transition:transform .15s,box-shadow .15s,background .15s}
+.profile-logout .profile-danger-button{width:100%}
+.profile-logout .profile-danger-button:hover,.profile-delete-account .profile-danger-button:hover{background:var(--ink);color:white;transform:translateY(-1px)}
+.profile-delete-account{margin-top:28px;padding:28px;border:1.5px solid var(--danger);border-radius:16px;background:var(--cream)}
+.profile-delete-account h2{font-size:24px;margin:0 0 12px}.profile-delete-account p{font-size:13px;line-height:1.7;margin-bottom:20px}
+.profile-delete-account fieldset{border:0;padding:0;margin:0;display:grid;gap:20px;min-width:0}.profile-delete-account label{display:grid;gap:8px;font-size:13px;font-weight:700}
+.profile-delete-password{display:flex;align-items:center;background:white;border:1px solid var(--ink);border-radius:8px;overflow:hidden}.profile-delete-password input{width:100%;min-width:0;min-height:48px;border:0;padding:12px;background:transparent;font:inherit}.profile-delete-password button{display:grid;place-items:center;width:48px;min-height:48px;flex-shrink:0;border:0;background:transparent;color:var(--ink)}
+.profile-delete-account .profile-danger-button{justify-self:start}
+@media(max-width:639px){.profile-delete-account{padding:22px}.profile-delete-account .profile-danger-button{width:100%}}
+@media(prefers-reduced-motion:reduce){.profile-danger-button{transition:none!important}}

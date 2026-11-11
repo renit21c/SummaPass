@@ -7,6 +7,7 @@ export const ratePolicies = {
   reservation: { limit: 12, windowSeconds: 60 },
   payment: { limit: 20, windowSeconds: 60 },
   ticketEmail: { limit: 5, windowSeconds: 600 },
+  accountDeletion: { limit: 5, windowSeconds: 600 },
   checkIn: { limit: 120, windowSeconds: 60 },
 } as const;
 export type RatePolicy = keyof typeof ratePolicies;

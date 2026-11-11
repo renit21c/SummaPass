@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { AlertTriangle,CheckCircle2,X } from 'lucide-react';
 import './confirmation-dialog.css';
 
-type Options={title?:string;confirmLabel?:string;destructive?:boolean;confirmationText?:string};
+type Options={title?:string;confirmLabel?:string;destructive?:boolean;confirmationText?:string;confirmationLabel?:string};
 type Ask=(message:string,options?:Options)=>Promise<boolean>;
 type Request=Options&{message:string};
 const ConfirmationContext=createContext<Ask|null>(null);
@@ -43,7 +43,7 @@ export function ConfirmationProvider({children}:{children:ReactNode}){
     <h2 id={`${id}-title`}>{request.title??'Konfirmasi tindakan'}</h2>
     <p id={`${id}-description`}>{request.message}</p>
     <form onSubmit={event=>{event.preventDefault();if(valid)finish(true);}}>
-     {request.confirmationText!==undefined&&<label className="summa-confirmation-label" htmlFor={`${id}-input`}>Ketik nama event untuk mengonfirmasi<strong>{request.confirmationText}</strong><input id={`${id}-input`} value={value} onChange={event=>setValue(event.target.value)} autoComplete="off" spellCheck={false} aria-describedby={`${id}-hint`}/><small id={`${id}-hint`}>Harus sama persis, termasuk huruf besar dan kecil.</small></label>}
+     {request.confirmationText!==undefined&&<label className="summa-confirmation-label" htmlFor={`${id}-input`}>{request.confirmationLabel??'Ketik nama event untuk mengonfirmasi'}<strong>{request.confirmationText}</strong><input id={`${id}-input`} value={value} onChange={event=>setValue(event.target.value)} autoComplete="off" spellCheck={false} aria-describedby={`${id}-hint`}/><small id={`${id}-hint`}>Harus sama persis, termasuk huruf besar dan kecil.</small></label>}
      <div className="summa-confirmation-actions"><button ref={cancel} className="button button-light" type="button" onClick={()=>finish(false)}>Batal</button><button className={`button${request.destructive?' summa-confirmation-danger':''}`} type="submit" disabled={!valid}>{request.confirmLabel??'Lanjutkan'}</button></div>
     </form>
    </div>

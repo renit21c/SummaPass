@@ -99,7 +99,8 @@ export async function getSession(): Promise<Session | null> {
   const client = await supabaseServer();
   const { data: { user }, error } = await client.auth.getUser();
   if (error || !user) return null;
-  const { data } = await client.from('profiles').select('display_name').eq('id', user.id).maybeSingle();
+  const { data,error:profileError } = await client.from('profiles').select('display_name').eq('id', user.id).maybeSingle();
+  if(profileError||!data)return null;
   const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
   return {
     id: user.id,
@@ -133,4 +134,7 @@ export async function endSession() {
   const store = await cookies(); const token = store.get(cookieName)?.value;
   if (token) sessions.delete(token);
   store.delete(cookieName);
+}
+export function deleteDemoAccountSessions(userId:string){
+ for(const [token,record] of sessions)if(record.user.id===userId)sessions.delete(token);
 }
