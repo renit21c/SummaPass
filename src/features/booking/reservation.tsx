@@ -286,11 +286,11 @@ export function Reservation({ initial, serverNow }: { initial: Booking; serverNo
             </div>
 
             {/* Secondary Quick 1-Click Simulation */}
-            <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: 12, display: 'flex', gap: 10 }}>
+            <div className="action-group payment-simulation-actions" style={{ borderTop: '1px dashed #cbd5e1', paddingTop: 12 }}>
               <button
                 type="button"
                 className="button button-light payment-success-button"
-                style={{ flex: 1, fontSize: 12, padding: '8px 12px' }}
+                style={{ fontSize: 12, padding: '8px 12px' }}
                 disabled={busy || loadingSnap || !active}
                 onClick={() => void pay('success')}
                 title="Bypass instan tanpa membuka popup Midtrans"

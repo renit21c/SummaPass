@@ -1,0 +1,72 @@
+/* Let action labels wrap while keeping icons and focus targets intact. */
+body .sr-only{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;padding:0!important;border:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap!important}
+.button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center;line-height:1.45}
+.button>svg,.chip>svg{flex-shrink:0}
+.action-group>*{min-width:0}
+.payment-simulation-actions>button{flex:1 1 160px;min-height:44px;max-width:100%;white-space:normal;line-height:1.5}
+.selected-seat-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.selected-seat-heading>strong{flex:1 1 140px;min-width:0;overflow-wrap:anywhere}
+.selected-seat-actions{display:flex;align-items:center;flex-shrink:0;gap:12px}
+.event-editor .editor-cover-section{min-width:0}
+.event-editor .editor-cover-frame{width:min(100%,320px);aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:var(--cream);margin-bottom:20px}
+.event-editor .editor-cover-frame>.editor-cover{display:block;width:100%;height:100%;max-width:100%;max-height:none;object-fit:contain;border-radius:0}
+
+@media(max-width:700px){
+ .manage-heading,.ticket-options-heading,.notifications-heading,.profile-page-heading,.profile-favorites-heading{flex-wrap:wrap;gap:16px;min-width:0}
+ .manage-heading>div,.ticket-options-heading>div,.profile-page-heading>div{min-width:0;max-width:100%}
+ .manage-heading h2,.ticket-options-heading h2{overflow-wrap:anywhere}
+ .manage-heading svg,.ticket-options-heading svg{flex-shrink:0}
+ .map-toolbar{flex-wrap:wrap;align-items:flex-start;gap:16px}
+ .map-actions{width:100%;justify-content:space-between;gap:12px}
+ .view-tabs,.my-tickets-tabs,.ticket-category-tabs,.ticket-package-presets,.promo-tabs{flex-wrap:wrap;gap:12px}
+ .view-tabs>button,.promo-tabs>button{flex:1 1 180px;min-width:0;min-height:44px;white-space:normal;justify-content:center;line-height:1.5}
+ .view-tabs>button{padding:12px}
+ .manage-actions,.operations-actions,.scanner-actions,.ticket-dialog-actions,.promo-form-actions,.promo-card-actions{gap:12px;flex-wrap:wrap}
+ .manage-actions>.button,.operations-actions>.button:not([data-icon-action]),.scanner-actions>.button:not([data-icon-action]),.ticket-dialog-actions>.button:not([data-icon-action]),.promo-form-actions>.button{flex:1 1 160px;max-width:100%}
+ .promo-card-actions>.button:not([data-icon-action]){flex:1 1 140px;min-height:44px}
+ .organizer-pagination{flex-wrap:wrap;gap:12px;align-items:center}
+ .organizer-pagination>span{flex-basis:100%;order:-1;text-align:center}
+ .organizer-pagination>.button{flex:1 1 100px;min-width:0}
+ .manage-section-list>div{flex-wrap:wrap;gap:12px}
+ .manage-section-list label{flex:1 1 160px;min-width:0;max-width:100%}
+ .staff-form label{min-width:0;flex:1 1 100%;width:100%}
+ .staff-form>.button{width:100%}
+ .staff-item>div,.operations-list li>div{min-width:0;max-width:100%;overflow-wrap:anywhere}
+ .ticket-options-manager,.manage-card,.operations-card,.organizer-event-card{min-width:0}
+ .editor-grid{grid-template-columns:minmax(0,1fr)}
+ .event-editor .editor-actions{gap:16px}
+ .event-editor .editor-actions>.button,.event-editor .editor-actions>.text-link{max-width:100%;min-height:44px}
+ .event-editor .editor-actions>.text-link{white-space:normal;line-height:1.5}
+ .event-editor input[type=file]{max-width:100%;font-size:13px}
+ .event-editor input[type=file]::file-selector-button{max-width:100%;margin-right:10px}
+}
+
+@media(max-width:639px){
+ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+ .buyer-packages{min-width:0;padding:16px}
+ .buyer-package-options{gap:12px}
+ .buyer-package-options>button{padding:12px;max-width:100%}
+ .buyer-package-options>button>strong{font-size:15px;line-height:1.4}
+ .profile-page-heading{align-items:flex-start;flex-direction:column}
+ .profile-demo-access>div{gap:12px}
+ .profile-demo-access .button{flex:1 1 160px}
+ .notifications-actions,.ticket-actions{gap:16px}
+ .ticket-actions>.button:not([data-icon-action]){width:100%;min-width:0;max-width:100%}
+ .ticket-dialog-actions>.button,.payment-simulation-actions>button{flex-basis:100%}
+ .checkin-manual form>.button{width:100%;min-height:44px}
+ .correction-actions{flex-wrap:wrap;gap:12px}
+ .correction-actions>button{min-width:0;flex:1 1 160px}
+ .pwa-mobile-actions{flex-wrap:wrap;gap:12px}
+ .pwa-mobile-actions>.button{flex:1 1 150px;min-width:0}
+ .pwa-mobile-actions>.pwa-mobile-later{flex:1 1 80px}
+ .footer-top{flex-wrap:wrap;gap:20px}
+ .footer-top>*{max-width:100%}
+ .seat-mobile-bar>div{min-width:0;flex:1}
+ .seat-mobile-bar>.button{flex:0 1 auto;max-width:52%;min-height:44px;white-space:normal;text-align:center}
+ body:has(.seat-mobile-bar){padding-bottom:calc(148px + env(safe-area-inset-bottom))}
+ body:has(.seat-mobile-bar) .subo-widget{bottom:calc(152px + env(safe-area-inset-bottom))}
+ body:has(.seat-mobile-bar) .subo-panel{max-height:calc(100dvh - 248px - env(safe-area-inset-bottom))}
+ body:has(.seat-mobile-bar) .pwa-mobile-banner{bottom:calc(220px + env(safe-area-inset-bottom));max-height:calc(100dvh - 300px - env(safe-area-inset-bottom))}
+}
+
+@media(hover:none){[data-icon-action][title]:hover::after{display:none}}

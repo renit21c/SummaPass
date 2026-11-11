@@ -6,6 +6,7 @@ import './globals.css';
 import '@/components/ux-enhancements.css';
 import '@/features/organizer/workspace.css';
 import '@/components/customer-readability.css';
+import '@/components/mobile-layout.css';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { getSession } from '@/lib/auth/session';
 import { MobileNavigation } from '@/components/mobile-navigation';

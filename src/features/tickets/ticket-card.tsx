@@ -602,7 +602,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
               </label>
             )}
 
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginTop: 18 }}>
+            <div className="action-group ticket-dialog-actions" style={{ marginTop: 18 }}>
               <button
                 className="button"
                 style={{ background: '#d92d20', color: '#fff', borderColor: 'var(--ink)' }}
@@ -704,7 +704,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
               <strong>Keamanan Tiket:</strong> Token QR lama akan otomatis tidak berlaku. Tiket baru hanya dapat divalidasi oleh petugas melalui QR kode terbaru.
             </div>
 
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="action-group ticket-dialog-actions">
               <button
                 className="button"
                 style={{ background: 'var(--purple)', color: '#fff', borderColor: 'var(--ink)' }}
@@ -744,7 +744,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             PDF siap cetak dan tautan tiket dikirim ke email akun pemesan.
           </p>
 
-          <form onSubmit={handleResendTicket} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <form className="action-group ticket-dialog-actions" onSubmit={handleResendTicket}>
             <button className="button button-dark" type="submit" disabled={resending || cooldown > 0}>
               <Send size={16} />
               {resending ? 'Memproses...' : 'Minta kirim ulang'}
