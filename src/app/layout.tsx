@@ -1,6 +1,6 @@
 import type { Metadata,Viewport } from 'next';
 import Link from 'next/link';
-import { ArrowUpRight, Ticket } from 'lucide-react';
+import { ArrowUpRight, Ticket, User } from 'lucide-react';
 import '@fontsource-variable/plus-jakarta-sans';
 import './globals.css';
 import '@/components/ux-enhancements.css';
@@ -48,7 +48,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <NotificationBell loggedIn={Boolean(session)} />
               <Link className="button button-small" href={session ? '/account' : '/login'}>
-                {session ? 'Akun saya' : 'Masuk/Daftar'} <ArrowUpRight size={18} />
+                {session ? (
+                  <>
+                    Akun saya <User size={18} />
+                  </>
+                ) : (
+                  <>
+                    Masuk/Daftar <ArrowUpRight size={18} />
+                  </>
+                )}
               </Link>
             </div>
               <MobileNavigation loggedIn={Boolean(session)} />
