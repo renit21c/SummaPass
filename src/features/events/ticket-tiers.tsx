@@ -101,7 +101,7 @@ export function TicketTiers({
 
                 <div style={{ margin: '14px 0 20px', paddingBottom: 16, borderBottom: '1px dashed var(--line)' }}>
                   <span style={{ fontSize: 11, color: 'var(--muted)', display: 'block' }}>Harga Tiket</span>
-                  <strong style={{ fontSize: 26, fontWeight: 850, color: 'var(--purple)' }}>
+                  <strong className="customer-ticket-price">
                     {rupiah(tier.packages?.length?Math.min(...tier.packages.map(p=>p.price)):tier.price)}
                   </strong>
                   <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>{tier.packages?.length?'/ paket':'/ orang'}</span>

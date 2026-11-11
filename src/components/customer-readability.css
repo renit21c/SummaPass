@@ -1,0 +1,17 @@
+:root{--header-clearance:112px}
+html{scroll-padding-top:var(--header-clearance)}
+.site-header{position:sticky;top:0;z-index:40;box-shadow:0 3px 12px #2525250d}
+body .organizer-nav,body .quantity-summary{top:var(--header-clearance)}
+#seat-order-summary{scroll-margin-top:var(--header-clearance)}
+.event-card .card-price{align-items:flex-start;flex-direction:column;gap:6px;margin-top:16px}
+.event-card .card-price>span{font-size:12px}
+.event-card .card-price>strong{font-size:clamp(20px,2.2vw,27px);line-height:1.25;font-weight:850;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.booking-preview>strong{font-size:clamp(36px,4vw,46px);line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.customer-ticket-price{display:inline-block;font-size:clamp(30px,3vw,38px);line-height:1.25;font-weight:850;color:var(--purple);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tier-packages li>strong{font-size:20px;line-height:1.35;font-variant-numeric:tabular-nums}
+.category-option>span{font-size:20px;font-weight:800;line-height:1.35;font-variant-numeric:tabular-nums}
+.buyer-package-options .buyer-package-price{font-size:22px;font-weight:850;line-height:1.3;color:var(--purple);font-variant-numeric:tabular-nums}
+.quantity-summary .quantity-total{font-size:clamp(34px,4vw,44px);overflow-wrap:anywhere}
+.price-breakdown p:last-child strong,.reservation-total>strong{font-size:30px;line-height:1.3;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+@media(max-width:760px){:root{--header-clearance:96px}.event-card .card-price>strong{font-size:22px}.event-card .card-price>span{font-size:11px}.buyer-package-options .buyer-package-price{font-size:20px}}
+@media(max-width:639px){.seat-mobile-bar strong{font-size:23px;line-height:1.25}}
