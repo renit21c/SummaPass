@@ -903,6 +903,21 @@ html,body{max-width:100%;overflow-x:clip}
   box-shadow: 6px 7px 0 var(--ink) !important;
 }
 
+.round-sticker {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+}
+.round-sticker:hover {
+  transform: rotate(-9deg) scale(1.08) !important;
+  box-shadow: 6px 7px 0 var(--ink) !important;
+}
+.round-sticker:active {
+  transform: rotate(-13deg) scale(0.96) !important;
+  box-shadow: 2px 3px 0 var(--ink) !important;
+}
+
 /* Concurrency Simulator Styles */
 .concurrency-trigger-btn {
   display: inline-flex;
