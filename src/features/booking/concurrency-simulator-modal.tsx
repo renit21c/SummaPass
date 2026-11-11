@@ -37,6 +37,7 @@ export function ConcurrencySimulatorModal({
   categories,
   seats,
   activeCategoryId,
+  activePackageId,
   selectedSeatId,
   onSimulationComplete,
 }: {
@@ -46,6 +47,7 @@ export function ConcurrencySimulatorModal({
   categories: CategoryItem[];
   seats: SeatItem[];
   activeCategoryId?: string;
+  activePackageId?: string;
   selectedSeatId?: string;
   onSimulationComplete?: () => void;
 }) {
@@ -103,6 +105,7 @@ export function ConcurrencySimulatorModal({
         body: JSON.stringify({
           slug,
           categoryId: currentCategory.id,
+          packageId: activePackageId,
           seatId,
           seatLabel: currentSeat ? `${currentSeat.section} ${currentSeat.row}${currentSeat.number}` : undefined,
           autoRelease,

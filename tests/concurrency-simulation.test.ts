@@ -7,7 +7,7 @@ import { DemoBookingStore } from '../src/features/booking/demo-store';
 function createMockDeps(store: DemoBookingStore) {
   return {
     inventory: async (slug: string) => store.inventory(slug),
-    reserve: async (userId: string, input: any) => store.reserve(userId, input),
+    reserve: async (userId: string, input: any) => input.packageId ? store.reservePackage(userId, input) : store.reserve(userId, input),
     cancel: async (userId: string, id: string) => store.cancel(userId, id),
   };
 }

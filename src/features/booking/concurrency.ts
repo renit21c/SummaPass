@@ -5,6 +5,7 @@ import { BookingError, type Booking, type Inventory, type ReserveInput } from '.
 export const concurrencySimulationSchema = z.object({
   slug: z.string().min(1, 'Slug event harus diisi.'),
   categoryId: z.string().min(1, 'Kategori tiket harus diisi.'),
+  packageId: z.string().uuid().optional(),
   seatId: z.string().min(1, 'ID kursi harus dipilih.'),
   seatLabel: z.string().optional(),
   autoRelease: z.boolean().default(true),
@@ -83,9 +84,16 @@ export async function runConcurrencySimulation(
   const keyA = randomUUID();
   const keyB = randomUUID();
 
+  const category = inv.categories.find(c => c.id === input.categoryId);
+  const defaultPackage = category?.packages?.find(p => p.active && p.participants === 1)
+    ?? category?.packages?.find(p => p.active)
+    ?? category?.packages?.[0];
+  const packageId = input.packageId ?? defaultPackage?.id;
+
   const buyerAInput: ReserveInput = {
     slug: input.slug,
     categoryId: input.categoryId,
+    ...(packageId ? { packageId, packageQuantity: 1 } : {}),
     seats: [{ seatId: input.seatId, name: 'Pembeli A (Budi Prasetyo)' }],
     key: keyA,
   };
@@ -93,6 +101,7 @@ export async function runConcurrencySimulation(
   const buyerBInput: ReserveInput = {
     slug: input.slug,
     categoryId: input.categoryId,
+    ...(packageId ? { packageId, packageQuantity: 1 } : {}),
     seats: [{ seatId: input.seatId, name: 'Pembeli B (Siti Rahma)' }],
     key: keyB,
   };
