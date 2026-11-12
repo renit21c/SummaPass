@@ -32,3 +32,13 @@ body .discount-badge{background:#b42318;color:#fff}
 :root{--header-clearance:88px}
 body .legend-dot.selected{background:var(--action)}
 @media(max-width:760px){:root{--header-clearance:80px}}
+/* Totals retain emphasis without overwhelming the booking summary. */
+body .quantity-summary .discount-price.quantity-total{font-size:clamp(26px,3vw,32px)}
+body .price-breakdown .discount-price{font-size:24px}
+body .reservation-total>strong{font-size:24px}
+body .reservation-total>strong:first-child{font-size:18px}
+@media(max-width:760px){
+ body .quantity-summary .discount-price.quantity-total{font-size:26px}
+ body .price-breakdown .discount-price,body .reservation-total>strong:last-child{font-size:22px}
+ body .seat-mobile-bar .discount-price,body .seat-mobile-bar strong{font-size:20px}
+}

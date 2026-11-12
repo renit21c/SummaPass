@@ -55,3 +55,22 @@
   .phone-sample-ticket{padding:8px;margin-inline:14px}.phone-sample-ticket>svg{width:20px;height:20px}.phone-sample-ticket h3{font-size:18px;margin-block:3px}.phone-sample-ticket>p{margin-bottom:3px}
   .phone-example-qr{width:96px;height:96px;padding:6px;margin-block:6px}.phone-example-qr svg{width:84px;height:84px}
 }
+/* Keep the longer event name and totals readable inside the phone. */
+.phone-order-prices strong{font-size:15px}
+.phone-order-event strong{font-size:12px;line-height:1.4}
+.phone-sample-ticket h3{font-size:16px;line-height:1.25}
+@media(max-width:760px),(min-width:761px) and (max-height:850px){
+ .phone-order-prices strong{font-size:14px}
+ .phone-order-event strong{font-size:12px}
+ .phone-sample-ticket h3{font-size:15px}
+}
+@media(max-width:760px),(min-width:761px) and (max-height:850px){
+ .phone-sample-ticket{padding:7px}
+ .phone-sample-ticket h3{margin-block:2px;line-height:1.2}
+ .phone-example-qr{width:88px;height:88px}
+ .phone-example-qr svg{width:76px;height:76px}
+}
+@media(max-width:374px){
+ .phone-example-qr{width:84px;height:84px}
+ .phone-example-qr svg{width:72px;height:72px}
+}

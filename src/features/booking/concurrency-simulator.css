@@ -1,0 +1,30 @@
+.war-dialog{width:min(540px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;margin:auto;border:2px solid var(--ink);border-radius:18px;background:var(--cream);color:var(--ink);box-shadow:5px 5px 0 var(--yellow);overflow:auto}
+.war-dialog::backdrop{background:#24221fb3}
+.war-content{display:grid;gap:24px;padding:28px}
+.war-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.war-heading h2{font-size:26px;line-height:1.25;margin:0 0 10px}
+.war-heading p,.war-note{font-size:12px;line-height:1.7;color:var(--muted);margin:0}
+.war-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink)}
+.war-close:hover{background:var(--purple-light)}
+.war-fields{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.war-fields label{display:grid;gap:10px;font-size:13px;font-weight:700;min-width:0}
+.war-fields select{width:100%;min-width:0;min-height:48px;padding:10px;border:1px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
+.war-run{width:100%}
+.war-error{display:flex;align-items:flex-start;gap:10px;margin:0;padding:14px;border:1px solid var(--danger,#b42318);border-radius:9px;background:#fff0ed;color:#8b231b;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.war-error svg,.war-outcome>svg{flex-shrink:0}
+.war-outcome{display:flex;gap:14px;padding:20px;border:1px solid var(--ink);border-radius:12px;background:var(--yellow)}
+.war-outcome.is-passed{background:var(--mint);color:var(--ink)}
+.war-outcome h3{margin:0 0 10px;font-size:20px;line-height:1.35}
+.war-outcome p{font-size:12px;line-height:1.7;margin:0}
+.war-buyers{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.war-buyers article{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:18px;border:1px solid var(--line);border-radius:12px;background:#fff;min-width:0}
+.war-buyers article>div{display:flex;align-items:center;gap:8px;font-size:13px}
+.war-buyers article p{font-size:12px;line-height:1.7;margin:0}
+.war-status{padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:11px;font-weight:700;background:var(--surface)}
+.war-status.is-winner{background:var(--purple-light);color:var(--purple)}
+.war-details{font-size:12px;border-block:1px solid var(--line);padding:14px 0}
+.war-details summary{cursor:pointer;min-height:32px;line-height:32px;font-weight:700}
+.war-details p{margin:12px 0 0;font-size:11px;overflow-wrap:anywhere;line-height:1.7}
+.war-actions{display:flex;justify-content:flex-end;gap:20px;flex-wrap:wrap}
+@media(max-width:540px){.war-content{padding:20px;gap:20px}.war-heading h2{font-size:23px}.war-fields,.war-buyers{grid-template-columns:minmax(0,1fr);gap:16px}.war-actions>.button{flex:1}.war-outcome{padding:16px}}
+@media(prefers-reduced-motion:reduce){.war-content .spin{animation:none}}
