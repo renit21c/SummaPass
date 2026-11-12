@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Format permintaan tidak valid.' }, { status: 400 });
     }
 
-    const result = await runConcurrencySimulation(user.id, body as any);
+    const result = await runConcurrencySimulation(user.id, body);
     return NextResponse.json(result, {
       status: 200,
       headers: { 'Cache-Control': 'no-store' },

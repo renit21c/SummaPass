@@ -660,9 +660,9 @@ export function SeatPicker({
         onClose={() => setShowSimulator(false)}
         slug={data.slug}
         categories={data.categories}
+        serverNow={data.serverNow}
         seats={data.seats}
         activeCategoryId={categoryId}
-        activePackageId={packageId || pack?.id}
         selectedSeatId={selected[0]}
         onSimulationComplete={refresh}
       />
