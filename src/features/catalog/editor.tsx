@@ -8,6 +8,7 @@ import { eventFieldLimits, type ManagedEvent } from './core';
 import { coverDimensionsError, coverFileError, editorValidation, type EditorValues } from './editor-validation';
 import { GalleryManager } from '@/features/gallery/manager';
 import { TicketOptionsEditor } from '@/features/ticket-options/editor';
+import { PromosManager } from '@/features/organizer/promos-manager';
 import { EventOperations } from '@/features/operations/event-operations';
 import { StaffManager } from '@/features/organizer/staff-manager';
 const local = (v:string) => new Date(Date.parse(v)+25200000).toISOString().slice(0,16);
@@ -92,7 +93,8 @@ export function EventEditor({initial,now,mode}:{initial?:ManagedEvent;now?:strin
   {message&&<p className={`editor-message${failed?' editor-message-error':''}`} role={failed?'alert':'status'}>{failed?<AlertCircle size={20} aria-hidden="true"/>:<CheckCircle2 size={20} aria-hidden="true"/>}{message}</p>}
   {saved?.id&&<GalleryManager eventId={saved.id} disabled={busy||saved.status==='ARCHIVED'||!!saved.cancelledAt}/>}
   {saved?.id&&<TicketOptionsEditor eventId={saved.id} disabled={saved.status==='ARCHIVED'||!!saved.cancelledAt} onManaged={()=>setSaved(previous=>previous?{...previous,customTicketing:true}:previous)}/>}
-  {saved?.id&&<>{mode==='supabase'&&<section className="manage-card"><h2>Pengelolaan event</h2><Link className="button" href={'/organizer/events/'+saved.id+'/manage'}>Denah, peserta, laporan, dan pengumuman</Link></section>}<StaffManager eventId={saved.id} mode={mode}/>{mode==='supabase'&&<EventOperations eventId={saved.id} cancelledAt={saved.cancelledAt}/>}</>}
+  {saved?.id&&<PromosManager eventId={saved.id} />}
+  {saved?.id&&<>{mode==='supabase'&&<section className="manage-card"><h2>Pengelolaan event</h2><Link className="button" href={'/organizer/events/'+saved.id+'/manage'}>Ruang Kendali: Denah, Diskon & Voucher, Peserta, dan Laporan</Link></section>}<StaffManager eventId={saved.id} mode={mode}/>{mode==='supabase'&&<EventOperations eventId={saved.id} cancelledAt={saved.cancelledAt}/>}</>}
   {saved&&!saved.cancelledAt&&saved.status!=='ARCHIVED'&&<section className="editor-actions"><h2>Publikasi</h2><p>Simpan perubahan sebelum publikasi.</p><button className="button" disabled={busy} onClick={()=>void action(saved.status==='PUBLISHED'?'unpublish':'publish')}>{saved.status==='PUBLISHED'?'Sembunyikan event':'Publikasikan event'}</button>{saved.status==='PUBLISHED'&&<Link className="button button-light" href={`/events/${saved.slug}`}>Lihat event</Link>}<button className="text-link" disabled={busy} onClick={()=>void action('archive')}>Arsipkan setelah acara selesai</button></section>}
  {saved?.id&&<section className="editor-actions"><h2>Duplikasi</h2><p>Buat draf baru dengan menyalin detail, kuota, dan harga dari event ini.</p><button type="button" className="button button-light" disabled={busy||duplicating} onClick={()=>void duplicate()}><Copy size={16} aria-hidden="true"/>{duplicating?'Menduplikasi...':'Duplikat event ini'}</button></section>}
  {saved&&<section className="editor-actions"><h2>Hapus event demo</h2><p>Event, sales, tiket, peserta, notifikasi, dan riwayat check-in akan dihapus permanen. Ketik nama event untuk mengonfirmasi.</p><button type="button" className="button button-light" disabled={busy} onClick={()=>void removeEvent()}>{busy?'Menghapus...':'Hapus event permanen'}</button></section>}
