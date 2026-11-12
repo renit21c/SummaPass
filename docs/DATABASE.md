@@ -1,5 +1,11 @@
 # Database dan ERD
 
+## Jadwal dari editor utama, migrasi 026
+
+Jalankan `supabase/migrations/202611120026_event_editor_schedule.sql` setelah 001 sampai 025. Tidak ada tabel baru. RPC editor yang sama mengizinkan perubahan jadwal saat ada reservasi atau tiket lunas; kunci lokasi tetap berlaku. Kursi, harga, dan snapshot tiket lama tetap tersimpan. Trigger perubahan event memasukkan pemberitahuan ke antrean untuk pemesan lunas dan audit tetap dicatat dalam transaksi yang sama.
+
+Perubahan periode penjualan umum memperbarui seluruh kategori serta menaikkan versi konfigurasi. Jika periode umum tidak diubah, periode per kategori tetap dipertahankan dan tidak boleh melewati waktu mulai acara yang baru. Harga, kuota, dan paket kategori khusus tidak ditimpa. Migrasi dapat dijalankan ulang.
+
 ## Galeri acara, migrasi 025
 
 `events` 1:N `event_gallery_images` (maksimal 10 per event). Foto menyimpan caption, position, waktu, dan object path UUID yang terikat ke event. Index `(event_id,position,created_at)` mendukung tampilan galeri. RLS publik hanya membaca foto acara PUBLISHED yang tidak dibatalkan; akses draf dan mutasi hanya organizer assigned. Bucket privat `event-gallery` memakai kebijakan yang sama, dengan SELECT publik terbatas pada objek tertaut. Mutasi RPC mengunci event dan mencatat audit. Detail aktivasi dan operasi ada di [EVENT_GALLERY.md](EVENT_GALLERY.md).

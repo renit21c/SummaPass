@@ -1,6 +1,7 @@
 "use client";
 import { useConfirmation } from '@/components/confirmation-dialog';
-import { useEffect, useState } from "react";
+import { NumberInput } from '@/components/number-input';
+import { useEffect, useRef, useState } from "react";
 import { RefreshCw, Plus, Save, Trash2 } from "lucide-react";
 import { ZodError } from "zod";
 import {
@@ -24,6 +25,7 @@ export function SeatingEditor({
   disabled: boolean;
 }) {
   const confirmAction=useConfirmation();
+  const root = useRef<HTMLElement>(null);
   const [config, setConfig] = useState<SeatingConfig | null>(null),
     [draft, setDraft] = useState<LayoutInput | null>(null);
   const [error, setError] = useState(""),
@@ -70,6 +72,9 @@ export function SeatingEditor({
   }, [eventId]);
   async function save(layout: boolean) {
     if (!draft || !config) return;
+    const scope = root.current?.querySelector(layout ? '[data-layout-fields]' : '[data-category-fields]');
+    const invalid = scope?.querySelector<HTMLInputElement>('input:invalid');
+    if (invalid) { invalid.reportValidity(); return; }
     if (
       !layout &&
       (draft.width !== config.width ||
@@ -222,7 +227,7 @@ export function SeatingEditor({
     });
   }
   return (
-    <section className="manage-card">
+    <section ref={root} className="manage-card">
       <div className="manage-heading">
         <div>
           <h2>Kategori dan denah</h2>
@@ -249,7 +254,7 @@ export function SeatingEditor({
         </p>
       ) : (
         <>
-          <fieldset disabled={busy || disabled} className="manage-fieldset">
+          <fieldset data-category-fields disabled={busy || disabled} className="manage-fieldset">
             <legend>Pengaturan kategori</legend>
             <label>
               Kategori
@@ -293,7 +298,7 @@ export function SeatingEditor({
                   </label>
                   <label>
                     Harga (Rp)
-                    <input
+                    <NumberInput
                       type="number"
                       min={0}
                       max={100000000}
@@ -306,7 +311,7 @@ export function SeatingEditor({
                   </label>
                   <label>
                     Kuota
-                    <input
+                    <NumberInput
                       type="number"
                       min={1}
                       max={2000}
@@ -390,11 +395,11 @@ export function SeatingEditor({
                 untuk membuat denah baru.
               </p>
             ) : (
-              <fieldset disabled={busy || disabled} className="manage-fieldset">
+              <fieldset data-layout-fields disabled={busy || disabled} className="manage-fieldset">
                 <div className="editor-grid">
                   <label>
                     Lebar denah
-                    <input
+                    <NumberInput
                       type="number"
                       min={320}
                       max={10000}
@@ -406,7 +411,7 @@ export function SeatingEditor({
                   </label>
                   <label>
                     Tinggi denah
-                    <input
+                    <NumberInput
                       type="number"
                       min={240}
                       max={10000}
@@ -508,7 +513,7 @@ export function SeatingEditor({
                   </label>
                   <label>
                     Kursi per baris
-                    <input
+                    <NumberInput
                       type="number"
                       min={1}
                       max={100}
@@ -580,7 +585,7 @@ export function SeatingEditor({
                     {(["number", "x", "y"] as const).map((k) => (
                       <label key={k}>
                         {k === "number" ? "Nomor kursi" : k.toUpperCase()}
-                        <input
+                        <NumberInput
                           type="number"
                           value={seat[k]}
                           onChange={(e) => changeSeat(k, e.target.value)}
@@ -662,7 +667,7 @@ export function SeatingEditor({
                     </label>
                     <label>
                       Harga (Rp)
-                      <input
+                      <NumberInput
                         type="number"
                         min={0}
                         max={100000000}
@@ -681,7 +686,7 @@ export function SeatingEditor({
                     </label>
                     <label>
                       Kuota
-                      <input
+                      <NumberInput
                         type="number"
                         min={1}
                         max={2000}
