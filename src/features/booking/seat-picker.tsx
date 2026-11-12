@@ -565,7 +565,7 @@ export function SeatPicker({
                         </div>
 
                         <label style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
-                          Nama Peserta (Wajib)
+                          <span>Nama Peserta <span className="required-mark" aria-hidden="true">*</span></span>
                           <input
                             required
                             maxLength={100}
