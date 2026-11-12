@@ -663,6 +663,7 @@ export function SeatPicker({
         categories={data.categories}
         seats={data.seats}
         activeCategoryId={categoryId}
+        activePackageId={packageId || pack?.id}
         selectedSeatId={selected[0]}
         onSimulationComplete={refresh}
       />
