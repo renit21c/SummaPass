@@ -22,6 +22,7 @@ export interface BuyerResult {
   error?: string;
   timestampOffsetMs: number;
   durationMs: number;
+  completedOffsetMs: number;
 }
 export interface ConcurrencySimulationResult {
   seatId: string;
@@ -77,8 +78,12 @@ export async function runConcurrencySimulation(userId: string, rawInput: unknown
   const started = performance.now();
   const testedAt = new Date().toISOString();
   async function attempt(name: string) {
-    const timestampOffsetMs = Math.round(performance.now() - started);
     const attemptStart = performance.now();
+    const timestampOffsetMs = Number((attemptStart - started).toFixed(1));
+    const timing = () => {
+      const end = performance.now();
+      return { timestampOffsetMs, durationMs: Number((end - attemptStart).toFixed(1)), completedOffsetMs: Number((end - started).toFixed(1)) };
+    };
     try {
       const booking = await runtime.reserve(userId, {
         slug: input.slug, categoryId: input.categoryId, key: randomUUID(),
@@ -87,14 +92,14 @@ export async function runConcurrencySimulation(userId: string, rawInput: unknown
       });
       return { booking, result: { buyerName: name, status: 'WINNER', httpStatus: 201,
         message: 'Berhasil memesan.', bookingReference: booking.reference, expiresAt: booking.expiresAt,
-        timestampOffsetMs, durationMs: Math.round(performance.now() - attemptStart) } satisfies BuyerResult };
+        ...timing() } satisfies BuyerResult };
     } catch (error) {
       const conflict = error instanceof BookingError && ['SEAT_UNAVAILABLE', 'QUOTA'].includes(error.code);
       return { booking: null, result: { buyerName: name, status: conflict ? 'REJECTED' : 'ERROR',
         httpStatus: error instanceof BookingError ? error.status : 503,
         error: error instanceof BookingError ? error.code : 'SYSTEM',
         message: error instanceof BookingError && error.code === 'SEAT_UNAVAILABLE' ? 'Kursi sudah dipesan pembeli lain.' : error instanceof BookingError ? error.message : 'Permintaan gagal. Coba lagi.',
-        timestampOffsetMs, durationMs: Math.round(performance.now() - attemptStart) } satisfies BuyerResult };
+        ...timing() } satisfies BuyerResult };
     }
   }
   // Both attempts share the same seats and have different idempotency keys.
