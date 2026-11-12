@@ -59,8 +59,8 @@ export function TicketTiers({
   ];
 
   return (
-    <section style={{ margin: '36px 0', border: '2px solid var(--ink)', borderRadius: 16, background: '#fff', padding: 26, boxShadow: '5px 5px 0 var(--ink)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+    <section className="ticket-tiers" style={{ margin: '36px 0', border: '2px solid var(--ink)', borderRadius: 16, background: '#fff', padding: 26, boxShadow: '5px 5px 0 var(--ink)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <Ticket size={24} style={{ color: 'var(--purple)' }} />
         <h2 style={{ fontSize: 26, margin: 0, fontWeight: 800 }}>Pilihan Kategori Tiket</h2>
       </div>
@@ -68,7 +68,7 @@ export function TicketTiers({
         {withoutSeats?'Pilih jumlah tiket. Event ini tidak menggunakan nomor kursi.':'Pilih paket tiket yang sesuai dengan preferensi tempat duduk dan fasilitas Anda.'}
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 24 }}>
         {displayTiers.map((tier) => {
           const rawPackages = tier.packages ?? [];
           const hasMultiplePackages = rawPackages.length > 1 || (rawPackages.length === 1 && rawPackages[0].participants > 1);

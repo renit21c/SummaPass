@@ -42,7 +42,6 @@ body .sr-only{position:absolute!important;width:1px!important;height:1px!importa
 }
 
 @media(max-width:639px){
- body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
  .buyer-packages{min-width:0;padding:16px}
  .buyer-package-options{gap:12px}
  .buyer-package-options>button{padding:12px;max-width:100%}
@@ -63,10 +62,23 @@ body .sr-only{position:absolute!important;width:1px!important;height:1px!importa
  .footer-top>*{max-width:100%}
  .seat-mobile-bar>div{min-width:0;flex:1}
  .seat-mobile-bar>.button{flex:0 1 auto;max-width:52%;min-height:44px;white-space:normal;text-align:center}
- body:has(.seat-mobile-bar){padding-bottom:calc(148px + env(safe-area-inset-bottom))}
+
  body:has(.seat-mobile-bar) .subo-widget{bottom:calc(152px + env(safe-area-inset-bottom))}
  body:has(.seat-mobile-bar) .subo-panel{max-height:calc(100dvh - 248px - env(safe-area-inset-bottom))}
  body:has(.seat-mobile-bar) .pwa-mobile-banner{bottom:calc(220px + env(safe-area-inset-bottom));max-height:calc(100dvh - 300px - env(safe-area-inset-bottom))}
 }
 
 @media(hover:none){[data-icon-action][title]:hover::after{display:none}}
+
+/* Let the footer end the page, including pages shorter than the viewport. */
+@media(max-width:760px){
+ body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+ body>main{flex:1 0 auto;width:100%}
+ body>.site-header,body>footer{flex-shrink:0}
+}
+@media(max-width:639px){
+ body{padding-bottom:0}
+ body>footer{margin-bottom:0;padding-bottom:env(safe-area-inset-bottom)}
+ /* Keep footer content above the booking dock without a blank strip after it. */
+ body:has(.seat-mobile-bar)>footer{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+}

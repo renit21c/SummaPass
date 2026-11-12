@@ -1,14 +1,15 @@
 'use client';
+import { ScrollReveal } from '@/components/scroll-reveal';
 import { DiscountPrice } from '../promos/price';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useId } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, CalendarDays, Search, SlidersHorizontal, Heart, Filter, X, RotateCcw } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, Search, Heart, Filter, X, RotateCcw } from 'lucide-react';
 import { type Event, dateLabel, rupiah } from './data';
 import { Poster } from '@/components/poster';
 import { useFavorites } from './favorites';
 import { CategoryIcon, CategoryLabel, TrendingBadge } from './event-labels';
 
-export function Explorer({ items }: { items: Event[] }) {
+export function Explorer({ items, animate = false }: { items: Event[]; animate?: boolean }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Semua');
   const [sort, setSort] = useState<'date' | 'price' | 'price-desc'>('date');
@@ -17,6 +18,7 @@ export function Explorer({ items }: { items: Event[] }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const filterPanelId = useId();
 
   const { favorites, toggle } = useFavorites();
 
@@ -49,7 +51,7 @@ export function Explorer({ items }: { items: Event[] }) {
     });
   }, [items, query, category, onlyFavorites, favorites, priceTier, startDate, endDate, sort]);
 
-  const hasActiveFilters = category !== 'Semua' || onlyFavorites || priceTier !== 'all' || startDate !== '' || endDate !== '' || query !== '';
+  const hasActiveFilters = category !== 'Semua' || onlyFavorites || priceTier !== 'all' || startDate !== '' || endDate !== '' || query !== '' || sort !== 'date';
 
   function resetFilters() {
     setQuery('');
@@ -58,11 +60,12 @@ export function Explorer({ items }: { items: Event[] }) {
     setPriceTier('all');
     setStartDate('');
     setEndDate('');
+    setSort('date');
   }
 
   return (
     <>
-      <div className="explorer-controls">
+      <ScrollReveal enabled={animate} className="explorer-controls">
         <label className="search-field">
           <Search size={20} />
           <span className="sr-only">Cari nama atau kategori event</span>
@@ -83,39 +86,38 @@ export function Explorer({ items }: { items: Event[] }) {
           )}
         </label>
 
-        <label className="sort-field">
-          <SlidersHorizontal size={18} />
-          <span className="sr-only">Urutkan event</span>
-          <select value={sort} onChange={e => setSort(e.target.value as any)}>
-            <option value="date">Tanggal terdekat</option>
-            <option value="price">Harga terendah</option>
-            <option value="price-desc">Harga tertinggi</option>
-          </select>
-        </label>
-
         <button
           type="button"
           onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
-          className={`chip ${showAdvancedFilter || startDate || endDate || priceTier !== 'all' ? 'active' : ''}`}
+          className={`chip ${showAdvancedFilter || startDate || endDate || priceTier !== 'all' || sort !== 'date' ? 'active' : ''}`}
           style={{ display: 'flex', alignItems: 'center', gap: 8, height: 52 }}
           aria-expanded={showAdvancedFilter}
+          aria-controls={filterPanelId}
         >
           <Filter size={16} />
           Filter Tanggal & Harga
         </button>
-      </div>
+      </ScrollReveal>
 
       {showAdvancedFilter && (
-        <div style={{ background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: 12, padding: 20, margin: '16px 0', boxShadow: '3px 3px 0 var(--ink)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+        <div id={filterPanelId} className="explorer-filter-panel" role="region" aria-label="Filter tanggal dan harga" style={{ background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: 12, padding: 20, margin: '16px 0', boxShadow: '3px 3px 0 var(--ink)' }}>
+          <label className="explorer-filter-sort">
+            <span>Urutkan event</span>
+            <select value={sort} onChange={e => setSort(e.target.value as 'date' | 'price' | 'price-desc')}>
+              <option value="date">Tanggal terdekat</option>
+              <option value="price">Harga terendah</option>
+              <option value="price-desc">Harga tertinggi</option>
+            </select>
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 20 }}>
             <div>
               <span style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Filter Rentang Harga</span>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className={`chip ${priceTier === 'all' ? 'active' : ''}`}
                   onClick={() => setPriceTier('all')}
-                  style={{ minHeight: 34, padding: '4px 12px', fontSize: 12 }}
+                  style={{ minHeight: 44, padding: '8px 14px', fontSize: 12 }}
                 >
                   Semua Harga
                 </button>
@@ -123,7 +125,7 @@ export function Explorer({ items }: { items: Event[] }) {
                   type="button"
                   className={`chip ${priceTier === 'under100' ? 'active' : ''}`}
                   onClick={() => setPriceTier('under100')}
-                  style={{ minHeight: 34, padding: '4px 12px', fontSize: 12 }}
+                  style={{ minHeight: 44, padding: '8px 14px', fontSize: 12 }}
                 >
                   &lt; Rp100.000
                 </button>
@@ -131,7 +133,7 @@ export function Explorer({ items }: { items: Event[] }) {
                   type="button"
                   className={`chip ${priceTier === '100to150' ? 'active' : ''}`}
                   onClick={() => setPriceTier('100to150')}
-                  style={{ minHeight: 34, padding: '4px 12px', fontSize: 12 }}
+                  style={{ minHeight: 44, padding: '8px 14px', fontSize: 12 }}
                 >
                   Rp100rb - Rp150rb
                 </button>
@@ -139,7 +141,7 @@ export function Explorer({ items }: { items: Event[] }) {
                   type="button"
                   className={`chip ${priceTier === 'above150' ? 'active' : ''}`}
                   onClick={() => setPriceTier('above150')}
-                  style={{ minHeight: 34, padding: '4px 12px', fontSize: 12 }}
+                  style={{ minHeight: 44, padding: '8px 14px', fontSize: 12 }}
                 >
                   &gt; Rp150.000
                 </button>
@@ -184,7 +186,7 @@ export function Explorer({ items }: { items: Event[] }) {
         </div>
       )}
 
-      <div className="filter-row" aria-label="Kategori event">
+      <ScrollReveal enabled={animate} className="filter-row" label="Kategori event">
         {['Semua', 'Musik', 'Workshop', 'Keluarga'].map(c => (
           <button
             className={`chip ${category === c && !onlyFavorites ? 'active' : ''}`}
@@ -212,13 +214,13 @@ export function Explorer({ items }: { items: Event[] }) {
         <span className="result-count" aria-live="polite">
           {filtered.length} event ditemukan
         </span>
-      </div>
+      </ScrollReveal>
 
       <div className="event-grid">
-        {filtered.map(e => {
+        {filtered.map((e, index) => {
           const isFav = favorites.includes(e.slug);
           return (
-            <div className="event-card" key={e.slug} style={{ position: 'relative' }}>
+            <ScrollReveal className="event-card" key={e.slug} enabled={animate} delay={(index%4)*70} style={{ position: 'relative' }}>
               <button
                 type="button"
                 onClick={ev => {
@@ -267,7 +269,7 @@ export function Explorer({ items }: { items: Event[] }) {
                   <DiscountPrice price={e.price} originalPrice={e.originalPrice}/>
                 </div>
               </Link>
-            </div>
+            </ScrollReveal>
           );
         })}
       </div>

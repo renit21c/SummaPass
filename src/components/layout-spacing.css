@@ -1,0 +1,86 @@
+/* Leave room for touch targets and the offset button shadows. */
+body :is(.notifications-actions,.organizer-table-controls,.organizer-pagination,.correction-actions,.view-tabs,.manage-tabs,.ticket-category-tabs,.ticket-package-presets,.promo-tabs,.promo-form-actions,.promo-card-actions,.ticket-dialog-actions,.summa-confirmation-actions){gap:16px}
+body :is(.manage-actions,.operations-actions,.scanner-actions,.organizer-event-actions,.payment-simulation-actions,.editor-actions){gap:20px}
+body .ticket-actions{gap:24px}
+body .filter-row{gap:12px;row-gap:14px}
+body .buyer-package-options{gap:16px}
+body .ticket-package-list{gap:14px}
+body .gallery-manager-actions{gap:16px;flex-wrap:wrap;margin-top:18px}
+body .gallery-manager-actions small{flex:1 1 100%;margin:0}
+body .gallery-manager-actions .icon-button{width:44px;height:44px;flex:0 0 44px}
+body .subo-topics{gap:12px}
+body .subo-links{gap:14px}
+body .promo-voucher-row{gap:14px}
+@media(max-width:760px){
+  .site-header .nav{gap:12px}
+  .site-header .header-actions{gap:12px!important}
+  body .explorer-controls{gap:16px}
+  body :is(.footer-top,.pwa-mobile-actions,.selected-seat-actions){gap:20px}
+  body .category-options{gap:16px}
+  body .event-photo-grid{gap:12px}
+  body .gallery-upload{flex-wrap:wrap;gap:16px}
+  body .gallery-manager-heading{flex-wrap:wrap;gap:16px}
+  body .organizer-table-controls>.search-field{min-width:0;flex-basis:100%}
+  body .organizer-table-controls>select{min-width:0;max-width:100%;flex:1 1 150px}
+  body .organizer-table-controls>.button{flex:1 1 150px}
+  body .promo-voucher-row{flex-wrap:wrap}
+  body .promo-voucher-row>input{flex:1 1 140px;min-height:46px}
+  body .promo-voucher-row>.button{flex:1 1 80px;min-height:46px}
+  body .summa-confirmation-actions{gap:16px}
+}
+
+body .venue-zone-switch{gap:16px}
+body nav[aria-label='Dashboard organizer']{gap:16px}
+@media(max-width:639px){body .profile-shortcuts{gap:16px;grid-template-columns:minmax(0,1fr)}body .profile-workspace-links{display:grid;gap:12px}}
+
+/* Give headings, cards, and their actions separate visual space. */
+body .seat-workspace>h2{margin:0 0 20px;line-height:1.3}
+body .buyer-packages{margin-block:32px;padding:24px}
+body .buyer-packages h2{margin:0 0 20px;line-height:1.3}
+body .buyer-package-options{margin-bottom:24px}
+body .buyer-packages>p{margin:16px 0 0}
+body .seat-workspace>.map-toolbar{margin-top:28px;margin-bottom:24px}
+body .category-option{gap:14px;padding:18px;min-width:0}
+body .category-options{gap:20px;margin-bottom:32px}
+body .category-option strong{line-height:1.35;overflow-wrap:anywhere}
+body .category-option>div:last-child{line-height:1.6}
+body .category-option>div:last-child>svg{flex-shrink:0}
+body .seat-summary h2{margin-bottom:24px}
+body :is(.auth-card,.account-card,.event-extra,.profile-panel,.promo-form,.ticket-options-manager)>h2{margin-bottom:20px}
+body .ticket-options-heading{margin-bottom:20px}
+body .ticket-options-columns h3{margin-bottom:20px}
+body .selected-seat-actions{gap:16px}
+body .seat-workspace>.button{margin-bottom:8px}
+@media(max-width:639px){
+ body .buyer-packages{padding:20px}
+ body .category-options{gap:16px}
+ body .category-option{padding:16px}
+ body .seat-mobile-bar{gap:20px}
+ body .seat-mobile-bar>.button{min-height:48px;font-size:12px;padding:12px 16px}
+}
+body .ticket-tiers>div:first-child>svg{flex-shrink:0}
+body .ticket-tiers .tier-packages li>div{flex-wrap:wrap;gap:12px}
+@media(max-width:639px){
+ body .ticket-tiers{padding:20px!important}
+ body .ticket-tiers>div:nth-of-type(2)>div{padding:20px!important;min-width:0}
+ body .ticket-tiers .customer-ticket-price{font-size:28px}
+}
+
+/* Compact navigation preserves a 44px touch target. */
+body .site-header .nav{height:72px;min-height:72px;gap:20px}
+body .site-header .wordmark{font-size:24px}
+body .site-header .nav nav{font-size:14px;gap:24px}
+body .site-header .header-actions>.button{min-height:44px;padding:10px 16px;font-size:13px}
+body .explorer-controls{display:grid;grid-template-columns:minmax(0,1fr) auto}
+.explorer-filter-sort{display:grid;gap:10px;max-width:360px;margin-bottom:24px;font-size:13px;font-weight:700}
+.explorer-filter-sort select{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-weight:500}
+.explorer-filter-panel input[type=date]{min-height:44px;max-width:100%;color:var(--ink)}
+@media(max-width:760px){
+ body .site-header .nav{height:64px;min-height:64px;gap:12px}
+ body .site-header .wordmark{font-size:21px}
+ body .site-header .wordmark svg{width:23px;height:23px;margin-right:6px}
+ body .explorer-controls{grid-template-columns:minmax(0,1fr)}
+ .explorer-filter-sort{max-width:none}
+}
+@media(max-width:374px){body .site-header .wordmark{font-size:18px}}
+@media(max-width:639px){body .site-header .header-actions>button,body .site-header .notification-bell-button{width:44px!important;height:44px!important;min-height:44px}}
