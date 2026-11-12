@@ -1,4 +1,5 @@
 'use client';
+import { FieldLabel } from '@/components/form-fields';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { DiscountPrice } from '../promos/price';
 import { useState, useMemo, useId } from 'react';
@@ -66,7 +67,7 @@ export function Explorer({ items, animate = false }: { items: Event[]; animate?:
   return (
     <>
       <ScrollReveal enabled={animate} className="explorer-controls">
-        <label className="search-field">
+        <FieldLabel className="search-field">
           <Search size={20} />
           <span className="sr-only">Cari nama atau kategori event</span>
           <input
@@ -84,7 +85,7 @@ export function Explorer({ items, animate = false }: { items: Event[]; animate?:
               <X size={16} />
             </button>
           )}
-        </label>
+        </FieldLabel>
 
         <button
           type="button"
@@ -101,14 +102,14 @@ export function Explorer({ items, animate = false }: { items: Event[]; animate?:
 
       {showAdvancedFilter && (
         <div id={filterPanelId} className="explorer-filter-panel" role="region" aria-label="Filter tanggal dan harga" style={{ background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: 12, padding: 20, margin: '16px 0', boxShadow: '3px 3px 0 var(--ink)' }}>
-          <label className="explorer-filter-sort">
+          <FieldLabel className="explorer-filter-sort">
             <span>Urutkan event</span>
             <select value={sort} onChange={e => setSort(e.target.value as 'date' | 'price' | 'price-desc')}>
               <option value="date">Tanggal terdekat</option>
               <option value="price">Harga terendah</option>
               <option value="price-desc">Harga tertinggi</option>
             </select>
-          </label>
+          </FieldLabel>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 20 }}>
             <div>
               <span style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Filter Rentang Harga</span>
@@ -151,7 +152,7 @@ export function Explorer({ items, animate = false }: { items: Event[]; animate?:
             <div>
               <span style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Filter Rentang Tanggal</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <label style={{ display: 'grid', gap: 4, fontSize: 11 }}>
+                <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11 }}>
                   <span>Dari Tanggal</span>
                   <input
                     type="date"
@@ -159,8 +160,8 @@ export function Explorer({ items, animate = false }: { items: Event[]; animate?:
                     onChange={e => setStartDate(e.target.value)}
                     style={{ border: '1px solid var(--ink)', borderRadius: 6, padding: '6px 10px', fontSize: 12, background: '#fff' }}
                   />
-                </label>
-                <label style={{ display: 'grid', gap: 4, fontSize: 11 }}>
+                </FieldLabel>
+                <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11 }}>
                   <span>Sampai Tanggal</span>
                   <input
                     type="date"
@@ -168,7 +169,7 @@ export function Explorer({ items, animate = false }: { items: Event[]; animate?:
                     onChange={e => setEndDate(e.target.value)}
                     style={{ border: '1px solid var(--ink)', borderRadius: 6, padding: '6px 10px', fontSize: 12, background: '#fff' }}
                   />
-                </label>
+                </FieldLabel>
               </div>
             </div>
           </div>

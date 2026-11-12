@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { NumberInput } from '@/components/number-input';
 import { useConfirmation } from '@/components/confirmation-dialog';
 import { useState, useEffect } from 'react';
@@ -235,7 +236,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
 
       {/* Creation Form */}
       {showForm && (
-        <form onSubmit={handleCreate} style={{ background: 'var(--purple-light)', border: '2px solid var(--ink)', borderRadius: 12, padding: 24, marginBottom: 28, boxShadow: '4px 5px 0 var(--ink)' }}>
+        <ValidatedForm onSubmit={handleCreate} style={{ background: 'var(--purple-light)', border: '2px solid var(--ink)', borderRadius: 12, padding: 24, marginBottom: 28, boxShadow: '4px 5px 0 var(--ink)' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={18} color="var(--purple)" />
             {activeTab === 'AUTOMATIC' ? 'Formulir Diskon Otomatis Baru' : 'Formulir Kode Voucher Baru'}
@@ -243,7 +244,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
             {activeTab === 'VOUCHER' && (
-              <label>
+              <FieldLabel>
                 Kode Voucher (Harus Unik)
                 <input
                   type="text"
@@ -255,10 +256,10 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                   disabled={busy}
                   style={{ textTransform: 'uppercase', fontWeight: 800, letterSpacing: 1 }}
                 />
-              </label>
+              </FieldLabel>
             )}
 
-            <label>
+            <FieldLabel>
               Nama Promo
               <input
                 type="text"
@@ -269,9 +270,9 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 maxLength={100}
                 disabled={busy}
               />
-            </label>
+            </FieldLabel>
 
-            <label>
+            <FieldLabel>
               Tipe Potongan
               <select
                 value={formDiscountType}
@@ -281,9 +282,9 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 <option value="PERCENT">Persentase (%)</option>
                 <option value="NOMINAL">Nominal Tetap (Rp)</option>
               </select>
-            </label>
+            </FieldLabel>
 
-            <label>
+            <FieldLabel>
               Besar Potongan {formDiscountType === 'PERCENT' ? '(1 - 100%)' : '(Rupiah)'}
               <NumberInput
                 type="number"
@@ -294,9 +295,9 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 required
                 disabled={busy}
               />
-            </label>
+            </FieldLabel>
 
-            <label>
+            <FieldLabel>
               Berlaku Untuk
               <select
                 value={formScope}
@@ -306,10 +307,10 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 <option value="ALL">Semua Kategori Tiket</option>
                 <option value="CATEGORY">Kategori Tiket Tertentu</option>
               </select>
-            </label>
+            </FieldLabel>
 
             {formScope === 'CATEGORY' && (
-              <label>
+              <FieldLabel>
                 Pilih Kategori Tiket
                 <select
                   value={formCategoryId}
@@ -322,10 +323,10 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
-              </label>
+              </FieldLabel>
             )}
 
-            <label>
+            <FieldLabel>
               Tanggal Mulai (WIB)
               <input
                 type="date"
@@ -334,9 +335,9 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 required
                 disabled={busy}
               />
-            </label>
+            </FieldLabel>
 
-            <label>
+            <FieldLabel>
               Tanggal Berakhir (WIB)
               <input
                 type="date"
@@ -346,9 +347,9 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 required
                 disabled={busy}
               />
-            </label>
+            </FieldLabel>
 
-            <label>
+            <FieldLabel>
               Batas Kuota Pemakaian (Opsional)
               <input
                 type="number"
@@ -358,9 +359,9 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 onChange={e => setFormQuota(e.target.value)}
                 disabled={busy}
               />
-            </label>
+            </FieldLabel>
 
-            <label>
+            <FieldLabel>
               Minimal Jumlah Tiket (Opsional)
               <input
                 type="number"
@@ -371,7 +372,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
                 onChange={e => setFormMinQuantity(e.target.value)}
                 disabled={busy}
               />
-            </label>
+            </FieldLabel>
           </div>
 
           <div className="action-group promo-form-actions" style={{ justifyContent: 'flex-end', marginTop: 20 }}>
@@ -382,7 +383,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
               {busy ? 'Menyimpan...' : 'Simpan Promo'}
             </button>
           </div>
-        </form>
+        </ValidatedForm>
       )}
 
       {/* Rules Information Box */}

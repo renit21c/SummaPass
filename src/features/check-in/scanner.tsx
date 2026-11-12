@@ -1,4 +1,5 @@
 'use client';
+import { FieldLabel, ValidatedForm } from '@/components/form-fields';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -373,7 +374,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
         <p>Belum ada event yang ditugaskan. Hubungi organizer.</p>
       ) : (
         <>
-          <label className="checkin-event">
+          <FieldLabel className="checkin-event">
             Event bertugas
             <select
               value={slug}
@@ -392,7 +393,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                 </option>
               ))}
             </select>
-          </label>
+          </FieldLabel>
 
           <div className="checkin-grid">
             <section className="checkin-camera">
@@ -466,13 +467,13 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
             <section className="checkin-manual">
               <h2>Cari tiket manual</h2>
               <p>Gunakan nomor SPT atau token QR.</p>
-              <form
+              <ValidatedForm
                 onSubmit={e => {
                   e.preventDefault();
                   void inspect(credential);
                 }}
               >
-                <label>
+                <FieldLabel>
                   Nomor tiket atau token QR
                   <input
                     value={credential}
@@ -487,11 +488,11 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                     placeholder="SPT-..."
                     disabled={busy}
                   />
-                </label>
+                </FieldLabel>
                 <button className="button button-dark" disabled={busy || !credential.trim()}>
                   {busy ? 'Memeriksa...' : 'Periksa tiket'}
                 </button>
-              </form>
+              </ValidatedForm>
               {error && (
                 <p className="form-error" role="alert">
                   {error}
@@ -679,7 +680,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
+                      <FieldLabel style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
                         <span>Periode:</span>
                         <select
                           value={period}
@@ -698,9 +699,9 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                           <option value="4H">4 Jam Terakhir</option>
                           <option value="TODAY">Hari Ini</option>
                         </select>
-                      </label>
+                      </FieldLabel>
 
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
+                      <FieldLabel style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
                         <span>Petugas:</span>
                         <select
                           value={staffScope}
@@ -717,7 +718,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                           <option value="all">Semua Petugas</option>
                           <option value="me">Hanya Saya</option>
                         </select>
-                      </label>
+                      </FieldLabel>
 
                       <div className="history-search" style={{ margin: 0 }}>
                         <Search size={16} />
@@ -967,14 +968,14 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                   )}
                 </div>
 
-                <form
+                <ValidatedForm
                   className="correction-form"
                   onSubmit={e => {
                     e.preventDefault();
                     void handleRevert();
                   }}
                 >
-                  <label>
+                  <FieldLabel>
                     Pilih Alasan Koreksi
                     <select
                       value={correctPreset}
@@ -986,9 +987,9 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                       <option value="Tiket tertukar">Tiket tertukar</option>
                       <option value="Lainnya">Lainnya (Tulis catatan khusus)</option>
                     </select>
-                  </label>
+                  </FieldLabel>
 
-                  <label>
+                  <FieldLabel>
                     {correctPreset === 'Lainnya' ? 'Catatan Tambahan (Wajib diisi)*' : 'Catatan Tambahan (Opsional)'}
                     <textarea
                       placeholder={
@@ -1002,7 +1003,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                       onChange={e => setCorrectNote(e.target.value)}
                       maxLength={300}
                     />
-                  </label>
+                  </FieldLabel>
 
                   {correctErrorMessage && (
                     <p className="form-error" style={{ marginTop: '8px' }} role="alert">
@@ -1028,7 +1029,7 @@ export function CheckInScanner({ events }: { events: { slug: string; title: stri
                       {correctBusy ? 'Memproses koreksi...' : 'Batalkan Check-in'}
                     </button>
                   </div>
-                </form>
+                </ValidatedForm>
               </div>
             </div>
           )}

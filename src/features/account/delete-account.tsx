@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { useState } from 'react';
 import { Trash2,Eye,EyeOff } from 'lucide-react';
 import { useConfirmation } from '@/components/confirmation-dialog';
@@ -18,10 +19,10 @@ export function DeleteAccount({mode}:{mode:'demo'|'supabase'}){
   }catch(e){setError(e instanceof Error?e.message:'Akun belum dapat dihapus.');setBusy(false);}
  }
  return <section className="profile-delete-account" aria-labelledby="delete-account-heading"><h2 id="delete-account-heading">Hapus akun</h2><p>Akses akun dan profil dihapus. Riwayat transaksi serta audit acara tetap tersimpan. Tindakan ini tidak dapat dibatalkan.</p>
-  <form onSubmit={e=>void remove(e)}><fieldset disabled={busy}>
-   {mode==='supabase'&&<label htmlFor="delete-account-password">Kata sandi saat ini<div className="profile-delete-password"><input id="delete-account-password" type={visible?'text':'password'} autoComplete="current-password" required maxLength={128} value={password} onChange={e=>setPassword(e.target.value)}/><button type="button" aria-label={visible?'Sembunyikan kata sandi':'Tampilkan kata sandi'} onClick={()=>setVisible(v=>!v)}>{visible?<EyeOff size={20}/>:<Eye size={20}/>}</button></div></label>}
+  <ValidatedForm onSubmit={e=>void remove(e)}><fieldset disabled={busy}>
+   {mode==='supabase'&&<FieldLabel htmlFor="delete-account-password">Kata sandi saat ini<div className="profile-delete-password"><input id="delete-account-password" type={visible?'text':'password'} autoComplete="current-password" required maxLength={128} value={password} onChange={e=>setPassword(e.target.value)}/><button type="button" aria-label={visible?'Sembunyikan kata sandi':'Tampilkan kata sandi'} onClick={()=>setVisible(v=>!v)}>{visible?<EyeOff size={20}/>:<Eye size={20}/>}</button></div></FieldLabel>}
    {mode==='demo'&&<p>Mode demo: sesi akun demo ini akan dihapus.</p>}
    <button className="button profile-danger-button" type="submit"><Trash2 size={18} aria-hidden="true"/>{busy?'Menghapus akun...':'Hapus akun'}</button>
-  </fieldset></form>{error&&<p className="form-error" role="alert">{error}</p>}
+  </fieldset></ValidatedForm>{error&&<p className="form-error" role="alert">{error}</p>}
  </section>;
 }

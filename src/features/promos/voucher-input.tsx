@@ -1,4 +1,5 @@
 'use client';
+import { FieldLabel } from '@/components/form-fields';
 import { useId,useRef,useState } from 'react';
 import { Tag } from 'lucide-react';
 import type { Promo,DiscountCalculationResult } from './core';
@@ -22,7 +23,7 @@ export function VoucherInput({slug,categoryId,quantity,packageId,packageQuantity
  }
  return <div className="promo-voucher">
   {code?<><strong><Tag size={16} aria-hidden="true"/>Kode voucher</strong><div className="promo-voucher-row"><span className="promo-voucher-code">{code}</span><button className="button button-light button-small" type="button" disabled={disabled||loading} onClick={()=>{onCode('');setError('');setHint('');}}>Hapus</button></div></>:<>
-   <label htmlFor={id}><Tag size={16} aria-hidden="true"/>Kode voucher</label>
+   <FieldLabel htmlFor={id}><Tag size={16} aria-hidden="true"/>Kode voucher</FieldLabel>
    <div className="promo-voucher-row"><input id={id} placeholder="Masukkan kode" maxLength={30} value={input} disabled={disabled||loading} aria-describedby={error?`${id}-error`:undefined} aria-invalid={!!error} onChange={e=>{setInput(e.target.value.toUpperCase());setError('');}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();void apply();}}}/><button className="button button-small" type="button" disabled={disabled||loading||!input.trim()||quantity<1} onClick={()=>void apply()}>{loading?'Memeriksa...':'Pakai'}</button></div>
   </>}
   {(error||invalidMessage)&&<p id={`${id}-error`} role="alert" className="promo-voucher-error">{error||invalidMessage}</p>}

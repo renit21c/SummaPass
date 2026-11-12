@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { useState, useEffect } from 'react';
 import { useConfirmation } from '@/components/confirmation-dialog';
 import { Users, UserPlus, ShieldAlert, CheckCircle2, Trash2 } from 'lucide-react';
@@ -92,8 +93,8 @@ export function StaffManager({ eventId, mode }: { eventId: string; mode?: 'demo'
         </p>
       </div>
 
-      {mode!=='supabase'&&<form className="staff-form" onSubmit={handleAssign}>
-        <label>
+      {mode!=='supabase'&&<ValidatedForm className="staff-form" onSubmit={handleAssign}>
+        <FieldLabel>
           Nama Petugas atau Identitas
           <input
             type="text"
@@ -104,12 +105,12 @@ export function StaffManager({ eventId, mode }: { eventId: string; mode?: 'demo'
             required
             maxLength={100}
           />
-        </label>
+        </FieldLabel>
         <button className="button button-dark" type="submit" disabled={busy || !nameInput.trim()}>
           <UserPlus size={16} />
           {busy ? 'Menugaskan...' : 'Tugaskan Petugas'}
         </button>
-      </form>}
+      </ValidatedForm>}
 
       {message && (
         <p className="editor-message" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }} role="status">

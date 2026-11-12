@@ -1,4 +1,5 @@
 "use client";
+import { FieldLabel } from '@/components/form-fields';
 import { useConfirmation } from '@/components/confirmation-dialog';
 import { NumberInput } from '@/components/number-input';
 import { useEffect, useRef, useState } from "react";
@@ -256,7 +257,7 @@ export function SeatingEditor({
         <>
           <fieldset data-category-fields disabled={busy || disabled} className="manage-fieldset">
             <legend>Pengaturan kategori</legend>
-            <label>
+            <FieldLabel>
               Kategori
               <select
                 value={categoryId}
@@ -284,21 +285,22 @@ export function SeatingEditor({
                 ))}
                 <option value="">+ Kategori baru</option>
               </select>
-            </label>
+            </FieldLabel>
             {cat && (
               <>
                 <div className="editor-grid">
-                  <label>
+                  <FieldLabel>
                     Nama kategori
                     <input
+                      required
                       maxLength={80}
                       value={cat.name}
                       onChange={(e) => setCat({ ...cat, name: e.target.value })}
                     />
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Harga (Rp)
-                    <NumberInput
+                    <NumberInput required
                       type="number"
                       min={0}
                       max={100000000}
@@ -308,10 +310,10 @@ export function SeatingEditor({
                         setCat({ ...cat, price: Number(e.target.value) })
                       }
                     />
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Kuota
-                    <NumberInput
+                    <NumberInput required
                       type="number"
                       min={1}
                       max={2000}
@@ -321,34 +323,36 @@ export function SeatingEditor({
                         setCat({ ...cat, quota: Number(e.target.value) })
                       }
                     />
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Penjualan mulai (WIB)
                     <input
                       type="datetime-local"
+                      required
                       value={cat.salesStart ? local(cat.salesStart) : ""}
                       onChange={(e) => {
                         if (e.target.value)
                           setCat({ ...cat, salesStart: iso(e.target.value) });
                       }}
                     />
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Penjualan selesai (WIB)
                     <input
                       type="datetime-local"
+                      required
                       value={cat.salesEnd ? local(cat.salesEnd) : ""}
                       onChange={(e) => {
                         if (e.target.value)
                           setCat({ ...cat, salesEnd: iso(e.target.value) });
                       }}
                     />
-                  </label>
+                  </FieldLabel>
                 </div>
                 <fieldset className="manage-checks">
                   <legend>Section yang dapat dipilih</legend>
                   {config.sections.map((s) => (
-                    <label key={s.id}>
+                    <FieldLabel key={s.id}>
                       <input
                         type="checkbox"
                         checked={cat.sections.includes(s.name)}
@@ -362,10 +366,10 @@ export function SeatingEditor({
                         }
                       />
                       {s.name} ({s.seats.length} kursi)
-                    </label>
+                    </FieldLabel>
                   ))}
                 </fieldset>
-                <label className="manage-check">
+                <FieldLabel className="manage-check">
                   <input
                     type="checkbox"
                     checked={cat.active}
@@ -374,7 +378,7 @@ export function SeatingEditor({
                     }
                   />
                   Kategori aktif
-                </label>
+                </FieldLabel>
                 <p className="manage-hint">
                   Kuota tidak boleh di bawah kursi terjual atau ditahan. Section
                   kategori yang sudah dipesan terkunci.
@@ -397,9 +401,9 @@ export function SeatingEditor({
             ) : (
               <fieldset data-layout-fields disabled={busy || disabled} className="manage-fieldset">
                 <div className="editor-grid">
-                  <label>
+                  <FieldLabel>
                     Lebar denah
-                    <NumberInput
+                    <NumberInput required
                       type="number"
                       min={320}
                       max={10000}
@@ -408,10 +412,10 @@ export function SeatingEditor({
                         setDraft({ ...draft, width: Number(e.target.value) })
                       }
                     />
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Tinggi denah
-                    <NumberInput
+                    <NumberInput required
                       type="number"
                       min={240}
                       max={10000}
@@ -420,12 +424,12 @@ export function SeatingEditor({
                         setDraft({ ...draft, height: Number(e.target.value) })
                       }
                     />
-                  </label>
+                  </FieldLabel>
                 </div>
                 <div className="manage-section-list">
                   {draft.sections.map((s, i) => (
                     <div key={i}>
-                      <label>
+                      <FieldLabel>
                         Nama section
                         <input
                           maxLength={80}
@@ -446,7 +450,7 @@ export function SeatingEditor({
                             });
                           }}
                         />
-                      </label>
+                      </FieldLabel>
                       <span>{s.seats.length} kursi</span>
                       <button
                         className="icon-button"
@@ -479,7 +483,7 @@ export function SeatingEditor({
                   ))}
                 </div>
                 <div className="editor-grid">
-                  <label>
+                  <FieldLabel>
                     Tambahkan ke section
                     <select
                       value={sectionTarget}
@@ -492,8 +496,8 @@ export function SeatingEditor({
                         </option>
                       ))}
                     </select>
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Section baru
                     <input
                       disabled={sectionTarget !== ""}
@@ -502,25 +506,25 @@ export function SeatingEditor({
                       placeholder="Contoh: VIP"
                       onChange={(e) => setSectionName(e.target.value)}
                     />
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Label baris
                     <input
                       value={rowNames}
                       placeholder="A,B,C"
                       onChange={(e) => setRowNames(e.target.value)}
                     />
-                  </label>
-                  <label>
+                  </FieldLabel>
+                  <FieldLabel>
                     Kursi per baris
-                    <NumberInput
+                    <NumberInput required
                       type="number"
                       min={1}
                       max={100}
                       value={perRow}
                       onChange={(e) => setPerRow(Number(e.target.value))}
                     />
-                  </label>
+                  </FieldLabel>
                 </div>
                 <button className="button button-light" onClick={addSection}>
                   <Plus size={16} />
@@ -574,23 +578,24 @@ export function SeatingEditor({
                 </div>
                 {seat && selected && (
                   <div className="editor-grid">
-                    <label>
+                    <FieldLabel>
                       Baris
                       <input
+                        required
                         value={seat.row}
                         maxLength={12}
                         onChange={(e) => changeSeat("row", e.target.value)}
                       />
-                    </label>
+                    </FieldLabel>
                     {(["number", "x", "y"] as const).map((k) => (
-                      <label key={k}>
+                      <FieldLabel key={k}>
                         {k === "number" ? "Nomor kursi" : k.toUpperCase()}
-                        <NumberInput
+                        <NumberInput required
                           type="number"
                           value={seat[k]}
                           onChange={(e) => changeSeat(k, e.target.value)}
                         />
-                      </label>
+                      </FieldLabel>
                     ))}
                     <button
                       className="button button-light"
@@ -650,9 +655,10 @@ export function SeatingEditor({
                 </p>
                 {draft.categories.map((c, i) => (
                   <div className="manage-draft-category" key={i}>
-                    <label>
+                    <FieldLabel>
                       Nama
                       <input
+                        required
                         maxLength={80}
                         value={c.name}
                         onChange={(e) =>
@@ -664,10 +670,10 @@ export function SeatingEditor({
                           })
                         }
                       />
-                    </label>
-                    <label>
+                    </FieldLabel>
+                    <FieldLabel>
                       Harga (Rp)
-                      <NumberInput
+                      <NumberInput required
                         type="number"
                         min={0}
                         max={100000000}
@@ -683,10 +689,10 @@ export function SeatingEditor({
                           })
                         }
                       />
-                    </label>
-                    <label>
+                    </FieldLabel>
+                    <FieldLabel>
                       Kuota
-                      <NumberInput
+                      <NumberInput required
                         type="number"
                         min={1}
                         max={2000}
@@ -702,11 +708,11 @@ export function SeatingEditor({
                           })
                         }
                       />
-                    </label>
+                    </FieldLabel>
                     <fieldset className="manage-checks">
                       <legend>Section</legend>
                       {draft.sections.map((s, j) => (
-                        <label key={j}>
+                        <FieldLabel key={j}>
                           <input
                             type="checkbox"
                             checked={c.sections.includes(s.name)}
@@ -729,7 +735,7 @@ export function SeatingEditor({
                             }
                           />
                           {s.name}
-                        </label>
+                        </FieldLabel>
                       ))}
                     </fieldset>
                     <button

@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { DiscountPrice } from '@/features/promos/price';
 import { VoucherInput } from '@/features/promos/voucher-input';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -466,7 +467,7 @@ export function SeatPicker({
             <span>{title}</span>
           </div>
 
-          <form onSubmit={submit} id="seat-reservation-form">
+          <ValidatedForm onSubmit={submit} id="seat-reservation-form">
             {chosen.length === 0 ? (
               <p className="selection-empty">Pilih kursi dari peta atau daftar.</p>
             ) : (
@@ -479,7 +480,7 @@ export function SeatPicker({
                   </div>
 
                   <div style={{ display: 'grid', gap: 10 }}>
-                    <label style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
+                    <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
                       Nama Pemesan
                       <input
                         required
@@ -490,9 +491,9 @@ export function SeatPicker({
                         placeholder="Nama lengkap pemesan"
                         style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '8px 10px', fontSize: 12 }}
                       />
-                    </label>
+                    </FieldLabel>
 
-                    <label style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
+                    <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
                       Email Pemesan (Tiket dikirim ke sini)
                       <input
                         required
@@ -504,9 +505,9 @@ export function SeatPicker({
                         placeholder="nama@email.com"
                         style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '8px 10px', fontSize: 12 }}
                       />
-                    </label>
+                    </FieldLabel>
 
-                    <label style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
+                    <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
                       No. WhatsApp / HP
                       <input
                         type="tel"
@@ -517,10 +518,10 @@ export function SeatPicker({
                         placeholder="08xxxxxxxxxx"
                         style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '8px 10px', fontSize: 12 }}
                       />
-                    </label>
+                    </FieldLabel>
                   </div>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, marginTop: 12, cursor: 'pointer' }}>
+                  <FieldLabel style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, marginTop: 12, cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={syncFirstTicket}
@@ -528,7 +529,7 @@ export function SeatPicker({
                       style={{ accentColor: 'var(--purple)' }}
                     />
                     <span>Samakan peserta tiket #1 dengan nama pemesan</span>
-                  </label>
+                  </FieldLabel>
                 </div>
 
                 {/* Formulir Peserta Tambahan */}
@@ -564,7 +565,7 @@ export function SeatPicker({
                           </div>
                         </div>
 
-                        <label style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
+                        <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11, fontWeight: 700 }}>
                           <span>Nama Peserta <span className="required-mark" aria-hidden="true">*</span></span>
                           <input
                             required
@@ -575,11 +576,11 @@ export function SeatPicker({
                             placeholder="Masukkan nama lengkap peserta"
                             style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '8px 10px', fontSize: 12 }}
                           />
-                        </label>
+                        </FieldLabel>
 
                         {isExpanded && (
                           <div style={{ display: 'grid', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--line)' }}>
-                            <label style={{ display: 'grid', gap: 4, fontSize: 11 }}>
+                            <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11 }}>
                               <span>Email Peserta (Opsional, untuk kirim e-ticket langsung)</span>
                               <input
                                 type="email"
@@ -589,9 +590,9 @@ export function SeatPicker({
                                 placeholder="peserta@email.com"
                                 style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '6px 8px', fontSize: 11 }}
                               />
-                            </label>
+                            </FieldLabel>
 
-                            <label style={{ display: 'grid', gap: 4, fontSize: 11 }}>
+                            <FieldLabel style={{ display: 'grid', gap: 4, fontSize: 11 }}>
                               <span>Kebutuhan Khusus / Aksesibilitas (Opsional)</span>
                               <input
                                 value={notes[s.id] ?? ''}
@@ -600,7 +601,7 @@ export function SeatPicker({
                                 placeholder="Contoh: Kursi roda, pendamping lansia"
                                 style={{ background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: 6, padding: '6px 8px', fontSize: 11 }}
                               />
-                            </label>
+                            </FieldLabel>
                           </div>
                         )}
                       </div>
@@ -633,17 +634,17 @@ export function SeatPicker({
               </div>
             </div>
 
-            <label className="terms-check">
+            <FieldLabel className="terms-check">
               <input type="checkbox" checked={terms} disabled={busy} onChange={e => setTerms(e.target.checked)} required />
               <span>Saya memahami reservasi berlaku 10 menit. Ini adalah simulasi tanpa pembayaran nyata.</span>
-            </label>
+            </FieldLabel>
 
             <p id="reservation-hint" className="reservation-hint" aria-live="polite">{reservationHint}</p>
             <button className="button reserve-button" aria-describedby="reservation-hint" disabled={busy || voucherBusy || !chosen.length || !terms || !!error || !!promoCalculation.voucherError || !packageAvailable || (!!pack&&chosen.length!==selectionLimit)} type="submit">
               {busy ? 'Memproses...' : 'Reservasi 10 menit'}
               <ArrowRight size={18} />
             </button>
-          </form>
+          </ValidatedForm>
 
           <div role="status" aria-live="polite" className="seat-feedback">{message}</div>
           {error && <div role="alert" className="form-error">{error}</div>}

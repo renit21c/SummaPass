@@ -13,6 +13,7 @@ export function editorValidation(values: EditorValues, customSeating = false) {
  const result = eventInput.safeParse(body);
  const errors: Record<string, string> = {};
  if (!result.success) for (const issue of result.error.issues) errors[String(issue.path[0])] ??= issue.message;
+ for (const name of Object.keys(errors)) if (!values[name]?.trim()) errors[name] = 'Wajib diisi.';
  return { result, errors };
 }
 export function coverFileError(file: Pick<File, 'size' | 'type'>): string | undefined {

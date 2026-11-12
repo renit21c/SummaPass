@@ -1,3 +1,4 @@
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import Link from 'next/link';
 import { Mail, CheckCircle, AlertCircle, ArrowUpRight } from 'lucide-react';
 
@@ -58,19 +59,19 @@ export default async function VerifyEmail({
           <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
             Periksa folder Spam atau Junk di email Anda, atau klik tombol di bawah untuk mengirim ulang tautan konfirmasi.
           </p>
-          <form action="/api/auth/resend-verification" method="post" style={{ display: 'grid', gap: 12 }}>
+          <ValidatedForm action="/api/auth/resend-verification" method="post" style={{ display: 'grid', gap: 12 }}>
             <input type="hidden" name="email" value={email} />
             {!email && (
-              <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700 }}>
+              <FieldLabel style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700 }}>
                 Alamat Email
                 <input name="email" type="email" required placeholder="nama@email.com" style={{ minHeight: 44, padding: '8px 12px', border: '1.5px solid var(--ink)', borderRadius: 8 }} />
-              </label>
+              </FieldLabel>
             )}
             <button className="button button-small" type="submit">
               Kirim Ulang Email Verifikasi
               <ArrowUpRight size={16} />
             </button>
-          </form>
+          </ValidatedForm>
         </div>
 
         <p className="auth-note" style={{ marginTop: 24 }}>

@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { useEffect,useRef,useState } from 'react';
 import Link from 'next/link';
 import { Bot,X,ArrowUpRight,TrendingUp,Download,ChartNoAxesCombined,ChevronLeft,LoaderCircle,Users,Clock3,UserCheck,GitCompareArrows } from 'lucide-react';
@@ -74,11 +75,11 @@ export function OrganizerSubo(){
   {open&&<section className="subo-panel" id="subo-organizer-panel" role="dialog" aria-modal="false" aria-labelledby="subo-organizer-title">
    <header className="subo-header"><span className="subo-avatar"><Bot size={26} aria-hidden="true"/></span><div><h2 id="subo-organizer-title">Subo</h2><p>Asisten organizer</p></div><button ref={closeRef} type="button" className="subo-close" onClick={close} aria-label="Tutup Subo"><X size={20}/></button></header>
    <div className="subo-body">
-    <form className="subo-period-filter" onSubmit={event=>{event.preventDefault();if(topic)void choose(topic,true);}}>
-     <label>Periode laporan<select value={period} onChange={event=>setPeriod(event.target.value as typeof period)}><option value="dashboard">Ikuti filter dashboard</option><option value="all">Semua tanggal</option><option value="month">Pilih bulan</option></select></label>
-     {period==='month'&&<label>Bulan (WIB)<input type="month" required min="2000-01" max="2099-12" value={month} onChange={event=>setMonth(event.target.value)}/></label>}
+    <ValidatedForm className="subo-period-filter" onSubmit={event=>{event.preventDefault();if(topic)void choose(topic,true);}}>
+     <FieldLabel>Periode laporan<select value={period} onChange={event=>setPeriod(event.target.value as typeof period)}><option value="dashboard">Ikuti filter dashboard</option><option value="all">Semua tanggal</option><option value="month">Pilih bulan</option></select></FieldLabel>
+     {period==='month'&&<FieldLabel>Bulan (WIB)<input type="month" required min="2000-01" max="2099-12" value={month} onChange={event=>setMonth(event.target.value)}/></FieldLabel>}
      {topic&&<button type="submit" disabled={busy}>Terapkan periode</button>}
-    </form>
+    </ValidatedForm>
     {!topic?<><div className="subo-greeting"><strong>Ada yang bisa aku bantu?</strong><p>Cek penjualan, kehadiran, atau laporan eventmu.</p></div><div className="subo-topics" aria-label="Bantuan organizer">{topics.map(({id,label,icon:Icon})=><button key={id} type="button" onClick={()=>void choose(id)}><Icon size={17} aria-hidden="true"/>{label}<ArrowUpRight size={15} aria-hidden="true"/></button>)}</div></>:
     <div className="subo-answer" ref={answerRef} aria-live="polite" aria-busy={busy}>
      <h3>{topics.find(item=>item.id===topic)?.label}</h3>
@@ -89,7 +90,7 @@ export function OrganizerSubo(){
        <p>Hanya pesanan dikonfirmasi dan pembayaran lunas yang dihitung.</p>
       </>:topic==='overview'?<><Metrics rows={[[ 'Pendapatan lunas',rupiah(data.totals.revenue)],['Tiket lunas',data.totals.sold],['Menunggu pembayaran',data.totals.pending+' pesanan']]}/><p>Dari {data.events.length} event yang ditugaskan.</p></>:
       topic==='compare'?<>
-       {data.events.length<2?<p>Perlu minimal dua event untuk dibandingkan.</p>:<><div className="subo-comparison-select">{[0,1].map(index=><label key={index}>Event {index+1}<select value={comparison[index]} onChange={e=>setComparison(previous=>previous.map((value,i)=>i===index?e.target.value:value))}><option value="">Pilih event</option>{data.events.map(item=><option key={item.id} value={item.id} disabled={comparison[1-index]===item.id}>{item.title}</option>)}</select></label>)}</div>
+       {data.events.length<2?<p>Perlu minimal dua event untuk dibandingkan.</p>:<><div className="subo-comparison-select">{[0,1].map(index=><FieldLabel key={index}>Event {index+1}<select value={comparison[index]} onChange={e=>setComparison(previous=>previous.map((value,i)=>i===index?e.target.value:value))}><option value="">Pilih event</option>{data.events.map(item=><option key={item.id} value={item.id} disabled={comparison[1-index]===item.id}>{item.title}</option>)}</select></FieldLabel>)}</div>
        {compareEvents[0]&&compareEvents[1]?<><div className="subo-comparison-table"><table><caption>Perbandingan pada periode yang sama</caption><thead><tr><th scope="col">Metrik</th>{compareEvents.map(item=><th key={item!.id} scope="col">{item!.title}</th>)}</tr></thead><tbody><tr><th scope="row">Pendapatan</th>{compareEvents.map(item=><td key={item!.id}>{rupiah(item!.revenue)}</td>)}</tr><tr><th scope="row">Tiket lunas</th>{compareEvents.map(item=><td key={item!.id}>{item!.sold}</td>)}</tr><tr><th scope="row">Pending aktif</th>{compareEvents.map(item=><td key={item!.id}>{item!.pending}</td>)}</tr></tbody></table></div><p>{compareEvents[0].revenue===compareEvents[1].revenue?'Pendapatan kedua event sama.':(compareEvents[0].revenue>compareEvents[1].revenue?compareEvents[0].title:compareEvents[1].title)+' unggul '+rupiah(Math.abs(compareEvents[0].revenue-compareEvents[1].revenue))+'.'}</p></>:<p>Pilih dua event yang berbeda.</p>}</>}
       </>:selected===null?<><p>{topic==='csv'?'Mau laporan untuk event apa?':'Mau cek event apa?'}</p><div className="subo-topics subo-event-options">{(topic==='csv'||topic==='pending')&&<button type="button" onClick={()=>setSelected('all')}>Semua event<ArrowUpRight size={15} aria-hidden="true"/></button>}{data.events.map(item=><button type="button" key={item.id} onClick={()=>setSelected(item.id)}>{item.title}<ArrowUpRight size={15} aria-hidden="true"/></button>)}</div></>:
       <><p><strong>{event?.title??'Semua event'}</strong></p>

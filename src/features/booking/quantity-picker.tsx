@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { DiscountPrice } from '@/features/promos/price';
 import { VoucherInput } from '@/features/promos/voucher-input';
 import { useEffect, useRef, useState } from 'react';
@@ -69,13 +70,13 @@ export function QuantityPicker({initial,title,user,initialCategory}:{initial:Inv
  }
  return <div className="quantity-booking">
   <div className="seat-page-heading"><div><h1>Pesan tiket</h1><p>{title}</p></div><span className="seat-mode">Tanpa nomor kursi</span></div>
-  <form className="quantity-layout" onSubmit={e=>void submit(e)}>
+  <ValidatedForm className="quantity-layout" onSubmit={e=>void submit(e)}>
    <section className="quantity-details"><h2>Pilih tiket</h2><p>Event ini tidak menggunakan pilihan kursi.</p>
     <fieldset disabled={busy}><legend>Detail tiket dan peserta</legend>
-     <label>Kategori tiket<select value={categoryId} onChange={e=>{setCategoryId(e.target.value);setPackageId('');setQuantity(1);setError('');}}>{data.categories.map(c=><option key={c.id} value={c.id}>{c.name} · {rupiah(c.price)}</option>)}</select></label>
+     <FieldLabel>Kategori tiket<select value={categoryId} onChange={e=>{setCategoryId(e.target.value);setPackageId('');setQuantity(1);setError('');}}>{data.categories.map(c=><option key={c.id} value={c.id}>{c.name} · {rupiah(c.price)}</option>)}</select></FieldLabel>
      <p role="status">{salesOpen?`${remaining.toLocaleString('id-ID')} tiket tersedia`:'Penjualan belum dibuka atau sudah ditutup.'}</p>
-     {pack?<PackagePicker packages={category?.packages??[]} selected={pack} quantity={quantity} remaining={remaining} promos={promos} categoryId={categoryId} busy={busy} onChange={(id,count)=>{setPackageId(id);setQuantity(count);setError('');}}/>:<label>Jumlah tiket<select value={quantity} disabled={!limit||!salesOpen} onChange={e=>{setQuantity(Number(e.target.value));setError('');}}>{Array.from({length:Math.max(1,limit)},(_,i)=><option value={i+1} key={i+1}>{i+1} tiket</option>)}</select><small>Maksimal 6 tiket per pesanan.</small></label>}
-     <h2>Data peserta</h2>{Array.from({length:participantCount},(_,i)=><label key={i}>Nama peserta {i+1}<input autoComplete={i===0?'name':'off'} required maxLength={100} value={names[i]??''} onChange={e=>{const value=e.target.value;setNames(previous=>{const next=[...previous];next[i]=value;return next;});}} pattern=".*\S.*" title="Isi nama peserta."/></label>)}
+     {pack?<PackagePicker packages={category?.packages??[]} selected={pack} quantity={quantity} remaining={remaining} promos={promos} categoryId={categoryId} busy={busy} onChange={(id,count)=>{setPackageId(id);setQuantity(count);setError('');}}/>:<FieldLabel>Jumlah tiket<select value={quantity} disabled={!limit||!salesOpen} onChange={e=>{setQuantity(Number(e.target.value));setError('');}}>{Array.from({length:Math.max(1,limit)},(_,i)=><option value={i+1} key={i+1}>{i+1} tiket</option>)}</select><small>Maksimal 6 tiket per pesanan.</small></FieldLabel>}
+     <h2>Data peserta</h2>{Array.from({length:participantCount},(_,i)=><FieldLabel key={i}>Nama peserta {i+1}<input autoComplete={i===0?'name':'off'} required maxLength={100} value={names[i]??''} onChange={e=>{const value=e.target.value;setNames(previous=>{const next=[...previous];next[i]=value;return next;});}} pattern=".*\S.*" title="Isi nama peserta."/></FieldLabel>)}
     </fieldset>
    </section>
    <aside className="quantity-summary">
@@ -101,11 +102,11 @@ export function QuantityPicker({initial,title,user,initialCategory}:{initial:Inv
 
      <DiscountPrice className="quantity-total" price={finalTotal} originalPrice={discountAmount>0?subtotal:undefined}/>
      <p>Tiket ditahan 10 menit setelah pemesanan berhasil.</p>
-     <label className="quantity-terms"><input type="checkbox" required checked={terms} disabled={busy} onChange={e=>setTerms(e.target.checked)}/><span>Saya menyetujui ketentuan event.</span></label>
+     <FieldLabel className="quantity-terms"><input type="checkbox" required checked={terms} disabled={busy} onChange={e=>setTerms(e.target.checked)}/><span>Saya menyetujui ketentuan event.</span></FieldLabel>
      {quantity>limit&&<p role="alert">Sisa tiket berubah. Pilih jumlah tiket yang tersedia.</p>}
      {error&&<p className="form-error" role="alert">{error}</p>}
      <button className="button" type="submit" disabled={busy||voucherBusy||!terms||quantity>limit||!salesOpen||!!promoCalc.voucherError}>{busy?'Memproses...':'Lanjut ke pembayaran'}<ArrowRight size={18} aria-hidden="true"/></button>
    </aside>
-  </form>
+  </ValidatedForm>
  </div>;
 }

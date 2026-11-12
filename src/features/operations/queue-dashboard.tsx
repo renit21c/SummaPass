@@ -1,4 +1,5 @@
 'use client';
+import { FieldLabel, ValidatedForm } from '@/components/form-fields';
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { queuePage, type QueuePage } from './contracts';
@@ -28,11 +29,11 @@ export function QueueDashboard({ eventId }: { eventId: string }) {
   }
   return <section className="operations-card"><div className="operations-title"><h2>Antrean pengiriman</h2><button data-icon-action="" aria-label="Muat ulang data" title="Muat ulang data" className="button button-light" disabled={busy} onClick={() => void load()}><RefreshCw size={20} aria-hidden="true" /></button></div><p>Status diterima provider belum memastikan email tiba di inbox.</p>
     <div className="operations-counts">{Object.entries(data?.counts ?? {}).map(([status, count]) => <span key={status}>{labels[status] ?? status}: <strong>{count}</strong></span>)}</div>
-    <label>Status<select value={filter} disabled={busy} onChange={e => setFilter(e.target.value)}><option value="">Semua</option>{['PENDING', 'PROCESSING', 'RETRY', 'SENT', 'FAILED', 'SKIPPED'].map(status => <option key={status} value={status}>{labels[status]}</option>)}</select></label>
+    <FieldLabel>Status<select value={filter} disabled={busy} onChange={e => setFilter(e.target.value)}><option value="">Semua</option>{['PENDING', 'PROCESSING', 'RETRY', 'SENT', 'FAILED', 'SKIPPED'].map(status => <option key={status} value={status}>{labels[status]}</option>)}</select></FieldLabel>
     {error && <p role="alert" className="form-error">{error}</p>}{busy && <p role="status">Memuat...</p>}
     {data && !data.items.length && <p>Belum ada pengiriman.</p>}
     {!!data?.items.length && <div className="operations-table"><table><thead><tr><th>Jenis / waktu</th><th>Status</th><th>Percobaan</th><th>Catatan</th><th>Tindakan</th></tr></thead><tbody>{data.items.map(job => <tr key={job.id}><td>{job.kind}<small>{new Date(job.createdAt).toLocaleString('id-ID')}</small></td><td>{labels[job.status]}{job.deliveryStatus && <small>{labels[job.deliveryStatus] ?? job.deliveryStatus}</small>}</td><td>{job.attempts}/5</td><td>{job.errorCode ?? '-'}</td><td>{job.canRetry ? <button className="text-link" disabled={busy} onClick={() => { setRetryId(job.id); setReason(''); }}>Antrekan ulang</button> : <span>-</span>}</td></tr>)}</tbody></table></div>}
     {data?.nextCursor && <button className="button button-light" disabled={busy} onClick={() => void load(data.nextCursor)}>Muat berikutnya</button>}
-    {retryId && <form className="operations-retry" onSubmit={e => { e.preventDefault(); void retry(); }}><h3>Antrekan ulang</h3><p>Payload, kunci idempotensi, batas 5 percobaan, dan batas 23 jam tetap berlaku.</p><label>Alasan<textarea required minLength={10} maxLength={500} value={reason} onChange={e => setReason(e.target.value)} /></label><div className="operations-actions"><button className="button" disabled={busy}>Konfirmasi</button><button className="button button-light" type="button" disabled={busy} onClick={() => setRetryId('')}>Tutup</button></div></form>}
+    {retryId && <ValidatedForm className="operations-retry" onSubmit={e => { e.preventDefault(); void retry(); }}><h3>Antrekan ulang</h3><p>Payload, kunci idempotensi, batas 5 percobaan, dan batas 23 jam tetap berlaku.</p><FieldLabel>Alasan<textarea required minLength={10} maxLength={500} value={reason} onChange={e => setReason(e.target.value)} /></FieldLabel><div className="operations-actions"><button className="button" disabled={busy}>Konfirmasi</button><button className="button button-light" type="button" disabled={busy} onClick={() => setRetryId('')}>Tutup</button></div></ValidatedForm>}
   </section>;
 }
