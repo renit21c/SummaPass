@@ -662,7 +662,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
 
           <form onSubmit={handleTransferTicket}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
-              Nama Peserta Baru (Wajib):
+              <span>Nama Peserta Baru <span className="required-mark" aria-hidden="true">*</span></span>
               <input
                 type="text"
                 required

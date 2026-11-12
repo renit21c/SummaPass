@@ -972,3 +972,5 @@ html,body{max-width:100%;overflow-x:clip}
   transform: translateY(1px);
   box-shadow: 1px 1px 0 #24221f;
 }
+
+.required-mark{color:var(--danger);font-weight:700}
