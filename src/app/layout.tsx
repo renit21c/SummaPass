@@ -7,6 +7,8 @@ import '@/components/ux-enhancements.css';
 import '@/features/organizer/workspace.css';
 import '@/components/customer-readability.css';
 import '@/components/mobile-layout.css';
+import '@/components/scrollbars.css';
+import '@/components/layout-spacing.css';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { getSession } from '@/lib/auth/session';
 import { MobileNavigation } from '@/components/mobile-navigation';

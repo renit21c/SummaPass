@@ -16,3 +16,19 @@ body .organizer-nav,body .quantity-summary{top:var(--header-clearance)}
 @media(max-width:760px){:root{--header-clearance:96px}.event-card .card-price>strong{font-size:22px}.event-card .card-price>span{font-size:11px}.buyer-package-options .buyer-package-price{font-size:20px}}
 @media(max-width:639px){.seat-mobile-bar strong{font-size:23px;line-height:1.25}}
 @media print{.site-header{position:static;box-shadow:none}}
+/* White foregrounds need a deeper orange than decorative brand surfaces. */
+body .button-light:hover:not(:disabled){background:var(--purple-light);color:var(--ink)}
+body .booking-preview .button{color:var(--ink)}
+body .booking-preview .button:hover:not(:disabled){background:var(--purple-light);color:var(--ink)}
+body .subo-header{background:var(--action);color:#fff}
+body .subo-header .subo-close{color:#fff}
+body .subo-header .subo-close:hover{background:var(--action-hover)}
+body .subo-avatar{color:var(--ink)}
+body .manage-seat.selected,body .seat-list-button.selected{background:var(--action);color:#fff}
+body .seat-node.selected rect{fill:var(--action)}
+body .seat-node.selected text{fill:#fff}
+body .category-option.is-active{color:var(--ink)}
+body .discount-badge{background:#b42318;color:#fff}
+:root{--header-clearance:88px}
+body .legend-dot.selected{background:var(--action)}
+@media(max-width:760px){:root{--header-clearance:80px}}

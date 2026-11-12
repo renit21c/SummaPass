@@ -311,10 +311,9 @@ export function SeatPicker({
                       <strong style={{ color: 'var(--red, #e11d48)' }}>
                         {rupiah(c.price - autoPromo.discountAmount)}
                       </strong>
-                      <span style={{
+                      <span className="discount-badge" style={{
                         fontSize: 10,
                         fontWeight: 800,
-                        background: 'var(--orange, #ff6b35)',
                         color: '#fff',
                         padding: '1px 5px',
                         borderRadius: 4
