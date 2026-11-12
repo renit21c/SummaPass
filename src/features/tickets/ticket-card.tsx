@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { CopyReference } from '@/components/copy-reference';
 import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -572,8 +573,8 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             </div>
           </div>
 
-          <form onSubmit={handleRefund}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+          <ValidatedForm onSubmit={handleRefund}>
+            <FieldLabel style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
               Alasan Pembatalan:
               <select
                 value={refundReason}
@@ -585,10 +586,10 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 <option value="Salah memilih kursi atau kategori tiket">Salah memilih kursi atau kategori tiket</option>
                 <option value="Lainnya">Alasan Lainnya</option>
               </select>
-            </label>
+            </FieldLabel>
 
             {refundReason === 'Lainnya' && (
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, margin: '12px 0' }}>
+              <FieldLabel style={{ display: 'block', fontSize: 13, fontWeight: 700, margin: '12px 0' }}>
                 Tuliskan Alasan:
                 <textarea
                   required
@@ -599,7 +600,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                   placeholder="Ceritakan alasan pembatalan tiket..."
                   style={{ display: 'block', width: '100%', padding: '10px 12px', marginTop: 4, borderRadius: 8, border: '1.5px solid var(--ink)', minHeight: 70 }}
                 />
-              </label>
+              </FieldLabel>
             )}
 
             <div className="action-group ticket-dialog-actions" style={{ marginTop: 18 }}>
@@ -620,7 +621,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 Batal
               </button>
             </div>
-          </form>
+          </ValidatedForm>
         </div>
       )}
 
@@ -660,8 +661,8 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             </div>
           </div>
 
-          <form onSubmit={handleTransferTicket}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
+          <ValidatedForm onSubmit={handleTransferTicket}>
+            <FieldLabel style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
               <span>Nama Peserta Baru <span className="required-mark" aria-hidden="true">*</span></span>
               <input
                 type="text"
@@ -673,9 +674,9 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 placeholder="Contoh: Siti Nurhaliza"
                 style={{ display: 'block', width: '100%', padding: '10px 12px', marginTop: 4, borderRadius: 8, border: '1.5px solid var(--ink)', background: '#fff' }}
               />
-            </label>
+            </FieldLabel>
 
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
+            <FieldLabel style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
               Email Peserta Baru (Opsional):
               <input
                 type="email"
@@ -684,9 +685,9 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 placeholder="Contoh: siti@example.com"
                 style={{ display: 'block', width: '100%', padding: '10px 12px', marginTop: 4, borderRadius: 8, border: '1.5px solid var(--ink)', background: '#fff' }}
               />
-            </label>
+            </FieldLabel>
 
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
+            <FieldLabel style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
               Alasan Pengalihan:
               <select
                 value={transferReason}
@@ -698,7 +699,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 <option value="Berhalangan hadir dan dialihkan">Berhalangan hadir dan dialihkan</option>
                 <option value="Lainnya">Alasan Lainnya</option>
               </select>
-            </label>
+            </FieldLabel>
 
             <div style={{ background: '#f8f8fb', border: '1px dashed var(--purple)', borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: 'var(--ink)' }}>
               <strong>Keamanan Tiket:</strong> Token QR lama akan otomatis tidak berlaku. Tiket baru hanya dapat divalidasi oleh petugas melalui QR kode terbaru.
@@ -722,7 +723,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
                 Batal
               </button>
             </div>
-          </form>
+          </ValidatedForm>
         </div>
       )}
 
@@ -744,7 +745,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             PDF siap cetak dan tautan tiket dikirim ke email akun pemesan.
           </p>
 
-          <form className="action-group ticket-dialog-actions" onSubmit={handleResendTicket}>
+          <ValidatedForm className="action-group ticket-dialog-actions" onSubmit={handleResendTicket}>
             <button className="button button-dark" type="submit" disabled={resending || cooldown > 0}>
               <Send size={16} />
               {resending ? 'Memproses...' : 'Minta kirim ulang'}
@@ -752,7 +753,7 @@ export function TicketCard({ ticket: initialTicket, event }: { ticket: Ticket; e
             <button className="button button-light" type="button" onClick={() => setShowResendModal(false)}>
               Batal
             </button>
-          </form>
+          </ValidatedForm>
         </div>
       )}
     </div>

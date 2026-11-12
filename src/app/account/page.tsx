@@ -1,3 +1,4 @@
+import { ValidatedForm } from '@/components/form-fields';
 import Link from 'next/link';
 import { ArrowUpRight, Ticket, Bell, ClipboardList, LayoutDashboard, ScanLine, LogOut } from 'lucide-react';
 import { requireSession, canAccessRole } from '@/lib/auth/session';
@@ -23,11 +24,11 @@ export default async function Account() {
      <Link href="/notifications"><Bell size={20}/><span>Notifikasi</span><ArrowUpRight size={16}/></Link>
      {(organizer||staff)&&<div className="profile-workspace-links">{organizer&&<Link href="/organizer"><LayoutDashboard size={20}/><span>Organizer</span><ArrowUpRight size={16}/></Link>}{staff&&<Link href="/staff"><ScanLine size={20}/><span>Check-in petugas</span><ArrowUpRight size={16}/></Link>}</div>}
     </nav>
-    <form action="/api/auth/logout" method="post" className="profile-logout"><button className="profile-danger-button" aria-label="Keluar dari akun" type="submit"><LogOut size={20} aria-hidden="true" />Keluar akun</button></form>
+    <ValidatedForm action="/api/auth/logout" method="post" className="profile-logout"><button className="profile-danger-button" aria-label="Keluar dari akun" type="submit"><LogOut size={20} aria-hidden="true" />Keluar akun</button></ValidatedForm>
    </aside>
    <div className="profile-main"><ProfileEditor initialUser={user}/><DeleteAccount mode={user.mode}/></div>
   </div>
   <FavoritesSection catalog={catalog}/>
-  {user.mode==='demo'&&(!organizer||!staff)&&<section className="profile-demo-access"><h2>Coba peran lain</h2><div>{!organizer&&<form action="/api/auth/login" method="post"><input type="hidden" name="demoRole" value="organizer"/><button className="button button-light">Organizer demo</button></form>}{!staff&&<form action="/api/auth/login" method="post"><input type="hidden" name="demoRole" value="staff"/><button className="button button-light">Petugas demo</button></form>}</div></section>}
+  {user.mode==='demo'&&(!organizer||!staff)&&<section className="profile-demo-access"><h2>Coba peran lain</h2><div>{!organizer&&<ValidatedForm action="/api/auth/login" method="post"><input type="hidden" name="demoRole" value="organizer"/><button className="button button-light">Organizer demo</button></ValidatedForm>}{!staff&&<ValidatedForm action="/api/auth/login" method="post"><input type="hidden" name="demoRole" value="staff"/><button className="button button-light">Petugas demo</button></ValidatedForm>}</div></section>}
  </main>;
 }

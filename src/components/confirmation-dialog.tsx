@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { createContext,useCallback,useContext,useEffect,useId,useRef,useState,type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
@@ -42,10 +43,10 @@ export function ConfirmationProvider({children}:{children:ReactNode}){
     <span className={`summa-confirmation-icon${request.destructive?' is-danger':''}`}>{request.destructive?<AlertTriangle size={28} aria-hidden="true"/>:<CheckCircle2 size={28} aria-hidden="true"/>}</span>
     <h2 id={`${id}-title`}>{request.title??'Konfirmasi tindakan'}</h2>
     <p id={`${id}-description`}>{request.message}</p>
-    <form onSubmit={event=>{event.preventDefault();if(valid)finish(true);}}>
-     {request.confirmationText!==undefined&&<label className="summa-confirmation-label" htmlFor={`${id}-input`}>{request.confirmationLabel??'Ketik nama event untuk mengonfirmasi'}<strong>{request.confirmationText}</strong><input id={`${id}-input`} value={value} onChange={event=>setValue(event.target.value)} autoComplete="off" spellCheck={false} aria-describedby={`${id}-hint`}/><small id={`${id}-hint`}>Harus sama persis, termasuk huruf besar dan kecil.</small></label>}
+    <ValidatedForm onSubmit={event=>{event.preventDefault();if(valid)finish(true);}}>
+     {request.confirmationText!==undefined&&<FieldLabel className="summa-confirmation-label" htmlFor={`${id}-input`}>{request.confirmationLabel??'Ketik nama event untuk mengonfirmasi'}<strong>{request.confirmationText}</strong><input id={`${id}-input`} required value={value} onChange={event=>setValue(event.target.value)} autoComplete="off" spellCheck={false} aria-describedby={`${id}-hint`}/><small id={`${id}-hint`}>Harus sama persis, termasuk huruf besar dan kecil.</small></FieldLabel>}
      <div className="summa-confirmation-actions"><button ref={cancel} className="button button-light" type="button" onClick={()=>finish(false)}>Batal</button><button className={`button${request.destructive?' summa-confirmation-danger':''}`} type="submit" disabled={!valid}>{request.confirmLabel??'Lanjutkan'}</button></div>
-    </form>
+    </ValidatedForm>
    </div>
   </dialog>,document.body)}</ConfirmationContext.Provider>;
 }

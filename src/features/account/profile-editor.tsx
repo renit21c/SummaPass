@@ -1,4 +1,5 @@
 'use client';
+import { ValidatedForm, FieldLabel } from '@/components/form-fields';
 import { useRef,useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2,LoaderCircle,Save } from 'lucide-react';
@@ -13,7 +14,7 @@ export function ProfileEditor({initialUser}:{initialUser:Profile}){
  function change(field:keyof typeof values,value:string|boolean){setValues(previous=>({...previous,[field]:value}));setMessage('');setError('');}
  return <section className="profile-panel" aria-labelledby="profile-details-title">
   <div className="profile-section-heading"><h2 id="profile-details-title">Data pribadi</h2><p>Perbarui informasi kontakmu di sini.</p></div>
-  <form className="profile-form" onSubmit={async event=>{
+  <ValidatedForm className="profile-form" onSubmit={async event=>{
    event.preventDefault();if(pending.current||!dirty)return;
    if(!values.name.trim()){setError('Nama lengkap wajib diisi.');return;}
    pending.current=true;setBusy(true);setMessage('');setError('');
@@ -30,15 +31,15 @@ export function ProfileEditor({initialUser}:{initialUser:Profile}){
   }}>
    <fieldset disabled={busy}>
     <div className="profile-fields">
-     <label className="profile-name-field">Nama lengkap<input name="name" autoComplete="name" required maxLength={100} value={values.name} onChange={event=>change('name',event.target.value)}/></label>
-     <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254} value={values.email} onChange={event=>change('email',event.target.value)} aria-describedby="profile-email-hint"/><small id="profile-email-hint">Perubahan email memerlukan konfirmasi.</small></label>
-     <label>Nomor HP / WhatsApp<input name="phone" type="tel" autoComplete="tel" maxLength={30} value={values.phone} onChange={event=>change('phone',event.target.value)} placeholder="Opsional, contoh 08xxxxxxxxxx"/></label>
+     <FieldLabel className="profile-name-field">Nama lengkap<input name="name" autoComplete="name" required maxLength={100} value={values.name} onChange={event=>change('name',event.target.value)}/></FieldLabel>
+     <FieldLabel>Email<input name="email" type="email" autoComplete="email" required maxLength={254} value={values.email} onChange={event=>change('email',event.target.value)} aria-describedby="profile-email-hint"/><small id="profile-email-hint">Perubahan email memerlukan konfirmasi.</small></FieldLabel>
+     <FieldLabel>Nomor HP / WhatsApp<input name="phone" type="tel" autoComplete="tel" maxLength={30} value={values.phone} onChange={event=>change('phone',event.target.value)} placeholder="Opsional, contoh 08xxxxxxxxxx"/></FieldLabel>
     </div>
-    <div className="profile-preferences"><h3>Pengingat email</h3><label className="profile-check"><input type="checkbox" checked={values.emailNotify} onChange={event=>change('emailNotify',event.target.checked)}/><span><strong>Terima pengingat acara</strong><small>Kami kirim ke email akunmu.</small></span></label></div>
+    <div className="profile-preferences"><h3>Pengingat email</h3><FieldLabel className="profile-check"><input type="checkbox" checked={values.emailNotify} onChange={event=>change('emailNotify',event.target.checked)}/><span><strong>Terima pengingat acara</strong><small>Kami kirim ke email akunmu.</small></span></FieldLabel></div>
     <div className="profile-save-row"><span>{dirty?'Ada perubahan yang belum disimpan.':'Tidak ada perubahan.'}</span><button className="button" type="submit" disabled={busy||!dirty}>{busy?<LoaderCircle size={18} className="spin"/>:<Save size={18}/>}{busy?'Menyimpan...':'Simpan perubahan'}</button></div>
    </fieldset>
    {message&&<p className="profile-success" role="status"><CheckCircle2 size={18}/>{message}</p>}
    {error&&<p className="form-error" role="alert">{error}</p>}
-  </form>
+  </ValidatedForm>
  </section>;
 }

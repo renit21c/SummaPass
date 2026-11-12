@@ -1,4 +1,5 @@
 'use client';
+import { FieldLabel } from '@/components/form-fields';
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -79,13 +80,13 @@ export function ConcurrencySimulatorModal({ isOpen, onClose, slug, categories, s
       </header>
       {!result ? <>
         <div className="war-fields">
-          <label>Kategori<select value={category?.id ?? ''} disabled={loading} onChange={e => { setCategoryId(e.target.value); setSeatId(''); setError(''); }}>
+          <FieldLabel>Kategori<select value={category?.id ?? ''} disabled={loading} onChange={e => { setCategoryId(e.target.value); setSeatId(''); setError(''); }}>
             {categories.map(c => { const state = simulationSalesState(c, serverNow); return <option key={c.id} value={c.id} disabled={state !== 'OPEN'}>{c.name}{state === 'CLOSED' ? ' (Ditutup)' : state === 'UPCOMING' ? ' (Belum dibuka)' : ''}</option>; })}
-          </select></label>
-          <label>Kursi<select value={seat?.id ?? ''} disabled={loading || !available.length} onChange={e => { setSeatId(e.target.value); setError(''); }}>
+          </select></FieldLabel>
+          <FieldLabel>Kursi<select value={seat?.id ?? ''} disabled={loading || !available.length} onChange={e => { setSeatId(e.target.value); setError(''); }}>
             {!available.length && <option value="">Tidak ada kursi tersedia</option>}
             {available.map(s => <option key={s.id} value={s.id}>{s.section} {s.row}{s.number}</option>)}
-          </select></label>
+          </select></FieldLabel>
         </div>
         <p className="war-note">{salesOpen ? 'Reservasi uji otomatis dibatalkan setelah selesai.' : 'Tidak ada kategori dengan penjualan terbuka.'}</p>
         {error && <p className="war-error" role="alert"><AlertTriangle size={18}/>{error}</p>}

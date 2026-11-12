@@ -1,4 +1,5 @@
 "use client";
+import { FieldLabel, ValidatedForm } from '@/components/form-fields';
 import Link from "next/link";
 import { useConfirmation } from '@/components/confirmation-dialog';
 import { useEffect, useRef, useState } from "react";
@@ -232,7 +233,7 @@ export function EventWorkspace({
             </button>
           </div>
           <div className="editor-grid">
-            <label>
+            <FieldLabel>
               Dari tanggal pemesanan (WIB)
               <input
                 type="date"
@@ -242,8 +243,8 @@ export function EventWorkspace({
                   setPage(1);
                 }}
               />
-            </label>
-            <label>
+            </FieldLabel>
+            <FieldLabel>
               Sampai tanggal (WIB)
               <input
                 type="date"
@@ -254,8 +255,8 @@ export function EventWorkspace({
                   setPage(1);
                 }}
               />
-            </label>
-            <label>
+            </FieldLabel>
+            <FieldLabel>
               Cari nama, referensi, atau kursi
               <input
                 value={query}
@@ -264,7 +265,7 @@ export function EventWorkspace({
                   setPage(1);
                 }}
               />
-            </label>
+            </FieldLabel>
           </div>
           {!range.success && (
             <p role="alert" className="form-error">
@@ -397,7 +398,7 @@ export function EventWorkspace({
                 terkirim tidak berubah; gunakan kirim ulang untuk PDF terbaru.
               </p>
               {edited && (
-                <form
+                <ValidatedForm
                   className="manage-edit-form"
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -410,7 +411,7 @@ export function EventWorkspace({
                     disabled={busy || disabled}
                   >
                     <div className="editor-grid">
-                      <label>
+                      <FieldLabel>
                         Nama
                         <input
                           required
@@ -420,8 +421,8 @@ export function EventWorkspace({
                             setEdited({ ...edited, name: e.target.value })
                           }
                         />
-                      </label>
-                      <label>
+                      </FieldLabel>
+                      <FieldLabel>
                         Email peserta
                         <input
                           type="email"
@@ -431,9 +432,9 @@ export function EventWorkspace({
                             setEdited({ ...edited, email: e.target.value })
                           }
                         />
-                      </label>
+                      </FieldLabel>
                     </div>
-                    <label>
+                    <FieldLabel>
                       Catatan
                       <textarea
                         maxLength={500}
@@ -442,8 +443,8 @@ export function EventWorkspace({
                           setEdited({ ...edited, notes: e.target.value })
                         }
                       />
-                    </label>
-                    <label>
+                    </FieldLabel>
+                    <FieldLabel>
                       Alasan perubahan (5–500 karakter)
                       <input
                         required
@@ -452,7 +453,7 @@ export function EventWorkspace({
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                       />
-                    </label>
+                    </FieldLabel>
                     <div className="manage-actions">
                       <button className="button" type="submit">
                         Simpan peserta
@@ -466,7 +467,7 @@ export function EventWorkspace({
                       </button>
                     </div>
                   </fieldset>
-                </form>
+                </ValidatedForm>
               )}
               <details className="manage-layout">
                 <summary>Impor perubahan peserta dari CSV</summary>
@@ -476,7 +477,7 @@ export function EventWorkspace({
                   impor.
                 </p>
                 <a data-icon-action="" aria-label="Unduh data peserta untuk diedit" title="Unduh data peserta untuk diedit" className="text-link" href={exportUrl("import")}><Download size={20} aria-hidden="true" /></a>
-                <label>
+                <FieldLabel>
                   File CSV
                   <input
                     type="file"
@@ -517,9 +518,9 @@ export function EventWorkspace({
                       e.target.value = "";
                     }}
                   />
-                </label>
+                </FieldLabel>
                 {imported.length > 0 && (
-                  <form
+                  <ValidatedForm
                     onSubmit={async (e) => {
                       e.preventDefault();
                       if (
@@ -551,7 +552,7 @@ export function EventWorkspace({
                         </tbody>
                       </table>
                     </div>
-                    <label>
+                    <FieldLabel>
                       Alasan impor
                       <input
                         required
@@ -560,12 +561,12 @@ export function EventWorkspace({
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                       />
-                    </label>
+                    </FieldLabel>
                     <button className="button" disabled={busy || disabled}>
                       <Upload size={16} />
                       Terapkan impor
                     </button>
-                  </form>
+                  </ValidatedForm>
                 )}
               </details>
             </>
@@ -580,7 +581,7 @@ export function EventWorkspace({
             Dikirim melalui notifikasi dan antrean email, satu kali per akun
             pemesan yang sudah lunas dan punya tiket aktif.
           </p>
-          <form
+          <ValidatedForm
             onSubmit={async (e) => {
               e.preventDefault();
               if (
@@ -606,7 +607,7 @@ export function EventWorkspace({
               className="manage-fieldset"
               disabled={busy || disabled || loading}
             >
-              <label>
+              <FieldLabel>
                 Judul (3–120 karakter)
                 <input
                   required
@@ -618,8 +619,8 @@ export function EventWorkspace({
                     announceKey.current = crypto.randomUUID();
                   }}
                 />
-              </label>
-              <label>
+              </FieldLabel>
+              <FieldLabel>
                 Isi (10–2.000 karakter)
                 <textarea
                   required
@@ -632,13 +633,13 @@ export function EventWorkspace({
                     announceKey.current = crypto.randomUUID();
                   }}
                 />
-              </label>
+              </FieldLabel>
               <button className="button">
                 <Mail size={16} />
                 {busy ? "Mengirim..." : "Kirim pengumuman"}
               </button>
             </fieldset>
-          </form>
+          </ValidatedForm>
           <h3>Riwayat pengumuman</h3>
           {!history.length ? (
             <p>Belum ada pengumuman.</p>
@@ -668,7 +669,7 @@ export function EventWorkspace({
             peserta, tiket, dan tim tidak disalin. Periode jual bergeser
             mengikuti jadwal baru.
           </p>
-          <form
+          <ValidatedForm
             onSubmit={async (e) => {
               e.preventDefault();
               const d = await mutate({
@@ -685,7 +686,7 @@ export function EventWorkspace({
             }}
           >
             <fieldset className="manage-fieldset" disabled={busy}>
-              <label>
+              <FieldLabel>
                 Acara mulai yang baru (WIB)
                 <input
                   required
@@ -696,13 +697,13 @@ export function EventWorkspace({
                     duplicateKey.current = crypto.randomUUID();
                   }}
                 />
-              </label>
+              </FieldLabel>
               <button className="button">
                 <Copy size={16} />
                 {busy ? "Menyalin..." : "Buat salinan draf"}
               </button>
             </fieldset>
-          </form>
+          </ValidatedForm>
           {duplicateId && (
             <Link
               className="button button-light"

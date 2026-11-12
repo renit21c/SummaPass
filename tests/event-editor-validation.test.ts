@@ -4,7 +4,7 @@ import { editorValidation, coverFileError, coverDimensionsError } from '../src/f
 const valid = () => ({ title:'Acara uji',description:'Deskripsi acara uji yang sudah cukup panjang.',category:'Musik',organizer:'Panitia',area:'Bandung',rules:'Satu tiket satu peserta.',theme:'play',startsAt:'2030-12-20T16:00',endsAt:'2030-12-20T19:00',salesStart:'2030-12-01T08:00',salesEnd:'2030-12-20T16:00',price:'75000',frontPrice:'125000',regularQuota:'24',frontQuota:'24' });
 test('editor validates trimmed text and places errors on the correct fields',()=>{
  const result=editorValidation({...valid(),title:'  a  ',description:' '.repeat(25),organizer:'',area:'',rules:''});
- assert.match(result.errors.title,/3 karakter/);assert.match(result.errors.description,/20 karakter/);
+ assert.match(result.errors.title,/3 karakter/);assert.equal(result.errors.description,'Wajib diisi.');
  for(const field of ['organizer','area','rules'])assert.ok(result.errors[field]);
  const bounds=editorValidation({...valid(),title:'a'.repeat(120),description:'a'.repeat(5000)});
  assert.equal(bounds.result.success,true);

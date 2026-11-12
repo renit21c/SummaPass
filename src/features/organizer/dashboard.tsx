@@ -1,4 +1,5 @@
 "use client";
+import { FieldLabel } from '@/components/form-fields';
 import Link from "next/link";
 import { categoryInventory } from "./core";
 import { useState } from "react";
@@ -176,7 +177,7 @@ export function OrganizerDashboard({
             <RefreshCw size={19} />
           </button>
         </div>
-        <label className="organizer-event-filter">
+        <FieldLabel className="organizer-event-filter">
           Event
           <select
             value={event}
@@ -192,7 +193,7 @@ export function OrganizerDashboard({
               </option>
             ))}
           </select>
-        </label>
+        </FieldLabel>
         {data.mode === "demo" && (
           <p className="organizer-demo-notice">
             Demo lokal. Event awal memiliki 2 kursi terjual contoh. Pendapatan
@@ -345,7 +346,7 @@ export function OrganizerDashboard({
         ) : (
           <>
             <div className="organizer-table-controls">
-              <label className="search-field">
+              <FieldLabel className="search-field">
                 <Search size={17} />
                 <span className="sr-only">Cari booking atau peserta</span>
                 <input
@@ -356,8 +357,8 @@ export function OrganizerDashboard({
                   }}
                   placeholder="Cari referensi atau nama peserta"
                 />
-              </label>
-              <label>
+              </FieldLabel>
+              <FieldLabel>
                 <span className="sr-only">Status booking</span>
                 <select
                   value={status}
@@ -373,14 +374,14 @@ export function OrganizerDashboard({
                     </option>
                   ))}
                 </select>
-              </label>
-              <label>
+              </FieldLabel>
+              <FieldLabel>
                 <span className="sr-only">Urutkan booking</span>
                 <select value={sort} onChange={(e) => setSort(e.target.value)}>
                   <option value="recent">Terbaru</option>
                   <option value="amount">Total terbesar</option>
                 </select>
-              </label>
+              </FieldLabel>
               <a data-icon-action="" aria-label="Unduh CSV transaksi" title="Unduh CSV transaksi" className="button" href={`/api/organizer/export?${params}`}><Download size={20} aria-hidden="true" /></a>
             </div>
             <p className="organizer-row-count">

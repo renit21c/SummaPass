@@ -1,0 +1,23 @@
+.field-label-text{min-width:0;line-height:1.6}
+.required-mark{color:var(--danger,#b42318);font-weight:800;display:inline;margin-inline-start:2px;white-space:nowrap}
+.form-field-error{display:block;font-size:12px;font-weight:500;line-height:1.6;color:var(--danger,#b42318);margin:6px 0 0;overflow-wrap:anywhere;flex-basis:100%}
+label.has-field-error:has(>input[type=checkbox]){flex-wrap:wrap}
+input[aria-invalid=true]:not([type=checkbox]):not([type=radio]),select[aria-invalid=true],textarea[aria-invalid=true]{border-color:var(--danger,#b42318)}
+.ticket-mode-field{margin:0;padding:0;border:0;min-width:0;display:grid;gap:14px}
+.ticket-mode-field>legend{font-size:14px;font-weight:700;margin-bottom:14px;padding:0}
+.ticket-mode-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.event-editor .ticket-mode-option{position:relative;display:flex!important;flex-direction:row!important;align-items:flex-start;gap:14px!important;margin:0!important;padding:20px;border:1.5px solid var(--line);border-radius:12px;background:var(--cream);cursor:pointer;min-width:0;transition:border-color .15s,background .15s}
+.ticket-mode-option>input{position:absolute;width:1px;height:1px;opacity:0;clip-path:inset(50%)}
+.ticket-mode-option>svg{flex-shrink:0;margin-top:2px;color:var(--purple)}
+.ticket-mode-option>span{display:grid;gap:7px;flex:1;min-width:0}
+.ticket-mode-option strong{font-size:15px;line-height:1.5}
+.ticket-mode-option small{font-size:12px;font-weight:400;line-height:1.7;color:var(--muted)}
+.ticket-mode-option:has(input:checked){border-color:var(--purple);background:var(--purple-light)}
+.ticket-mode-option:has(input:focus-visible){outline:3px solid var(--purple);outline-offset:3px}
+.ticket-mode-option:has(input:disabled){cursor:default}
+.ticket-mode-option:not(:has(input:disabled)):hover{border-color:var(--purple)}
+.event-editor .editor-field-error,.auth-form .auth-field-error{font-size:12px;font-weight:500;line-height:1.6;color:var(--danger,#b42318);background:transparent;border:0;padding:0;margin:6px 0 0;box-shadow:none}
+.ticket-mode-check{width:20px;height:20px;border:1px solid var(--line);border-radius:50%;display:grid!important;place-items:center;flex:0 0 20px!important;color:transparent}
+.ticket-mode-option:has(input:checked) .ticket-mode-check{background:var(--purple);border-color:var(--purple);color:#fff}
+@media(max-width:600px){.ticket-mode-options{grid-template-columns:minmax(0,1fr);gap:14px}.ticket-mode-option{padding:18px}}
+@media(prefers-reduced-motion:reduce){.ticket-mode-option{transition:none}}
