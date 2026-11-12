@@ -5,6 +5,12 @@ import { requestLimit } from '@/lib/rate-limit/server';
 import { failure } from '@/features/booking/http';
 import { runConcurrencySimulation } from '@/features/booking/concurrency';
 
+// A lightweight HTTP round trip; does not create or release any reservations.
+export async function HEAD() {
+  const user = await getSession();
+  return new NextResponse(null, { status: user ? 204 : 401, headers: { 'Cache-Control': 'no-store' } });
+}
+
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) {
     return NextResponse.json({ error: 'Permintaan tidak diizinkan.' }, { status: 403 });

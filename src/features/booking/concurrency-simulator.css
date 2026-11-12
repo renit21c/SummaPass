@@ -1,4 +1,4 @@
-.war-dialog{width:min(540px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;margin:auto;border:2px solid var(--ink);border-radius:18px;background:var(--cream);color:var(--ink);box-shadow:5px 5px 0 var(--yellow);overflow:auto}
+.war-dialog{width:min(680px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;margin:auto;border:2px solid var(--ink);border-radius:18px;background:var(--cream);color:var(--ink);box-shadow:5px 5px 0 var(--yellow);overflow:auto}
 .war-dialog::backdrop{background:#24221fb3}
 .war-content{display:grid;gap:24px;padding:28px}
 .war-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
@@ -22,9 +22,26 @@
 .war-buyers article p{font-size:12px;line-height:1.7;margin:0}
 .war-status{padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:11px;font-weight:700;background:var(--surface)}
 .war-status.is-winner{background:var(--purple-light);color:var(--purple)}
+.war-buyer-timing{display:grid;gap:12px;width:100%;margin:0;padding-top:14px;border-top:1px solid var(--line)}
+.war-buyer-timing>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:11px}
+.war-buyer-timing dt,.war-metrics dt{color:var(--muted);line-height:1.6}
+.war-buyer-timing dd,.war-metrics dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.war-buyer-timing dd{text-align:right;max-width:65%}
+.war-comparison{display:grid;gap:18px;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff)}
+.war-comparison h3{margin:0;font-size:17px;line-height:1.4}
+.war-timeline{display:grid;gap:14px;min-width:0}
+.war-timeline-axis{display:flex;justify-content:space-between;gap:16px;padding-left:82px;color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
+.war-timeline-row{display:grid;grid-template-columns:70px minmax(0,1fr);align-items:center;gap:12px;font-size:11px}
+.war-timeline-track{height:16px;position:relative;background:var(--purple-light);border-radius:4px;overflow:hidden}
+.war-timeline-track>span{position:absolute;top:0;bottom:0;min-width:2px;background:var(--muted);border-radius:4px}
+.war-timeline-track>span.is-winner{background:var(--purple)}
+.war-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:0;padding-top:18px;border-top:1px solid var(--line)}
+.war-metrics>div{display:grid;align-content:start;gap:8px;font-size:11px;min-width:0}
+.war-metrics dd{font-size:18px;line-height:1.4}
 .war-details{font-size:12px;border-block:1px solid var(--line);padding:14px 0}
 .war-details summary{cursor:pointer;min-height:32px;line-height:32px;font-weight:700}
 .war-details p{margin:12px 0 0;font-size:11px;overflow-wrap:anywhere;line-height:1.7}
 .war-actions{display:flex;justify-content:flex-end;gap:20px;flex-wrap:wrap}
 @media(max-width:540px){.war-content{padding:20px;gap:20px}.war-heading h2{font-size:23px}.war-fields,.war-buyers{grid-template-columns:minmax(0,1fr);gap:16px}.war-actions>.button{flex:1}.war-outcome{padding:16px}}
 @media(prefers-reduced-motion:reduce){.war-content .spin{animation:none}}
+@media(max-width:380px){.war-comparison{padding:16px}.war-metrics{column-gap:14px}.war-metrics dd{font-size:16px}}

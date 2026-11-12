@@ -46,6 +46,12 @@ test('concurrency simulation produces exactly 1 winner and 1 rejected buyer with
   assert.equal(loser.httpStatus, 409);
   assert.equal(loser.error, 'SEAT_UNAVAILABLE');
   assert.equal(result.outcome, 'PASSED');
+  for (const buyer of [result.buyerA, result.buyerB]) {
+    assert.ok(buyer.timestampOffsetMs >= 0);
+    assert.ok(buyer.completedOffsetMs >= buyer.timestampOffsetMs);
+    assert.ok(buyer.durationMs >= 0);
+    assert.ok(Math.abs(buyer.completedOffsetMs - buyer.timestampOffsetMs - buyer.durationMs) < 0.2);
+  }
 
   // Seat should be back to AVAILABLE because autoRelease is true
   const seatAfter = store.inventory('little-weekend').seats.find(s => s.id === 'Regular-B5');
@@ -223,4 +229,21 @@ test('a repeated booking response is not claimed as two distinct seat allocation
   assert.equal(r.outcome, 'INCONCLUSIVE');
   assert.equal(r.technicalAudit.doubleBookingDetected, false);
   assert.deepEqual(f.cancelled, ['booking-1']);
+});
+
+test('timings measure actual reservation completion, including a faster rejected response', async () => {
+  const f = fixture();
+  let calls = 0;
+  f.deps.reserve = async (_user, input) => {
+    const current = ++calls;
+    if (current === 2) throw new BookingError('SEAT_UNAVAILABLE', 'Sudah dipesan.');
+    await new Promise(resolve => setTimeout(resolve, 25));
+    return f.booking(input, current);
+  };
+  const result = await runConcurrencySimulation('test-user', simulationInput, f.deps);
+  assert.equal(result.outcome, 'PASSED');
+  assert.equal(result.buyerA.status, 'WINNER');
+  assert.ok(result.buyerA.durationMs >= 20);
+  assert.ok(result.buyerA.completedOffsetMs > result.buyerB.completedOffsetMs);
+  assert.ok(result.buyerA.durationMs > result.buyerB.durationMs);
 });

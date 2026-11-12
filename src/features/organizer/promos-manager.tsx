@@ -1,4 +1,5 @@
 'use client';
+import { NumberInput } from '@/components/number-input';
 import { useConfirmation } from '@/components/confirmation-dialog';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, CheckCircle2, ShieldAlert, Trash2, Calendar, Ticket, Percent, Sparkles, AlertCircle } from 'lucide-react';
@@ -284,7 +285,7 @@ export function PromosManager({ eventId, categories = [] }: PromosManagerProps) 
 
             <label>
               Besar Potongan {formDiscountType === 'PERCENT' ? '(1 - 100%)' : '(Rupiah)'}
-              <input
+              <NumberInput
                 type="number"
                 min={1}
                 max={formDiscountType === 'PERCENT' ? 100 : 10000000}
